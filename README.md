@@ -132,37 +132,48 @@ It is left in the data rather than smoothed away. Treat it as an open question.
 `multiyear.py` runs all nine Sentinel-2 melt seasons. Peak observed meltwater
 area over the study area:
 
-| Season | Peak km² | Peak date | Usable scenes |
-|---|---|---|---|
-| 2017-18 | 0.00 | 2018-03-01 | 1 |
-| 2018-19 | 1.02 | 2019-01-25 | 9 |
-| 2019-20 | 8.24 | 2020-01-29 | 9 |
-| 2020-21 | 8.80 | 2021-01-24 | 9 |
-| 2021-22 | 0.39 | 2021-11-09 | 9 |
-| 2022-23 | 5.28 | 2023-02-22 | 5 |
-| 2023-24 | 2.02 | 2024-02-08 | 2 |
-| 2024-25 | 0.29 | 2025-02-22 | 4 |
-| 2025-26 | **11.52** | 2026-02-10 | 7 |
+| Season | Peak km² | Peak date | Usable scenes | |
+|---|---|---|---|---|
+| 2017-18 | — | — | 1 | omitted, not a season |
+| 2018-19 | 1.02 | 2019-01-25 | 9 | marginal, just above floor |
+| 2019-20 | 8.24 | 2020-01-29 | 9 | |
+| 2020-21 | 8.80 | 2021-01-24 | 9 | |
+| 2021-22 | *(0.39)* | — | 9 | **no melt detected** |
+| 2022-23 | 5.28 | 2023-02-22 | 5 | |
+| 2023-24 | 2.02 | 2024-02-08 | 2 | likely undercounted |
+| 2024-25 | *(0.29)* | — | 4 | **no melt detected** |
+| 2025-26 | **11.52** | 2026-02-10 | 7 | largest in record |
 
-Inter-annual variability is large — more than an order of magnitude between
-2024-25 and 2025-26 — and 2025-26 is the largest in the record. **Do not read
-a trend off this chart.** Nine seasons over one 20 km window, with three of
-them undersampled, cannot separate a trend from year-to-year weather.
+Inter-annual variability is large — from no detectable melt to 11.52 km² —
+and 2025-26 is the largest in the record. **Do not read a trend off this
+chart.** Eight plotted seasons over one 20 km window, several undersampled,
+cannot separate a trend from year-to-year weather.
 
-Three caveats that matter for reading the table:
+The 2025-26 peak was inspected directly rather than trusted: the scene is
+clean, with unmistakable dark meltwater channels and the mask sitting exactly
+on them.
 
+Four caveats that matter for reading the table:
+
+- **There is a noise floor at ~0.7 km².** Two scenes that pass every screen
+  still report meltwater *before melt onset* — 0.39 km² on 2021-11-09 and
+  0.68 km² on 2022-11-25. Inspection shows both hugging the edges of a dark
+  patch (bare or blue ice, or shadowed terrain) near the AOI boundary, not
+  ponds. 0.68 km² is the largest confirmed non-melt detection, so anything
+  below 0.7 km² is reported as "no melt detected" and drawn hollow in the
+  chart. This is why 2021-22 and 2024-25 carry no number.
 - **Peak observed ≠ seasonal peak.** If the true maximum fell on a cloudy day
-  it is simply missed. Seasons with fewer than five clear scenes are greyed
-  out in the chart for this reason.
-- **Low seasons sit at the noise floor.** 2021-22 and 2024-25 peak at 0.3–0.4
-  km², about 0.1% of the AOI. 2021-22's "peak" is in fact an early-November
-  reading, before melt onset, while its January scenes read ~0.003 km². Read
-  those seasons as "no melt detected", not as a measured quantity.
+  it is simply missed. Seasons with fewer than five clear scenes are greyed;
+  seasons with fewer than two are dropped entirely, which is what happened to
+  2017-18 (one scene, in March).
 - **Sparsity is the weather, not the filter.** For 2023-24 (2 usable of 95),
   the rejections break down as 53 cloud, 35 off-swath nodata, 4 water, and
   only **1** from the NDSI gate. Screening is not what is throwing the data
   away. The 35 nodata scenes are partial-swath and could largely be recovered
   by mosaicking same-date scenes.
+- **Same-date scenes are true duplicates, not complementary swaths.** Checked
+  before collapsing them: in every observed case both cover 376–419 km² of the
+  ~419 km² AOI, so keeping the better one discards no coverage.
 
 ## Configuration
 
@@ -179,6 +190,23 @@ The study area is pinned to one Sentinel-2 tile on purpose. The S2 tiling grid
 is fixed, so the same pixel window on tile 19CEV is the same ground on every
 date — that is what makes areas comparable across a time series.
 
+## Tests
+
+```
+python -m pytest tests -q
+```
+
+18 tests, no network — synthetic arrays and fake STAC items, so they run
+offline in under a second. They cover the parts where a silent wrong answer
+is possible: NDWI sign conventions, nodata never becoming water, threshold
+monotonicity, the pixel-count-to-km² conversion, division-by-zero on a fully
+masked scene, all four branches of the baseline 04.00 offset (including
+unparseable metadata), SCL fraction accounting, and the same-date dedup rule.
+
+Two are regression guards for bugs found the hard way: that SCL class 6 is
+never added to the reject set (it would silently delete 80% of real ponds),
+and that the noise floor stays above the largest confirmed artifact.
+
 ## Known limitations
 
 - **Study area is one 20 km window, not the whole shelf.** It was picked for
@@ -190,8 +218,16 @@ date — that is what makes areas comparable across a time series.
   `pixel count × 100 m²`; at 72°S in UTM 19S the error is small but nonzero.
 - **NDWI cannot distinguish shallow ponds from wet/slushy snow**, a known
   ambiguity in the literature and a motivation for the planned ML classifier.
-- **Blue ice can false-positive.** The brightness floor catches the worst of it,
+- **Blue ice and dark terrain can false-positive.** This is what sets the
+  0.7 km² noise floor above. The brightness floor catches the worst of it,
   but it is not a physical discriminator.
+- **No validation against published George VI numbers.** The pipeline is
+  internally consistent but externally unanchored, which is the largest
+  outstanding gap in the science.
+- **Every threshold is calibrated on a handful of scenes.** NDWI 0.16,
+  brightness floor 3000, NDSI gate 1%, water gate 2%, noise floor 0.7 km² —
+  all set from one or two seasons. Since the gates decide which data survives,
+  a bad calibration would quietly reshape the whole trend.
 
 Handled correctly: the **Sentinel-2 baseline 04.00 offset**. From 2022-01-25
 onward, L2A reflectance is shifted by −1000 DN, and since NDWI is a ratio of

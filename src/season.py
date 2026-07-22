@@ -176,15 +176,26 @@ def _record(label, item, st, scr, tag, quiet):
     })
 
 
+def _quality(row):
+    """Rank same-date scenes: most usable ground first, then least cloud."""
+    return (float(row["usable_km2"]), -float(row["cloud_frac_aoi"]))
+
+
 def series(label):
-    """One measurement per date: the clearest scene. All rows stay in the CSV."""
+    """One measurement per date: the best scene. All rows stay in the CSV.
+
+    A date can yield more than one scene from overlapping orbits. Checked
+    that these really are the same ground rather than complementary swaths -
+    in every observed case both cover 376-419 km2 of the ~419 km2 AOI - so
+    picking one is correct and does not discard coverage.
+    """
     rows = list(load_done(label).values())
     if not rows:
         return []
     best = {}
     for r in rows:
         cur = best.get(r["date"])
-        if cur is None or float(r["cloud_frac_aoi"]) < float(cur["cloud_frac_aoi"]):
+        if cur is None or _quality(r) > _quality(cur):
             best[r["date"]] = r
     return sorted(best.values(), key=lambda r: r["date"])
 

@@ -27,6 +27,14 @@ import season as S
 SEASONS = ["2017-18", "2018-19", "2019-20", "2020-21", "2021-22",
            "2022-23", "2023-24", "2024-25", "2025-26"]
 
+# Below this many clear scenes, the seasonal peak is likely simply missed.
+MIN_SCENES_TRUSTED = 5
+
+# Below this many, the season is not characterised at all and is dropped from
+# the chart rather than drawn as a bar. 2017-18 had exactly one usable scene,
+# in March, which is not a melt season by any reading.
+MIN_SCENES_PLOTTED = 2
+
 OUT_CSV = melt.ROOT / "output" / "multiyear_summary.csv"
 OUT_PNG = melt.ROOT / "output" / "multiyear_trend.png"
 
@@ -66,6 +74,11 @@ def main():
 
 
 def plot(summary):
+    dropped = [s for s in summary if s["n_usable"] < MIN_SCENES_PLOTTED]
+    for s in dropped:
+        print(f"[plot] {s['season']} omitted - only {s['n_usable']} usable scene(s)")
+    summary = [s for s in summary if s["n_usable"] >= MIN_SCENES_PLOTTED]
+
     labels = [s["season"] for s in summary]
     peaks = [s["peak_km2"] for s in summary]
     counts = [s["n_usable"] for s in summary]
@@ -75,14 +88,25 @@ def plot(summary):
         2, 1, figsize=(11, 7.6), sharex=True,
         gridspec_kw={"height_ratios": [3, 1], "hspace": 0.12})
 
+    floor = melt.NOISE_FLOOR_KM2
     bars = ax.bar(x, peaks, color="#0077b6", width=0.62)
-    # Grey out seasons with too few clear scenes to trust the peak.
-    for b, c in zip(bars, counts):
-        if c < 5:
+
+    for b, xi, p, c in zip(bars, x, peaks, counts):
+        below = (not np.isnan(p)) and p <= floor
+        if below:
+            # Not a measurement. Draw it hollow so it cannot be read as one.
+            b.set_facecolor("none")
+            b.set_edgecolor("#aab4bc")
+            b.set_hatch("///")
+            ax.text(xi, floor * 1.06, "no melt\ndetected", ha="center", va="bottom",
+                    fontsize=7.5, color="#77828a", linespacing=1.15)
+        elif c < MIN_SCENES_TRUSTED:
             b.set_color("#b8c4cc")
-    for xi, p, c in zip(x, peaks, counts):
-        if not np.isnan(p):
             ax.text(xi, p, f"{p:.1f}", ha="center", va="bottom", fontsize=9)
+        else:
+            ax.text(xi, p, f"{p:.1f}", ha="center", va="bottom", fontsize=9)
+
+    ax.axhline(floor, color="#c1121f", ls="--", lw=1.2, zorder=3)
 
     ax.set_ylabel("Peak observed meltwater area (km$^2$)")
     ax.set_title("George VI Ice Shelf - peak meltwater by melt season\n"
@@ -92,9 +116,13 @@ def plot(summary):
     ax.grid(alpha=0.3, axis="y")
     ax.set_ylim(0, max(1.0, np.nanmax(peaks)) * 1.18)  # headroom for labels
     ax.legend(handles=[
-        plt.Rectangle((0, 0), 1, 1, color="#0077b6", label="5+ clear scenes"),
+        plt.Rectangle((0, 0), 1, 1, color="#0077b6", label="measured peak"),
         plt.Rectangle((0, 0), 1, 1, color="#b8c4cc",
-                      label="<5 clear scenes - peak likely undercounted"),
+                      label=f"<{MIN_SCENES_TRUSTED} clear scenes - likely undercounted"),
+        plt.Rectangle((0, 0), 1, 1, facecolor="none", edgecolor="#aab4bc", hatch="///",
+                      label="at or below noise floor - not a measurement"),
+        plt.Line2D([0], [0], color="#c1121f", ls="--", lw=1.2,
+                   label=f"noise floor, {floor:.1f} km$^2$"),
     ], loc="upper left", fontsize=8.5, framealpha=0.9)
 
     ax2.bar(x, counts, color="#8d99ae", width=0.62)

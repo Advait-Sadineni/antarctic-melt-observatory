@@ -37,6 +37,17 @@ NDWI_THRESHOLD = 0.16  # TUNABLE - see tune_threshold.py
 BRIGHTNESS_FLOOR = 3000  # rejects dark open ocean and deep shadow
 NDSI_ICE_MIN = 0.60  # below this a pixel is not snow/ice/water - see ice_check()
 
+# Detections at or below this are not distinguishable from artifacts.
+#
+# Set from evidence, not taste. Two scenes that pass every screen still report
+# meltwater before melt onset: 2021-11-09 gives 0.39 km2 and 2022-11-25 gives
+# 0.68 km2, both in early November. Inspecting them shows the detections
+# hugging the edges of a dark patch - bare or blue ice, or shadowed terrain -
+# near the AOI boundary, not ponds. 0.68 km2 is the largest confirmed
+# non-melt detection, so anything under ~0.7 km2 is reported as "no melt
+# detected" rather than as a measured area.
+NOISE_FLOOR_KM2 = 0.7
+
 # --- SCL (Scene Classification Layer) ----------------------------------------
 # sen2cor ships a per-pixel class map with every L2A product.
 #
