@@ -87,26 +87,65 @@ The fix is **NDSI** = `(Green − SWIR) / (Green + SWIR)`, from B03 and B11
 AOI, clean scenes put 0.0–0.1% of pixels below NDSI 0.6 while cloud-covered
 ones put 3.7–35.9% there, so `melt.ice_check()` gates scenes at 1%.
 
-It has to be a *scene* gate, not a pixel mask: the phantom pond pixels
-themselves still score high NDSI, so masking per-pixel would not remove them.
+Thresholding NDSI per-pixel does *not* remove the phantoms — they sit beside
+the cloud rather than under it and score high NDSI themselves. Dilating the
+detected cloud by a **1 km halo** does remove them. On a confirmed cloudy
+scene that cuts the phantom from 8.16 to 2.32 km² while costing a confirmed
+clean scene 0.5% of its real detections.
 
-The cost is temporal coverage. The 2020-21 season drops from 18 usable scenes
-to 9. That is the right trade — the 9 are defensible and the discarded ones
-included the phantoms — but it means gaps are wide, and a season's peak can
-be missed entirely if it fell on a cloudy day.
+The halo replaced an earlier whole-scene NDSI threshold, which turned out not
+to survive a change of study area: a cloud bank that filled the old 20 km
+window covers only ~11% of the current 61 km one, so a gate calibrated at 1%
+silently stopped firing when the AOI grew. A local mask has no such
+dependence.
+
+**Grazing sunlight fakes meltwater.** Scenes at 9.5° and 11.7° solar elevation
+returned the largest "melt" of their season — in March, at the end of the melt
+season — with detections tracking the crevassed eastern margin rather than any
+pond. At low sun, shadow from crevasses and surface topography lengthens, and
+shadowed snow lit by blue skylight reproduces water's NDWI signature. Scenes
+below **15° solar elevation** are rejected.
+
+**A plausibility tripwire catches what the physics-based tests miss.** The
+largest meltwater density on a visually confirmed clean scene is 0.49% of the
+study area, so anything above 2% is treated as a detector failure rather than
+a record melt event, and logged loudly. It has earned its place: 2020-01-29
+reported 2.78% with a halo of only 0.23%, meaning the NDSI test saw almost no
+cloud. Inspection showed a large dark cloud-shadow band with the mask sitting
+squarely on it — shadow, not bright cloud, so NDSI was blind to it. The
+tripwire was the only thing standing between that scene and the record books,
+in a season that genuinely was a record-warm Antarctic Peninsula summer, which
+is exactly when a wrong answer would have been most believable.
+
+**Partial cloud no longer discards the whole scene.** Demanding a clear 61 km
+square is far stricter than demanding a clear 20 km one — the 2026-02-10
+record scene is 23.7% cloudy over the large area but only 5.8% over the small
+one, so a whole-scene cloud gate was throwing away 76% of usable ground. A
+scene is now kept if at least half the study area survives screening, and the
+result is reported as a **density over the surviving ground**, scaled back to
+the full area (`pond_km2_equiv`). That keeps scenes with different usable
+footprints comparable.
 
 ### Threshold sensitivity
 
 `tune_threshold.py` sweeps NDWI 0.04–0.40. The curve has three regimes:
 
-- **Below ~0.08** — saturation. Bare ice itself goes slightly positive and the
-  entire 419 km² AOI is flagged as water. Unusable.
-- **0.08–0.12** — a cliff, area dropping ~80% per 0.02 step.
-- **Above ~0.12** — a stable, smooth decay of roughly 5% per 0.02.
+- **Below ~0.08** — saturation. Bare ice itself goes slightly positive and
+  essentially the entire 3775 km² study area is flagged as water. Unusable.
+- **0.08–0.14** — a cliff, area dropping 30–90% per 0.02 step.
+- **Above ~0.16** — a smooth decay easing from ~15% to ~6% per 0.02.
 
-At the default 0.16, local sensitivity is **4% of area per 0.01 of threshold**.
-Across the full published range 0.10–0.25 the answer moves from 17.0 to 6.8 km²
-— a factor of 2.5.
+At the default 0.16, local sensitivity is **11% of area per 0.01 of
+threshold**. Across the published range 0.10–0.25 the answer moves from 41.9
+to ~6.3 km² — a factor of about seven.
+
+That is markedly worse than the factor of 2.5 measured on the old hand-picked
+window, and the reason is instructive: that window was almost entirely pond or
+bare ice, so it sat well clear of the cliff. A representative area contains a
+great deal of marginal, near-threshold surface, so the answer depends more on
+where the line is drawn. The honest reading is that the *shape* of a season —
+onset, peak timing, relative magnitude — is far more robust than any absolute
+area, and the threshold must always be quoted alongside the number.
 
 The practical consequence: **absolute pond area is threshold-dependent and
 should be quoted with its threshold.** Comparisons across dates at a *fixed*
@@ -132,26 +171,33 @@ It is left in the data rather than smoothed away. Treat it as an open question.
 `multiyear.py` runs all nine Sentinel-2 melt seasons. Peak observed meltwater
 area over the study area:
 
+Areas are `pond_km2_equiv`: meltwater density over the ground that survived
+screening, scaled to the full 3775 km² study area.
+
 | Season | Peak km² | Peak date | Usable scenes | |
 |---|---|---|---|---|
-| 2017-18 | — | — | 1 | omitted, not a season |
-| 2018-19 | 1.02 | 2019-01-25 | 9 | marginal, just above floor |
-| 2019-20 | 8.24 | 2020-01-29 | 9 | |
-| 2020-21 | 8.80 | 2021-01-24 | 9 | |
-| 2021-22 | *(0.39)* | — | 9 | **no melt detected** |
-| 2022-23 | 5.28 | 2023-02-22 | 5 | |
-| 2023-24 | 2.02 | 2024-02-08 | 2 | likely undercounted |
-| 2024-25 | *(0.29)* | — | 4 | **no melt detected** |
-| 2025-26 | **11.52** | 2026-02-10 | 7 | largest in record |
+| 2017-18 | 8.90 | 2018-02-22 | 2 | likely undercounted |
+| 2018-19 | 11.56 | 2019-02-17 | 7 | peak is the unresolved case below |
+| 2019-20 | 10.03 | 2020-01-19 | 3 | likely undercounted |
+| 2020-21 | 11.34 | 2021-01-24 | 8 | peak scene visually verified |
+| 2021-22 | *(1.47)* | — | 8 | **no melt detected** |
+| 2022-23 | 10.49 | 2023-02-26 | 6 | |
+| 2023-24 | — | — | 0 | no scene passed screening |
+| 2024-25 | 9.60 | 2025-02-05 | 3 | likely undercounted |
+| 2025-26 | **18.66** | 2026-02-10 | 7 | largest in record, verified |
 
-Inter-annual variability is large — from no detectable melt to 11.52 km² —
-and 2025-26 is the largest in the record. **Do not read a trend off this
-chart.** Eight plotted seasons over one 20 km window, several undersampled,
-cannot separate a trend from year-to-year weather.
+2025-26 is the largest in the record and its peak scene was inspected
+directly rather than trusted — clean, with unmistakable dark meltwater
+channels and the mask sitting exactly on them.
 
-The 2025-26 peak was inspected directly rather than trusted: the scene is
-clean, with unmistakable dark meltwater channels and the mask sitting exactly
-on them.
+**Do not read a trend off this chart.** Eight plotted seasons, three of them
+undersampled and one with no usable data at all, cannot separate a trend from
+year-to-year weather over a single 61 km window.
+
+Note how much these numbers moved as screening improved. An earlier version of
+this table had 2024-25 peaking at 34.2 km², which turned out to be a cumulus
+band; and 2019-20 at 8.24 km² from a scene later shown to be cloud shadow.
+Both looked entirely reasonable at the time.
 
 Four caveats that matter for reading the table:
 
@@ -169,8 +215,11 @@ Four caveats that matter for reading the table:
 - **Sparsity is the weather, not the filter.** For 2023-24 (2 usable of 95),
   the rejections break down as 53 cloud, 35 off-swath nodata, 4 water, and
   only **1** from the NDSI gate. Screening is not what is throwing the data
-  away. The 35 nodata scenes are partial-swath and could largely be recovered
-  by mosaicking same-date scenes.
+  away. The 35 nodata scenes are partial-swath and are **not** recoverable by
+  mosaicking: checked all five multi-scene dates in 2023-24, and in every case
+  the same-date companion has the same footprint rather than a complementary
+  one. When the AOI sits at an orbit edge, nobody imaged the missing ground
+  that day.
 - **Same-date scenes are true duplicates, not complementary swaths.** Checked
   before collapsing them: in every observed case both cover 376–419 km² of the
   ~419 km² AOI, so keeping the better one discards no coverage.
@@ -179,16 +228,46 @@ Four caveats that matter for reading the table:
 
 Everything lives in `src/melt.py`:
 
-| Setting | Value | Note |
+| Setting | Value | Why |
 |---|---|---|
-| Study area | tile `19CEV`, 2048×2048 px @ 10 m | ~20.5 km square, ~72.1°S 69°W |
-| NDWI threshold | `0.16` | tunable; see above |
+| Study area | tile `19CEV`, 6144×6144 px @ 10 m | ~61 km square, 3775 km², ~72.1°S 69°W |
+| Screening resolution | 60 m | fractions only; a fraction of the bytes |
+| NDWI threshold | `0.16` | tunable; see sensitivity above |
 | Brightness floor | green > 3000 DN | rejects dark ocean/shadow |
-| AOI cloud limit | 20% | `season.py` scene rejection |
+| NDSI ice minimum | `0.60` | below this a pixel is not snow/ice/water |
+| Cloud halo | 1 km | cloud contaminates ground beside it |
+| Min solar elevation | 15° | grazing light fakes meltwater |
+| Min usable fraction | 50% | keeps partly-cloudy scenes, normalised |
+| Max halo fraction | 15% | heavy detected cloud implies undetected cloud |
+| Max plausible density | 2% of usable | tripwire for unmodelled failures |
+| Noise floor | 2.2 km² | above the pre-melt baseline |
+
+Every one of these was set from a measurement, and most exist because a
+specific scene produced a specific wrong answer. None is a default.
 
 The study area is pinned to one Sentinel-2 tile on purpose. The S2 tiling grid
 is fixed, so the same pixel window on tile 19CEV is the same ground on every
 date — that is what makes areas comparable across a time series.
+
+### The study area is chosen for coverage, not for ponds
+
+The first version of this project used a 20 km window found by searching the
+tile for the *densest ponding*. That makes every absolute number a best case,
+and it is the kind of choice that quietly invalidates a result.
+
+The current 61 km area is instead the largest window that is fully imaged and
+100% snow/ice across four clear scenes drawn from different seasons (2019,
+2020, 2021, 2026). Pond density played no part in selecting it, so it
+includes a great deal of shelf that never ponds.
+
+The difference is large enough to be worth stating plainly. On the same scene
+(2021-01-24), the hand-picked window gave **2.10%** meltwater cover while the
+representative area gives **0.302%** — a factor of seven. Any pond-fraction
+number from the old window should be read as roughly 7× optimistic.
+
+Screening runs at 60 m and only scenes that pass pay for full-resolution
+reads, which is what keeps a nine-season run to about half an hour despite
+the area being nine times larger.
 
 ## Tests
 
@@ -218,6 +297,11 @@ and that the noise floor stays above the largest confirmed artifact.
   `pixel count × 100 m²`; at 72°S in UTM 19S the error is small but nonzero.
 - **NDWI cannot distinguish shallow ponds from wet/slushy snow**, a known
   ambiguity in the literature and a motivation for the planned ML classifier.
+  The clearest case is 2019-02-17, which reports 11.6 km² over a large dark
+  patch late in the season. It survives every screen — it is not cloud (the
+  halo catches only 1%), not low sun (21.4°), and not nodata — and it is
+  genuinely unresolved whether it is extensive slush or an unmodelled
+  artifact. It is left in the data and flagged rather than tuned away.
 - **Blue ice and dark terrain can false-positive.** This is what sets the
   0.7 km² noise floor above. The brightness floor catches the worst of it,
   but it is not a physical discriminator.
@@ -269,13 +353,12 @@ output/                 rendered PNGs and CSVs
 
 ## Roadmap
 
-1. Mosaic same-date partial-swath scenes. 35 of 95 scenes in 2023-24 were
-   discarded for off-swath nodata; merging them would roughly double usable
-   coverage in the worst seasons, which is the single biggest weakness above.
-2. Expand the AOI from one window to the full shelf via a geographic polygon.
-   This is the main barrier to comparing against published studies.
-3. Per-pixel cloud masking (`s2cloudless` on L1C) instead of whole-scene
-   rejection, recovering partially-clear scenes.
+1. Expand the study area beyond one hand-picked window. This is the main
+   barrier to comparing against published studies.
+2. Per-pixel cloud masking (`s2cloudless` on L1C) instead of whole-scene
+   rejection, recovering partially-clear scenes. Note that NDSI cannot do this
+   job — the phantom pond pixels score high NDSI, which is why it only works
+   as a scene gate.
 4. ICESat-2 ATL06/ATL11 elevation overlay (`icepyx`) — pond depth and hence
    volume, which is what actually drives hydrofracture, rather than extent.
 5. ERA5 climate drivers + ML classifier to replace NDWI thresholding, which

@@ -52,12 +52,12 @@ def main():
                             "peak_date": "", "mean_top3_km2": float("nan")})
             continue
 
-        areas = sorted((float(r["pond_km2"]) for r in rows), reverse=True)
-        peak_row = max(rows, key=lambda r: float(r["pond_km2"]))
+        areas = sorted((float(r["pond_km2_equiv"]) for r in rows), reverse=True)
+        peak_row = max(rows, key=lambda r: float(r["pond_km2_equiv"]))
         summary.append({
             "season": label,
             "n_usable": len(rows),
-            "peak_km2": round(float(peak_row["pond_km2"]), 4),
+            "peak_km2": round(float(peak_row["pond_km2_equiv"]), 4),
             "peak_date": peak_row["date"],
             "mean_top3_km2": round(float(np.mean(areas[:3])), 4),
         })

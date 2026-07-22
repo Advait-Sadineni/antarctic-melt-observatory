@@ -24,7 +24,7 @@ OUT_PNG = melt.ROOT / "output" / "threshold_sensitivity.png"
 def main():
     item = melt.get_item(ITEM_ID)
     bands = melt.load_scene(item, bands=("green", "nir"))
-    reject = melt.screen(melt.read_scl(item))["reject_mask"]
+    reject = melt.reject_mask(item)  # full-res; screen() returns a decimated one
 
     areas = []
     print(f"[sweep] {ITEM_ID}\n")

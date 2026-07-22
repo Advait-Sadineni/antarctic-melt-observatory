@@ -33,8 +33,34 @@ import melt
 
 DEFAULT_SEASON = "2020-21"
 
-MAX_CLOUD_IN_AOI = 0.20  # reject scene if >20% of the AOI is cloud/shadow
-MAX_NODATA = 0.05
+# A scene is kept if enough of the study area survives screening, and the
+# result is reported as a *density* over that surviving ground rather than as
+# a raw area. Demanding a clear 61 km square is far stricter than demanding a
+# clear 20 km one: the 2026-02-10 record scene has 23.7% cloud over the large
+# AOI and only 5.8% over the small one, so a whole-scene cloud gate threw away
+# 76% of perfectly good ground. Requiring half the AOI and normalising keeps
+# it, and keeps scenes comparable when their usable areas differ.
+MIN_USABLE_FRAC = 0.50
+
+# Usable fraction alone is not enough. A scene with a third of the AOI under
+# detected cloud still had two thirds "usable", passed, and returned 365 km2
+# of meltwater - thirty times anything plausible. Heavy detected cloud implies
+# heavy *undetected* cloud in what is left, so the halo fraction gates the
+# scene as well.
+#
+# First set at 15%, which was still too loose: 2024-12-20 passed at 10% halo
+# and returned 34 km2, and inspection showed a cumulus band across the scene
+# with the mask lighting up all over it. Scenes at 11% and 13% were the same
+# story. Observed halo: clean scenes 0.03-0.06%, a salvageable partly-cloudy
+# one 1.99%, everything at or above 10% contaminated. 5% cuts between them.
+MAX_HALO_FRAC = 0.05
+
+# Last-resort tripwire for failure modes not yet modelled. The largest
+# meltwater density measured on a visually confirmed clean scene is 0.49% of
+# the study area, so anything above 2% is treated as a detector failure
+# rather than a record melt event. Rejections are logged, never silent - if
+# this ever fires on a real scene, that is a finding, not a nuisance.
+MAX_POND_FRAC_PLAUSIBLE = 0.02
 
 # Contamination gate. Cloud shadow on an ice shelf is lit by blue skylight,
 # which raises green relative to NIR and mimics water's NDWI signature - it
@@ -44,13 +70,10 @@ MAX_NODATA = 0.05
 # tell. Clear scenes here run <=0.42%; the one contaminated scene hit 7.7%.
 MAX_WATER_IN_AOI = 0.02
 
-# Cloud gate that works over ice, where SCL does not. See melt.ice_check().
-# Clean scenes measure 0.0-0.1% non-ice; cloud-covered ones 3.7-35.9%.
-MAX_NONICE_IN_AOI = 0.01
-
-FIELDS = ["item_id", "date", "cloud_frac_aoi", "water_frac_aoi", "nonice_frac_aoi",
-          "usable_frac", "tile_cloud", "pond_px", "pond_km2", "usable_km2",
-          "pond_pct_of_usable"]
+FIELDS = ["item_id", "date", "sun_elev", "cloud_frac_aoi", "water_frac_aoi",
+          "nonice_frac_aoi", "halo_frac_aoi", "usable_frac", "tile_cloud",
+          "pond_px", "pond_km2", "usable_km2", "pond_pct_of_usable",
+          "pond_km2_equiv"]
 
 
 def season_dates(label):
@@ -86,29 +109,59 @@ def append_row(label, row):
         w.writerow(row)
 
 
+AOI_KM2 = melt.WIN_SIZE**2 * melt.PIXEL_KM2
+
+
 def process(item):
     """Screen cheapest-first; only fetch 10 m bands once a scene has passed."""
     scr = melt.screen(melt.read_scl(item))
+    scr["sun_elev"] = melt.sun_elevation(item)
     scr["nonice_frac"] = float("nan")
+    scr["halo_frac"] = float("nan")
 
-    if (scr["nodata_frac"] > MAX_NODATA
-            or scr["cloud_frac"] > MAX_CLOUD_IN_AOI
-            or scr["water_frac"] > MAX_WATER_IN_AOI):
+    # Grazing illumination makes crevasse and topographic shadow indistinguishable
+    # from meltwater, so those scenes are unusable rather than merely noisy.
+    if scr["sun_elev"] < melt.MIN_SUN_ELEVATION_DEG:
+        return None, scr
+    if scr["water_frac"] > MAX_WATER_IN_AOI:
         return None, scr
 
-    # NDSI gate last: it costs two extra reads, so only scenes that already
-    # passed the cheap SCL checks pay for it.
-    scr["nonice_frac"] = melt.ice_check(item)
-    if scr["nonice_frac"] > MAX_NONICE_IN_AOI:
+    # NDSI costs two extra reads, so only scenes that passed the cheap SCL
+    # checks pay for it.
+    cm = melt.cloud_mask(item)
+    scr["nonice_frac"] = cm["nonice_frac"]
+    scr["halo_frac"] = cm["halo_frac"]
+
+    if cm["halo_frac"] > MAX_HALO_FRAC:
+        scr["usable_frac"] = float("nan")
         return None, scr
 
+    # Cheap upper bound on usable ground: SCL-clear minus the cloud halo.
+    # Bail before paying for full-resolution reads if it cannot pass.
+    approx_usable = float((~scr["reject_mask"]).mean()) - cm["halo_frac"]
+    if approx_usable < MIN_USABLE_FRAC:
+        scr["usable_frac"] = max(approx_usable, 0.0)
+        return None, scr
+
+    # Only now pay for full-resolution reads.
     bands = melt.load_scene(item, bands=("green", "nir"))
-    _, ponds, valid = melt.detect(bands["green"], bands["nir"], scr["reject_mask"])
+    reject = melt.reject_mask(item) | cm["mask"]
+    _, ponds, valid = melt.detect(bands["green"], bands["nir"], reject)
 
-    # Cloud removes pixels from consideration, which would drag absolute area
-    # down on hazier days. Track usable area so the two can be compared.
-    usable = valid & ~scr["reject_mask"]
-    return melt.pond_stats(ponds, usable), scr
+    usable = valid & ~reject
+    scr["usable_frac"] = float(usable.mean())
+    if scr["usable_frac"] < MIN_USABLE_FRAC:
+        return None, scr
+
+    st = melt.pond_stats(ponds, usable)
+    if st["pond_pct"] / 100.0 > MAX_POND_FRAC_PLAUSIBLE:
+        scr["implausible_pct"] = st["pond_pct"]
+        return None, scr
+
+    # Density scaled back to the whole study area, so scenes with different
+    # usable footprints stay comparable.
+    st["pond_km2_equiv"] = st["pond_pct"] / 100.0 * AOI_KM2
+    return st, scr
 
 
 def _safe_process(item):
@@ -149,30 +202,42 @@ def run_season(label, quiet=False, workers=6):
 
 def _record(label, item, st, scr, tag, quiet):
     if st is None:
-        why = ("water" if scr["water_frac"] > MAX_WATER_IN_AOI
-               else "nodata" if scr["nodata_frac"] > MAX_NODATA
-               else "cloud" if scr["cloud_frac"] > MAX_CLOUD_IN_AOI else "nonice")
+        if "implausible_pct" in scr:
+            # Never silent: this means the detector failed in a new way.
+            print(f"{tag}  REJECT [implausible] {scr['implausible_pct']:.2f}% of usable "
+                  f"is meltwater (cap {MAX_POND_FRAC_PLAUSIBLE*100:.0f}%), "
+                  f"halo {scr['halo_frac']*100:.1f}%")
+            return
+        why = ("sun" if scr["sun_elev"] < melt.MIN_SUN_ELEVATION_DEG
+               else "water" if scr["water_frac"] > MAX_WATER_IN_AOI
+               else "halo" if scr["halo_frac"] > MAX_HALO_FRAC else "usable")
         if not quiet:
-            print(f"{tag}  skip [{why:6s}] (cloud {scr['cloud_frac']*100:5.1f}%, "
+            print(f"{tag}  skip [{why:6s}] (sun {scr['sun_elev']:4.1f}, "
+                  f"cloud {scr['cloud_frac']*100:5.1f}%, "
                   f"nodata {scr['nodata_frac']*100:5.1f}%, "
                   f"water {scr['water_frac']*100:5.2f}%, "
-                  f"nonice {scr['nonice_frac']*100:6.2f}%)")
+                  f"halo {scr['halo_frac']*100:6.2f}%, "
+                  f"usable {scr['usable_frac']*100:5.1f}%)")
         return
 
-    print(f"{tag}  cloud {scr['cloud_frac']*100:5.1f}%  nonice {scr['nonice_frac']*100:4.2f}%  "
-          f"pond {st['pond_km2']:7.3f} km2  ({st['pond_pct']:5.2f}% of usable)")
+    print(f"{tag}  sun {scr['sun_elev']:4.1f}  usable {scr['usable_frac']*100:5.1f}%  "
+          f"halo {scr['halo_frac']*100:5.2f}%  "
+          f"pond {st['pond_km2_equiv']:7.3f} km2-eq  ({st['pond_pct']:5.3f}% of usable)")
     append_row(label, {
         "item_id": item.id,
         "date": item.datetime.date().isoformat(),
+        "sun_elev": round(scr["sun_elev"], 2),
         "cloud_frac_aoi": round(scr["cloud_frac"], 5),
         "water_frac_aoi": round(scr["water_frac"], 5),
         "nonice_frac_aoi": round(scr["nonice_frac"], 5),
+        "halo_frac_aoi": round(scr["halo_frac"], 5),
         "usable_frac": round(scr["usable_frac"], 5),
         "tile_cloud": round(item.properties.get("eo:cloud_cover") or 0, 3),
         "pond_px": st["pond_px"],
         "pond_km2": round(st["pond_km2"], 4),
         "usable_km2": round(st["valid_km2"], 2),
         "pond_pct_of_usable": round(st["pond_pct"], 4),
+        "pond_km2_equiv": round(st["pond_km2_equiv"], 4),
     })
 
 
@@ -207,15 +272,15 @@ def plot(label):
         return
 
     dates = [date.fromisoformat(r["date"]) for r in rows]
-    areas = [float(r["pond_km2"]) for r in rows]
-    clouds = [float(r["cloud_frac_aoi"]) * 100 for r in rows]
+    areas = [float(r["pond_km2_equiv"]) for r in rows]
+    clouds = [100 - float(r["usable_frac"]) * 100 for r in rows]
 
     fig, ax = plt.subplots(figsize=(11, 5.8))
     ax.plot(dates, areas, "-", color="#0077b6", lw=1.4, alpha=0.7, zorder=1)
     sc = ax.scatter(dates, areas, c=clouds, cmap="viridis_r", vmin=0,
-                    vmax=MAX_CLOUD_IN_AOI * 100, s=55, zorder=2,
+                    vmax=(1 - MIN_USABLE_FRAC) * 100, s=55, zorder=2,
                     edgecolor="white", linewidth=0.6)
-    fig.colorbar(sc, ax=ax, label="cloud in AOI (%)")
+    fig.colorbar(sc, ax=ax, label="screened out of AOI (%)")
 
     peak = max(range(len(areas)), key=lambda i: areas[i])
     ax.annotate(f"peak {areas[peak]:.1f} km$^2$\n{dates[peak]:%d %b %Y}",
@@ -223,7 +288,7 @@ def plot(label):
                 xytext=(12, -28), textcoords="offset points", fontsize=9,
                 arrowprops=dict(arrowstyle="->", color="#444", lw=1))
 
-    ax.set_ylabel("Meltwater area (km$^2$)")
+    ax.set_ylabel("Meltwater area (km$^2$, scaled to full AOI)")
     ax.set_title(f"George VI Ice Shelf meltwater, {label} melt season\n"
                  f"{melt.WIN_SIZE * int(melt.PIXEL_M) / 1000:.0f} km AOI, "
                  f"NDWI > {melt.NDWI_THRESHOLD}, {len(rows)} usable scenes",

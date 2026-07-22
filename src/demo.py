@@ -16,6 +16,12 @@ import melt
 ITEM_ID = "S2B_19CEV_20210124_0_L2A"  # 2021-01-24, cloud-free, peak melt
 OUT_PNG = melt.ROOT / "output" / "george_vi_meltwater.png"
 
+# The study area in melt.py is 61 km across. Rendered whole, individual ponds
+# are a pixel or two and the picture says nothing. This is a zoomed detail
+# window over a heavily ponded stretch - good for showing what the detector
+# does, not representative of the shelf. Season numbers use the full AOI.
+DETAIL_ROW, DETAIL_COL, DETAIL_SIZE = 1280, 920, 2048
+
 
 def stretch_rgb(red, green, blue, lo=2, hi=98):
     """Percentile stretch to 0-1 for display.
@@ -32,23 +38,24 @@ def stretch_rgb(red, green, blue, lo=2, hi=98):
 
 
 def main():
-    print(f"[scene] {ITEM_ID}")
+    print(f"[scene] {ITEM_ID}  (detail view, not the full study area)")
     item = melt.get_item(ITEM_ID)
-    bands = melt.load_scene(item)
-    scl = melt.read_scl(item)
-    scr = melt.screen(scl)
+    bands = melt.load_scene(item, use_cache=True, row=DETAIL_ROW,
+                            col=DETAIL_COL, size=DETAIL_SIZE)
+    scr = melt.screen(melt.read_scl(item))
 
-    ndwi, ponds, valid = melt.detect(bands["green"], bands["nir"], scr["reject_mask"])
+    ndwi, ponds, valid = melt.detect(bands["green"], bands["nir"])
     st = melt.pond_stats(ponds, valid)
 
     print()
-    print(f"  window       {melt.WIN_SIZE}x{melt.WIN_SIZE} px @ {melt.PIXEL_M:.0f} m"
-          f"  ({st['valid_km2']:.1f} km2 valid)")
+    print(f"  detail       {DETAIL_SIZE}x{DETAIL_SIZE} px @ {melt.PIXEL_M:.0f} m"
+          f"  ({st['valid_km2']:.1f} km2)")
     print(f"  BOA offset   {melt.boa_offset(item)} DN")
-    print(f"  cloud in AOI {scr['cloud_frac'] * 100:.2f}%  (SCL-derived)")
+    print(f"  cloud in AOI {scr['cloud_frac'] * 100:.2f}%  (SCL, full study area)")
     print(f"  NDWI thresh  {melt.NDWI_THRESHOLD}")
     print(f"  pond pixels  {st['pond_px']:,}")
-    print(f"  pond area    {st['pond_km2']:.3f} km2  ({st['pond_pct']:.2f}% of scene)")
+    print(f"  pond area    {st['pond_km2']:.3f} km2  ({st['pond_pct']:.2f}% of detail)")
+    print(f"\n  note: detail window only. Run season.py for study-area numbers.")
     print()
 
     rgb = stretch_rgb(bands["red"], bands["green"], bands["blue"])
@@ -71,6 +78,7 @@ def main():
 
     fig.suptitle(
         f"George VI Ice Shelf  -  {ITEM_ID.split('_')[2]}  -  "
+        f"{DETAIL_SIZE * int(melt.PIXEL_M) // 1000} km detail view  -  "
         f"{st['pond_px']:,} pond pixels  =  {st['pond_km2']:.2f} km$^2$",
         fontsize=14,
     )

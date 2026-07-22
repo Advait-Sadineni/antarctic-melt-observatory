@@ -185,6 +185,104 @@ def test_series_prefers_most_usable_scene_on_a_date(tmp_path, monkeypatch):
     assert [r["item_id"] for r in out] == ["B", "C"]  # one per date, B beats A
 
 
-def test_noise_floor_covers_confirmed_artifacts():
-    """Both confirmed pre-melt false positives must fall under the floor."""
-    assert melt.NOISE_FLOOR_KM2 >= 0.68
+def test_noise_floor_clears_the_pre_melt_baseline():
+    """The floor must sit above every pre-melt reading, or artifacts read as melt."""
+    assert melt.NOISE_FLOOR_KM2 > melt.NOV_BASELINE_MAX_KM2
+
+
+def test_noise_floor_is_a_small_fraction_of_the_study_area():
+    """Sanity bound: a floor near the AOI size would suppress everything."""
+    aoi_km2 = melt.WIN_SIZE**2 * melt.PIXEL_KM2
+    assert 0 < melt.NOISE_FLOOR_KM2 < 0.02 * aoi_km2
+
+
+# --- Cloud halo --------------------------------------------------------------
+
+def test_halo_dilation_grows_the_masked_region():
+    """A cloud contaminates ground beside it, not only under it."""
+    from scipy import ndimage
+
+    low = np.zeros((100, 100), bool)
+    low[50, 50] = True
+    cells = int(round(melt.CLOUD_HALO_KM * 1000 / melt.SCREEN_PIXEL_M))
+    grown = ndimage.binary_dilation(low, iterations=cells)
+
+    assert cells >= 1
+    assert grown.sum() > low.sum()
+    assert grown[50, 50 + cells]      # reaches the halo distance
+    assert not grown[50, 50 + cells + 2]  # but does not run away
+
+
+def test_halo_upsampling_preserves_coverage():
+    """np.kron from the 60 m screen grid to 10 m must not shift or lose area."""
+    scale = int(melt.SCREEN_PIXEL_M / melt.PIXEL_M)
+    coarse = np.array([[True, False], [False, True]])
+    full = np.kron(coarse, np.ones((scale, scale), bool))
+
+    assert full.shape == (2 * scale, 2 * scale)
+    assert full.mean() == pytest.approx(coarse.mean())
+    assert full[0, 0] and not full[0, scale]
+
+
+# --- Sun elevation -----------------------------------------------------------
+
+def test_sun_elevation_read_and_defaulted():
+    assert melt.sun_elevation(FakeItem({"view:sun_elevation": 9.5})) == 9.5
+    # Missing metadata must not silently reject every scene.
+    assert melt.sun_elevation(FakeItem({})) >= melt.MIN_SUN_ELEVATION_DEG
+
+
+def test_low_sun_scenes_are_below_the_gate():
+    """The two scenes whose artifacts motivated the gate must fall under it."""
+    for elev in (9.5, 11.7):
+        assert elev < melt.MIN_SUN_ELEVATION_DEG
+
+
+# --- Scene-quality guards ----------------------------------------------------
+
+def test_halo_gate_rejects_confirmed_contaminated_scenes():
+    """Every halo fraction confirmed contaminated by inspection must fail.
+
+    2018-12-26 (32.7%) returned 365 km2; 2024-12-20 (10.0%) returned 34 km2
+    off a cumulus band. A clean scene at 0.06% and a salvageable partly
+    cloudy one at 1.99% must still pass.
+    """
+    for bad in (0.327, 0.1302, 0.112, 0.1002):
+        assert bad > season.MAX_HALO_FRAC
+    for good in (0.0006, 0.0199):
+        assert good <= season.MAX_HALO_FRAC
+
+
+def test_plausibility_cap_sits_above_real_melt_below_failures():
+    """0.49% is the largest confirmed-clean density; 9.67% was a failure."""
+    assert 0.0049 < season.MAX_POND_FRAC_PLAUSIBLE < 0.0967
+
+
+def test_usable_fraction_gate_keeps_the_record_scene():
+    """2026-02-10 is 23.7% cloudy over the large AOI but 76.3% usable."""
+    assert 0.763 >= season.MIN_USABLE_FRAC
+
+
+def test_screen_output_is_decimated_not_full_res():
+    """screen() works on decimated SCL; its mask must not be used for masking.
+
+    Guards a bug where the coarse reject_mask was passed to detect() against
+    full-resolution bands, which only fails at runtime on a shape mismatch.
+    """
+    n = melt._screen_shape()
+    assert n < melt.WIN_SIZE
+    assert melt.screen(np.full((n, n), 11, dtype="uint8"))["reject_mask"].shape == (n, n)
+
+
+def test_window_scales_to_source_resolution():
+    """A 20 m band must read half the pixel offsets of a 10 m band."""
+    w10 = melt._window(scale=1)
+    w20 = melt._window(scale=2)
+    assert (w10.col_off, w10.width) == (melt.WIN_COL, melt.WIN_SIZE)
+    assert (w20.col_off, w20.width) == (melt.WIN_COL // 2, melt.WIN_SIZE // 2)
+
+
+def test_aoi_stays_inside_the_tile():
+    """A Sentinel-2 10 m tile is 10980 px. The window must fit."""
+    assert melt.WIN_ROW + melt.WIN_SIZE <= 10980
+    assert melt.WIN_COL + melt.WIN_SIZE <= 10980
