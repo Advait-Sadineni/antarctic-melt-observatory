@@ -1,0 +1,2 @@
+item_id,date,cloud_frac_aoi,water_frac_aoi,nonice_frac_aoi,usable_frac,tile_cloud,pond_px,pond_km2,usable_km2,pond_pct_of_usable
+S2B_19CEV_20180301_0_L2A,2018-03-01,0.0,0.0,0.0,0.99561,0.006,36,0.0036,417.59,0.0009

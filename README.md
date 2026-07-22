@@ -6,9 +6,10 @@ pooling on an ice shelf wedges open crevasses under its own weight and can
 disintegrate the shelf, as happened to Larsen B in 2002. Once a shelf is gone,
 the glaciers it buttressed accelerate into the ocean.
 
-Current scope: single-scene detection, a full melt-season pond-area time series,
-and a threshold sensitivity analysis, all over one 20 km study area on **George VI
-Ice Shelf** (Antarctic Peninsula). Roadmap below covers multi-year trends,
+Current scope: single-scene detection, per-season pond-area time series across
+nine melt seasons (2017-18 to 2025-26), a multi-year peak comparison, and a
+threshold sensitivity analysis — all over one 20 km study area on **George VI
+Ice Shelf** (Antarctic Peninsula). Roadmap below covers full-shelf coverage,
 ICESat-2 elevation, and ERA5-driven prediction.
 
 ## Run it
@@ -22,6 +23,8 @@ pip install rasterio matplotlib pystac-client numpy
 | `python src/demo.py` | `output/george_vi_meltwater.png` — true colour beside the detected mask |
 | `python src/tune_threshold.py` | `output/threshold_sensitivity.png` — how much the answer depends on the threshold |
 | `python src/season.py` | `output/season_2020_21.png` + `.csv` — pond area across one melt season |
+| `python src/season.py 2019-20` | same, for any season |
+| `python src/multiyear.py` | `output/multiyear_trend.png` — peak meltwater by season |
 
 No credentials required. Imagery comes from the **AWS Open Data** Sentinel-2 L2A
 archive as Cloud-Optimized GeoTIFFs, found via the Earth Search STAC API. Each
@@ -71,6 +74,27 @@ area is 97% clear. `season.py` therefore computes cloud fraction *inside the
 AOI* from SCL and filters on that, which keeps scenes that tile-level filtering
 would have thrown away.
 
+**SCL badly under-reports cloud over ice, so NDSI does that job instead.**
+White cloud on a white shelf is genuinely hard for sen2cor. Three February
+2021 scenes that SCL called 2–19% cloudy turned out, on inspection, to be
+blanketed edge to edge, and two produced multi-km² phantom ponds along the
+cloud edges — including a 5.04 km² reading whose mask sat squarely on bright
+cloud rather than on any pond.
+
+The fix is **NDSI** = `(Green − SWIR) / (Green + SWIR)`, from B03 and B11
+(1610 nm). Snow, ice and liquid water all absorb SWIR strongly and sit high
+(0.85–0.95 here); water cloud *reflects* SWIR and drops. Measured over this
+AOI, clean scenes put 0.0–0.1% of pixels below NDSI 0.6 while cloud-covered
+ones put 3.7–35.9% there, so `melt.ice_check()` gates scenes at 1%.
+
+It has to be a *scene* gate, not a pixel mask: the phantom pond pixels
+themselves still score high NDSI, so masking per-pixel would not remove them.
+
+The cost is temporal coverage. The 2020-21 season drops from 18 usable scenes
+to 9. That is the right trade — the 9 are defensible and the discarded ones
+included the phantoms — but it means gaps are wide, and a season's peak can
+be missed entirely if it fell on a cloudy day.
+
 ### Threshold sensitivity
 
 `tune_threshold.py` sweeps NDWI 0.04–0.40. The curve has three regimes:
@@ -103,6 +127,43 @@ ponds, or a brief refreeze, would both produce this and are well documented
 in the literature — but it is equally consistent with undetected thin cloud.
 It is left in the data rather than smoothed away. Treat it as an open question.
 
+### Multi-year trend, 2017-18 to 2025-26
+
+`multiyear.py` runs all nine Sentinel-2 melt seasons. Peak observed meltwater
+area over the study area:
+
+| Season | Peak km² | Peak date | Usable scenes |
+|---|---|---|---|
+| 2017-18 | 0.00 | 2018-03-01 | 1 |
+| 2018-19 | 1.02 | 2019-01-25 | 9 |
+| 2019-20 | 8.24 | 2020-01-29 | 9 |
+| 2020-21 | 8.80 | 2021-01-24 | 9 |
+| 2021-22 | 0.39 | 2021-11-09 | 9 |
+| 2022-23 | 5.28 | 2023-02-22 | 5 |
+| 2023-24 | 2.02 | 2024-02-08 | 2 |
+| 2024-25 | 0.29 | 2025-02-22 | 4 |
+| 2025-26 | **11.52** | 2026-02-10 | 7 |
+
+Inter-annual variability is large — more than an order of magnitude between
+2024-25 and 2025-26 — and 2025-26 is the largest in the record. **Do not read
+a trend off this chart.** Nine seasons over one 20 km window, with three of
+them undersampled, cannot separate a trend from year-to-year weather.
+
+Three caveats that matter for reading the table:
+
+- **Peak observed ≠ seasonal peak.** If the true maximum fell on a cloudy day
+  it is simply missed. Seasons with fewer than five clear scenes are greyed
+  out in the chart for this reason.
+- **Low seasons sit at the noise floor.** 2021-22 and 2024-25 peak at 0.3–0.4
+  km², about 0.1% of the AOI. 2021-22's "peak" is in fact an early-November
+  reading, before melt onset, while its January scenes read ~0.003 km². Read
+  those seasons as "no melt detected", not as a measured quantity.
+- **Sparsity is the weather, not the filter.** For 2023-24 (2 usable of 95),
+  the rejections break down as 53 cloud, 35 off-swath nodata, 4 water, and
+  only **1** from the NDSI gate. Screening is not what is throwing the data
+  away. The 35 nodata scenes are partial-swath and could largely be recovered
+  by mosaicking same-date scenes.
+
 ## Configuration
 
 Everything lives in `src/melt.py`:
@@ -133,9 +194,17 @@ date — that is what makes areas comparable across a time series.
   but it is not a physical discriminator.
 
 Handled correctly: the **Sentinel-2 baseline 04.00 offset**. From 2022-01-25
-onward, L2A reflectance is shifted by −1000 DN. NDWI is a ratio of differences,
-so an additive offset genuinely changes the result. `melt.boa_offset()` applies
-it per-scene from the processing baseline, on both the cached and fresh paths.
+onward, L2A reflectance is shifted by −1000 DN, and since NDWI is a ratio of
+differences an additive offset genuinely changes the result.
+
+In this archive the correction turns out to be a no-op: Earth Search sets
+`earthsearch:boa_offset_applied: true` and has already removed it, which
+`melt.boa_offset()` honours. Verified rather than assumed — median snow DN is
+~10000 on both sides of the 2022 boundary, so the pixel values really are
+harmonised, and applying −1000 again would have inflated NDWI on every
+post-2022 scene. Note the STAC `raster:bands` metadata still advertises
+`offset: -0.1`, which contradicts the flag; the pixels agree with the flag.
+The code is kept defensive so a non-harmonised source would still be correct.
 
 ## Accounts (still not needed)
 
@@ -156,6 +225,7 @@ local machine and cost the pipeline its "plain local script" property.
 src/melt.py             core: scene access, cloud screening, NDWI detection
 src/demo.py             one scene -> side-by-side PNG
 src/season.py           one melt season -> pond-area time series
+src/multiyear.py        all seasons -> peak meltwater trend
 src/tune_threshold.py   threshold sensitivity sweep
 data/                   cached GeoTIFF windows (gitignored)
 output/                 rendered PNGs and CSVs
@@ -163,8 +233,15 @@ output/                 rendered PNGs and CSVs
 
 ## Roadmap
 
-1. Multi-year trend — repeat the season run across melt years for a trend chart
-2. Expand the AOI from one window to the full shelf via a geographic polygon
-3. ICESat-2 ATL06/ATL11 elevation overlay (`icepyx`) — pond depth, not just extent
-4. ERA5 climate drivers + ML classifier to replace NDWI thresholding
-5. Prediction layer: seasonal weather → expected melt extent
+1. Mosaic same-date partial-swath scenes. 35 of 95 scenes in 2023-24 were
+   discarded for off-swath nodata; merging them would roughly double usable
+   coverage in the worst seasons, which is the single biggest weakness above.
+2. Expand the AOI from one window to the full shelf via a geographic polygon.
+   This is the main barrier to comparing against published studies.
+3. Per-pixel cloud masking (`s2cloudless` on L1C) instead of whole-scene
+   rejection, recovering partially-clear scenes.
+4. ICESat-2 ATL06/ATL11 elevation overlay (`icepyx`) — pond depth and hence
+   volume, which is what actually drives hydrofracture, rather than extent.
+5. ERA5 climate drivers + ML classifier to replace NDWI thresholding, which
+   also dissolves the threshold-sensitivity problem.
+6. Prediction layer: seasonal weather → expected melt extent.

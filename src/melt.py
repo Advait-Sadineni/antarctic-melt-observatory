@@ -35,6 +35,7 @@ PIXEL_KM2 = (PIXEL_M**2) / 1e6
 # --- Detection parameters ----------------------------------------------------
 NDWI_THRESHOLD = 0.16  # TUNABLE - see tune_threshold.py
 BRIGHTNESS_FLOOR = 3000  # rejects dark open ocean and deep shadow
+NDSI_ICE_MIN = 0.60  # below this a pixel is not snow/ice/water - see ice_check()
 
 # --- SCL (Scene Classification Layer) ----------------------------------------
 # sen2cor ships a per-pixel class map with every L2A product.
@@ -113,6 +114,52 @@ def boa_offset(item):
         except (TypeError, ValueError):
             pass
     return -1000 if item.datetime >= datetime(2022, 1, 25, tzinfo=timezone.utc) else 0
+
+
+def read_coarse(item, asset):
+    """Read an asset over the AOI at 20 m.
+
+    For a 20 m asset that is a native read. For a 10 m asset, asking for a
+    half-size output makes GDAL pull the COG's first overview instead of the
+    full-resolution pixels, so screening costs a quarter of the bytes.
+    """
+    with rasterio.open(item.assets[asset].href) as src:
+        native10 = abs(src.res[0] - 10.0) < 1e-6
+        return src.read(
+            1,
+            window=_window(scale=1 if native10 else 2),
+            out_shape=(WIN_SIZE // 2, WIN_SIZE // 2),
+            resampling=Resampling.average if native10 else Resampling.nearest,
+        ).astype("f4")
+
+
+def ice_check(item):
+    """Fraction of the AOI that does not look like snow, ice, or water.
+
+    NDSI = (green - SWIR) / (green + SWIR), using B03 and B11 (1610 nm).
+    Snow, ice and liquid water all absorb SWIR strongly, so they sit high
+    (0.85-0.95 here). Water cloud *reflects* SWIR, so it drops.
+
+    This exists because SCL badly under-reports cloud over ice - white cloud
+    on a white shelf is genuinely hard for it. Three February scenes that SCL
+    called 2-19% cloudy were, on inspection, blanketed edge to edge, and two
+    of them produced multi-km2 phantom ponds along the cloud edges.
+
+    Measured over this AOI: clean scenes put 0.0-0.1% of pixels below NDSI
+    0.6, while cloud-covered ones put 3.7-35.9% there. Used as a scene-level
+    gate, not a pixel mask - the phantom pond pixels themselves still score
+    high NDSI, so masking per-pixel would not remove them.
+    """
+    offset = boa_offset(item)
+    green = read_coarse(item, "green")
+    swir = read_coarse(item, "swir16")
+    valid = (green > 0) & (swir > 0)
+    green = np.where(valid, green + offset, 0)
+    swir = np.where(valid, swir + offset, 0)
+
+    ndsi = np.where(valid, (green - swir) / np.maximum(green + swir, 1e-6), np.nan)
+    with np.errstate(invalid="ignore"):
+        return float(np.nanmean(ndsi < NDSI_ICE_MIN))
 
 
 def read_scl(item):
