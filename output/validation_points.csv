@@ -1,0 +1,11 @@
+metric,value
+scene,S2B_19CEV_20210124_0_L2A
+n_labelled,96
+precision,0.6316
+precision_ci_lo,0.4728
+precision_ci_hi,0.7662
+recall_area_weighted,0.3594
+f1,0.4581
+detected_frac_of_aoi,0.003005
+sampled_true_frac_of_aoi,0.005281
+area_bias,0.569

@@ -334,6 +334,67 @@ unconfirmed**, and with it that season's rank. This is exactly the failure
 mode that motivated doing validation at all, and it was invisible to every
 internal check.
 
+### Against visual interpretation
+
+```
+python src/validate_points.py make     # build blind chips
+python src/validate_points.py score    # score labels against the hidden key
+```
+
+Cross-sensor agreement shows two instruments measure the same thing. It cannot
+show either is *right* — they can agree on a wrong answer. This compares the
+mask against visual interpretation of the true-colour imagery.
+
+96 points on the 2021-01-24 scene, stratified random (detected / near-detected
+/ far), labelled **blind**: the chips are shuffled and anonymously numbered,
+nothing reveals the detector's opinion, and the answer key is not opened until
+scoring. Estimates are area-weighted, so the rarity of meltwater is respected.
+
+| Metric | Value |
+|---|---|
+| Precision | **0.63** (95% CI 0.47–0.77) |
+| Recall, area-weighted | **0.36** |
+| F1 | 0.46 |
+| Area bias | detector reports 0.57× the sampled truth |
+
+**This is the least flattering result in the project, and the most useful.**
+About a third of detected pixels are not meltwater, and roughly two thirds of
+meltwater is missed.
+
+**The false positives have a single cause: crevasse shadow.** All 14 of them
+sit in heavily crevassed terrain, with the mask tracing the dark stripes of
+the crevasse pattern. And they are numerically distinct from real ponds:
+
+| Visual label | n | NDWI p25 | median | p75 | max |
+|---|---|---|---|---|---|
+| water | 28 | 0.239 | **0.382** | 0.505 | 0.686 |
+| not water | 61 | 0.068 | **0.074** | 0.118 | **0.245** |
+
+Every false positive falls between NDWI 0.168 and 0.245 — just above the 0.16
+threshold — while genuine ponds sit far higher. The two classes separate
+cleanly; the threshold is simply drawn inside the overlap.
+
+Sweeping it against the labelled sample:
+
+| NDWI threshold | Precision | Recall | F1 |
+|---|---|---|---|
+| 0.10 | 0.59 | 0.68 | **0.63** |
+| 0.16 *(current)* | 0.63 | 0.36 | 0.46 |
+| 0.20 | 0.85 | 0.34 | 0.49 |
+| 0.25 | **1.00** | 0.30 | 0.46 |
+
+Raising the threshold to 0.20–0.25 would eliminate essentially all crevasse
+false positives. **The threshold has deliberately not been changed**, because
+retuning on 96 points from a single scene is precisely the overfitting this
+project has been trying to avoid, and it would shift every historical number
+again. It is recorded here as the top-priority next action, to be settled by
+labelling several scenes across different seasons.
+
+Note the direction of the two errors: the detector over-detects crevasse
+shadow and under-detects pond margins, and those partly cancel in the total.
+Area bias is 0.57×, so the absolute areas in this README are more likely
+*under*-estimates than over-estimates, despite the false positives.
+
 ### Limits of this validation
 
 - **Processing levels differ.** Sentinel-2 L2A is bottom-of-atmosphere;
@@ -346,6 +407,16 @@ internal check.
   the record 2025-26 — have no cross-sensor check. Collection-2 Level-1 was
   not reachable without an account; Collection-2 *Level-2* was reachable and
   turned out to be unusable (below).
+- **The visual reference is itself uncertain.** 7 of 96 points were labelled
+  "unsure" and excluded. The hard cases are exactly the ones that matter:
+  meltwater does fill crevasses on George VI, so some "crevasse shadow" calls
+  could be water-filled crevasses. The physical argument favours the labels —
+  shadow dims all bands roughly together and lifts NDWI only slightly, which
+  matches the 0.17–0.25 cluster, whereas water absorbs NIR strongly and pushes
+  NDWI to 0.4+ — but a single interpreter is a real limitation.
+- **One scene, 96 points.** Precision has a 95% CI of 0.47–0.77; recall rests
+  on 27 points in the near-detection stratum. This is enough to identify the
+  failure mode, not to fix it.
 - **Landsat Level-2 surface reflectance is invalid over ice.** Measured here,
   96.9% of its pixels over the study area fall outside the product's own
   documented valid range, reading green reflectance of 1.22 where reflectance
@@ -441,6 +512,11 @@ output/                 rendered PNGs and CSVs
 
 ## Roadmap
 
+0. **Settle the NDWI threshold against labelled data.** Validation shows
+   precision 0.63 at 0.16, with every false positive being crevasse shadow at
+   NDWI 0.17–0.25, and precision reaching 1.00 by 0.25. Label several scenes
+   across seasons, then retune once, on evidence, and regenerate everything.
+   This now outranks every other item.
 1. Expand the study area beyond one hand-picked window. This is the main
    barrier to comparing against published studies.
 2. Per-pixel cloud masking (`s2cloudless` on L1C) instead of whole-scene
