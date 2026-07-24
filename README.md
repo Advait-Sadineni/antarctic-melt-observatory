@@ -177,7 +177,7 @@ screening, scaled to the full 3775 km² study area.
 | Season | Peak km² | Peak date | Usable scenes | |
 |---|---|---|---|---|
 | 2017-18 | 8.90 | 2018-02-22 | 2 | likely undercounted |
-| 2018-19 | 11.56 | 2019-02-17 | 7 | peak is the unresolved case below |
+| 2018-19 | *11.56* | 2019-02-17 | 7 | **peak fails cross-sensor validation** |
 | 2019-20 | 10.03 | 2020-01-19 | 3 | likely undercounted |
 | 2020-21 | 11.34 | 2021-01-24 | 8 | peak scene visually verified |
 | 2021-22 | *(1.47)* | — | 8 | **no melt detected** |
@@ -269,6 +269,91 @@ Screening runs at 60 m and only scenes that pass pay for full-resolution
 reads, which is what keeps a nine-season run to about half an hour despite
 the area being nine times larger.
 
+## Validation
+
+```
+python src/validate_landsat.py
+```
+
+The pipeline was internally consistent but externally unanchored — every
+threshold in it was calibrated against its own output. This compares it
+against **Landsat 8**, an independent satellite with independent optics and an
+independent processing chain, on the same ground on the same day. The same
+detector is applied to both sensors, in reflectance units, so any difference
+is attributable to the sensor rather than the method.
+
+11 usable pairs, 2018–2021 (Landsat Collection-1 ends in 2021).
+
+### Result
+
+| Measure | All 11 pairs | Same-day, ≥80% shared (4) |
+|---|---|---|
+| Area agreement (Landsat ÷ Sentinel-2, at 30 m) | 1.34 | **0.90** |
+| Pearson *r* on areas | **0.83** | |
+| Spearman rank correlation | **0.86** | |
+| IoU at native resolution | 0.12 | |
+| IoU at matched 30 m | 0.30 | 0.35 |
+| Agreement within 1 Landsat pixel | 0.39 | 0.43 |
+
+**How much meltwater there is, the pipeline gets right.** On the cleanest
+pairs the two satellites agree on area to within 10%, and across all pairs
+the correlation is strong in both magnitude (*r* = 0.83) and ordering
+(Spearman = 0.86). Since the ranking of dates and seasons is what this project
+actually claims, that is the number that matters most.
+
+**Exactly which pixels, it gets right only moderately** — IoU 0.30–0.35.
+Most of that gap is resolution rather than error: IoU roughly **doubles**
+(0.12 → 0.30) when Sentinel-2 is degraded to Landsat's 30 m grid before
+detection, because a 10 m meltwater channel is a sub-pixel mixture to Landsat
+and its NDWI is diluted below threshold no matter how good either instrument
+is. The remainder is inter-sensor co-registration, which is itself of order
+one Landsat pixel, and genuine surface change between overpasses.
+
+### What validation caught
+
+**2019-02-17 fails cross-sensor validation.** This is the 11.6 km² scene that
+makes 2018-19 the second-highest season and that no internal screen could
+explain — not cloud, not low sun, not nodata. It is a same-day pair with 98%
+shared clear ground, so it should be one of the *best* comparisons available.
+Instead it is the worst on every metric:
+
+| | 2019-02-17 | 2019-01-25 (same season, same conditions) |
+|---|---|---|
+| IoU matched | **0.14** | 0.41 |
+| Within 1 pixel | **0.28** | 0.77 |
+| Landsat ÷ Sentinel-2 | **0.48** | 1.15 |
+
+Landsat sees roughly half the area, in materially different places. That is
+the signature of a diffuse, marginal, near-threshold surface — most likely
+slush or wet snow, which NDWI cannot separate from ponded water — rather than
+of standing meltwater, which reproduces well across sensors on the other
+same-day pairs.
+
+**Consequence: the 2018-19 peak of 11.56 km² should be treated as
+unconfirmed**, and with it that season's rank. This is exactly the failure
+mode that motivated doing validation at all, and it was invisible to every
+internal check.
+
+### Limits of this validation
+
+- **Processing levels differ.** Sentinel-2 L2A is bottom-of-atmosphere;
+  Landsat Level-1 is top-of-atmosphere. NDWI is a normalised ratio and far
+  more robust to this than raw reflectance, but it is not immune, and the
+  size of that effect has not yet been measured here.
+- **Four clean pairs is a small sample.** The headline 0.90 area agreement
+  rests on them.
+- **Landsat Collection-1 ends in 2021**, so the 2022-26 seasons — including
+  the record 2025-26 — have no cross-sensor check. Collection-2 Level-1 was
+  not reachable without an account; Collection-2 *Level-2* was reachable and
+  turned out to be unusable (below).
+- **Landsat Level-2 surface reflectance is invalid over ice.** Measured here,
+  96.9% of its pixels over the study area fall outside the product's own
+  documented valid range, reading green reflectance of 1.22 where reflectance
+  cannot exceed 1.0. The atmospheric correction is not designed for bright
+  cryospheric surfaces. Using it would have produced an official-looking
+  validation built on unphysical numbers, so this module uses Level-1 and
+  computes top-of-atmosphere reflectance itself.
+
 ## Tests
 
 ```
@@ -298,16 +383,19 @@ and that the noise floor stays above the largest confirmed artifact.
 - **NDWI cannot distinguish shallow ponds from wet/slushy snow**, a known
   ambiguity in the literature and a motivation for the planned ML classifier.
   The clearest case is 2019-02-17, which reports 11.6 km² over a large dark
-  patch late in the season. It survives every screen — it is not cloud (the
-  halo catches only 1%), not low sun (21.4°), and not nodata — and it is
-  genuinely unresolved whether it is extensive slush or an unmodelled
-  artifact. It is left in the data and flagged rather than tuned away.
+  patch late in the season and survives every internal screen. Cross-sensor
+  validation now gives an independent verdict on it: Landsat sees half the
+  area in materially different places (IoU 0.14 against 0.41 for a comparable
+  scene in the same season), which is the signature of diffuse marginal
+  surface rather than standing water. The reading is left in the data and
+  flagged, not tuned away — but the 2018-19 seasonal peak that rests on it is
+  unconfirmed.
 - **Blue ice and dark terrain can false-positive.** This is what sets the
   0.7 km² noise floor above. The brightness floor catches the worst of it,
   but it is not a physical discriminator.
-- **No validation against published George VI numbers.** The pipeline is
-  internally consistent but externally unanchored, which is the largest
-  outstanding gap in the science.
+- **No comparison against published George VI numbers yet.** Cross-sensor
+  validation anchors the pipeline against another satellite, but not against
+  the literature; that remains the largest outstanding gap.
 - **Every threshold is calibrated on a handful of scenes.** NDWI 0.16,
   brightness floor 3000, NDSI gate 1%, water gate 2%, noise floor 0.7 km² —
   all set from one or two seasons. Since the gates decide which data survives,

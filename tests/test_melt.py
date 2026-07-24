@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import melt  # noqa: E402
 import season  # noqa: E402
+import validate_landsat as vl  # noqa: E402
 
 
 class FakeItem:
@@ -261,6 +262,60 @@ def test_plausibility_cap_sits_above_real_melt_below_failures():
 def test_usable_fraction_gate_keeps_the_record_scene():
     """2026-02-10 is 23.7% cloudy over the large AOI but 76.3% usable."""
     assert 0.763 >= season.MIN_USABLE_FRAC
+
+
+# --- Cross-sensor validation -------------------------------------------------
+
+def test_brightness_floor_converts_to_reflectance():
+    """The DN threshold and its reflectance form must mean the same thing."""
+    assert vl.BRIGHTNESS_FLOOR_REFL == pytest.approx(melt.BRIGHTNESS_FLOOR / 10000.0)
+    assert 0.0 < vl.BRIGHTNESS_FLOOR_REFL < 1.0
+
+
+def test_ndwi_is_invariant_to_pure_scaling_but_not_to_offset():
+    """Why Landsat L2 cannot be compared as raw DN.
+
+    Sentinel-2 L2A is a pure scaling, so NDWI on DN equals NDWI on
+    reflectance. Landsat L2 carries an additive offset, which does not cancel
+    in a ratio of differences - comparing raw DN would compare two different
+    quantities.
+    """
+    g, n = 9000.0, 8000.0
+    ndwi = lambda a, b: (a - b) / (a + b)
+
+    scaled = ndwi(g * 1e-4, n * 1e-4)
+    assert ndwi(g, n) == pytest.approx(scaled)
+
+    offset = ndwi(g * 2.75e-5 - 0.2, n * 2.75e-5 - 0.2)
+    assert not np.isclose(ndwi(g, n), offset)
+
+
+def test_landsat_l2_over_ice_is_out_of_valid_range():
+    """Guards the finding that motivated using Level-1 instead.
+
+    Measured green DN over the study area sits near 51589, which converts to
+    1.22 reflectance - outside the product's documented -0.2 to 1.0 range and
+    physically impossible.
+    """
+    measured_dn = 51589
+    refl = measured_dn * 2.75e-5 - 0.2
+    assert refl > 1.0
+
+
+def test_block_reducers_preserve_geometry():
+    """Resampling 10 m to 30 m must not shift or lose coverage."""
+    a = np.zeros((9, 9), bool)
+    a[0, 0] = True
+    assert vl._block_any(a).shape == (3, 3)
+    assert vl._block_any(a)[0, 0]
+    assert vl._block_any(a).sum() == 1
+
+    vals = np.ones((9, 9), "f4") * 0.5
+    assert vl._block_mean(vals) == pytest.approx(np.full((3, 3), 0.5))
+
+
+def test_resolution_ratio_matches_the_two_sensors():
+    assert melt.PIXEL_M * vl.RES_RATIO == pytest.approx(30.0)
 
 
 def test_screen_output_is_decimated_not_full_res():

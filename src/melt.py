@@ -128,6 +128,34 @@ def _screen_shape(size=None):
     return int(size * PIXEL_M / SCREEN_PIXEL_M)
 
 
+# Sentinel-2 tile 19CEV sits in UTM zone 19S. The S2 tiling grid is fixed, so
+# the tile's georeferencing is a constant of the tile rather than of any
+# particular scene - which is what lets a pixel window mean the same ground on
+# every date, and lets another sensor be warped onto exactly this grid.
+#
+# Read from a real asset rather than hardcoded: an origin wrong by a couple of
+# pixels would misalign every cross-sensor comparison silently, and the error
+# would look like genuine disagreement between satellites.
+TILE_CRS = "EPSG:32719"
+_GEOREF_CACHE = {}
+
+
+def tile_georeference(item):
+    """(crs, transform) of the tile's 10 m grid, cached per session."""
+    if "v" not in _GEOREF_CACHE:
+        with rasterio.open(item.assets["green"].href) as src:
+            if abs(src.res[0] - PIXEL_M) > 1e-6:
+                raise ValueError(f"expected a {PIXEL_M} m asset, got {src.res[0]} m")
+            _GEOREF_CACHE["v"] = (src.crs, src.transform)
+    return _GEOREF_CACHE["v"]
+
+
+def aoi_transform(item):
+    """Affine transform of the study area, in the tile's own CRS."""
+    _, tile = tile_georeference(item)
+    return tile * tile.identity().translation(WIN_COL, WIN_ROW)
+
+
 def search_scenes(start, end, max_cloud_tile=100):
     """All scenes on our tile between two dates, newest processing first."""
     from pystac_client import Client

@@ -1,6 +1,14 @@
 # Validation plan
 
-Written 2026-07-21. Nothing here is done yet.
+Written 2026-07-21. **Tier 1 item 2 (Landsat cross-sensor) is done** — see
+`src/validate_landsat.py` and the Validation section of the README. Everything
+else below is still outstanding.
+
+Headline from the completed work: area agreement with Landsat 8 is 0.90 on
+clean same-day pairs, with *r* = 0.83 and Spearman = 0.86 across all 11 pairs,
+while per-pixel IoU is 0.30–0.35 and is dominated by the 30 m versus 10 m
+resolution difference. One scene, 2019-02-17, failed validation outright and
+its season's peak is now marked unconfirmed.
 
 ## Why this comes before new features
 
@@ -39,19 +47,29 @@ only ever been eyeballed.
 
 No accounts, no new data. Effort: about half a day, mostly careful clicking.
 
-### 2. Cross-sensor agreement with Landsat 8/9
+### 2. Cross-sensor agreement with Landsat 8 — **DONE**
 
-Independent satellite, independent band passes, same ground. Agreement is
-strong evidence; disagreement localizes the fault.
+Implemented in `src/validate_landsat.py`. Results and caveats in the README.
 
-- `landsat-c2-l2` is already in the Earth Search STAC this project uses, so
-  **no new credentials**
-- Find Landsat/Sentinel-2 pairs ≤1 day apart over the AOI
-- Run NDWI on both, compare total area and per-pixel overlap
-- Landsat is 30 m vs our 10 m, so resample and expect Landsat to under-detect
-  narrow channels — quantify that bias rather than treating it as error
+Notes for anyone repeating this, since the data routing was the hard part:
 
-Highest evidence per unit effort. Do this first.
+- `landsat-c2-l2` in the Earth Search STAC is **unusable over ice** — 96.9% of
+  its pixels here fall outside the product's own valid range. Level-2 surface
+  reflectance is not designed for bright cryospheric surfaces. Use Level-1 and
+  compute TOA reflectance.
+- Level-1 pixel access took four attempts: AWS `usgs-landsat` is Requester
+  Pays, USGS LandsatLook returns an auth page, Planetary Computer's
+  `landsat-c2-l1` holds only Landsat 1–5 MSS. Google's public
+  `gcp-public-data-landsat` bucket works anonymously and covers 2013–2021.
+- Compare at **matched resolution**. Sentinel-2 must be averaged to 30 m
+  *before* detection, or the comparison measures the resolution gap rather
+  than the detector.
+- Do not hardcode the tile origin. Read georeferencing from the imagery; a
+  two-pixel error looks exactly like sensor disagreement.
+
+Still open from this item: Landsat Collection-1 ends in 2021, so seasons
+2022-26 — including the record 2025-26 — remain unvalidated. Collection-2
+Level-1 needs a USGS ERS account, which would close that gap.
 
 ---
 
