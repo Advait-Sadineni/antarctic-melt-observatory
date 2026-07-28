@@ -27,6 +27,7 @@ pip install rasterio matplotlib pystac-client numpy
 | `python src/season.py` | `output/season_2020_21.png` + `.csv` — pond area across one melt season |
 | `python src/season.py 2019-20` | same, for any season |
 | `python src/multiyear.py` | `output/multiyear_trend.png` — peak meltwater by season |
+| `python src/evolution.py` | `output/seasonal_evolution.png` — within-season curves, all years |
 | `python src/validate_landsat.py` | cross-sensor check against Landsat 8 |
 | `python src/validate_points.py make` / `score` | blind visual accuracy check |
 | `python src/retune.py eval` | score candidate detection methods vs blind labels |
