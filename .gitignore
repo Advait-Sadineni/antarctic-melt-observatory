@@ -5,6 +5,9 @@ data/
 *.jp2
 *.SAFE/
 
+# GIS exports - regenerable via export_gis.py, and the GeoJSON is large
+output/gis/
+
 # Credentials (roadmap)
 .env
 .netrc

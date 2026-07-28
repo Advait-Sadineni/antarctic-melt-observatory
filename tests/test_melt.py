@@ -19,6 +19,7 @@ import season  # noqa: E402
 import validate_landsat as vl  # noqa: E402
 import uncertainty as unc  # noqa: E402
 import validate_points as vp  # noqa: E402
+import export_gis  # noqa: E402
 
 
 class FakeItem:
@@ -412,6 +413,28 @@ def test_wilson_interval_contains_point_estimate():
     lo, hi = vp.wilson(24, 38)
     assert lo < 24 / 38 < hi
     assert 0.0 <= lo < hi <= 1.0
+
+
+# --- GIS export --------------------------------------------------------------
+
+def test_polygon_area_shoelace_with_hole():
+    """A 100 m square (10 px) minus a 20 m square hole, in projected metres."""
+    outer = [(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]
+    hole = [(40, 40), (60, 40), (60, 60), (40, 60), (40, 40)]
+    geom = {"type": "Polygon", "coordinates": [outer, hole]}
+    assert export_gis._ring_area(geom) == pytest.approx(100 * 100 - 20 * 20)
+
+
+def test_polygon_area_matches_pixel_count():
+    """One 30x30 m block (9 pixels at 10 m) should be 900 m²."""
+    ring = [(0, 0), (30, 0), (30, 30), (0, 30), (0, 0)]
+    geom = {"type": "Polygon", "coordinates": [ring]}
+    assert export_gis._ring_area(geom) == pytest.approx(9 * melt.PIXEL_M**2)
+
+
+def test_mask_nodata_is_distinct_from_classes():
+    """GeoTIFF nodata must not collide with the 0/1 water classes."""
+    assert export_gis.MASK_NODATA not in (0, 1)
 
 
 def test_screen_output_is_decimated_not_full_res():

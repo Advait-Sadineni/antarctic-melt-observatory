@@ -29,7 +29,12 @@ pip install rasterio matplotlib pystac-client numpy
 | `python src/multiyear.py` | `output/multiyear_trend.png` — peak meltwater by season |
 | `python src/validate_landsat.py` | cross-sensor check against Landsat 8 |
 | `python src/validate_points.py make` / `score` | blind visual accuracy check |
+| `python src/retune.py eval` | score candidate detection methods vs blind labels |
 | `python src/uncertainty.py` | `output/uncertainty_peaks.png` — peaks as ranges, not points |
+| `python src/export_gis.py <scene>` | `output/gis/` — GeoTIFF mask + GeoJSON ponds for QGIS |
+
+Install: `pip install -r requirements.txt`. Tests: `python -m pytest tests -q`
+(46 tests, offline, ~1 s).
 
 No credentials required. Imagery comes from the **AWS Open Data** Sentinel-2 L2A
 archive as Cloud-Optimized GeoTIFFs, found via the Earth Search STAC API. Each
