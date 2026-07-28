@@ -216,18 +216,54 @@ def _tile_window(item):
     return row0, col0, size
 
 
-def tile_water_on_grid(item, grid_tr, gw, gh):
-    """Detect meltwater on one tile and reproject the mask onto the common grid."""
-    row, col, size = _tile_window(item)
-    if size < 256:
-        return None
-    melt.set_aoi(melt._tile_of(item), row, col, size)
+def _coarse_water_score(item):
+    """Cheap 60 m proxy for detected water in the AOI, for ranking scenes by
+    melt without a full-resolution detection. Reads COG overviews (a tiny
+    fraction of the bytes), applies the same NDWI + shadow gates as detect() but
+    skips hysteresis and the fine cloud mask - enough to pick the peak-melt date,
+    which is then re-detected at full resolution."""
+    g = melt.read_coarse(item, "green")
+    n = melt.read_coarse(item, "nir")
+    r = melt.read_coarse(item, "red")
+    valid = (g > 0) & (n > 0)
+    ndwi = np.where(valid, (g - n) / np.maximum(g + n, 1e-6), -9)
+    ok = (valid & (g > melt.BRIGHTNESS_FLOOR)
+          & ((g - r) > melt.SHADOW_GREEN_MINUS_RED * melt.DN_PER_REFLECTANCE))
+    return int((ok & (ndwi > melt.NDWI_THRESHOLD)).sum())
+
+
+def _detect_ponds(item):
+    """Detect meltwater on one scene in its tile window (tile-space mask)."""
     bands = melt.load_scene(item, bands=("green", "nir", "red"))
     reject = melt.reject_mask(item) | melt.cloud_mask(item)["mask"]
     _, ponds, _ = melt.detect(bands["green"], bands["nir"], reject, red=bands["red"])
+    return ponds
 
-    src_crs, _ = melt.tile_georeference(item)
-    src_tr = melt.aoi_transform(item)
+
+def tile_water_on_grid(items, grid_tr, gw, gh):
+    """Per-tile SEASONAL-MAX meltwater warped onto the common grid.
+
+    ``items`` are the candidate scenes for one tile across the melt window. The
+    peak-melt date - the scene with the most water - is selected and reprojected
+    onto the grid. Selecting the peak scene (not the clearest) is what makes this
+    a seasonal maximum: the clearest scene is often a pre-melt December date, so
+    ranking by clarity misses the peak entirely (e.g. the record 2019-20
+    summer). Candidates are ranked cheaply at 60 m and only the winner is
+    detected at full resolution. Keeping a single real scene per tile preserves
+    the single-scene precision validated on 19DEA, avoiding the false-positive
+    accumulation of multi-date compositing.
+    """
+    ref = items[0]
+    row, col, size = _tile_window(ref)
+    if size < 256:
+        return None, None, 0
+    melt.set_aoi(melt._tile_of(ref), row, col, size)
+
+    chosen = (max(items, key=_coarse_water_score) if len(items) > 1 else items[0])
+    ponds = _detect_ponds(chosen)
+
+    src_crs, _ = melt.tile_georeference(ref)
+    src_tr = melt.aoi_transform(ref)
     dst = np.zeros((gh, gw), "f4")
     reproject(
         source=ponds.astype("f4"), destination=dst,
@@ -235,15 +271,32 @@ def tile_water_on_grid(item, grid_tr, gw, gh):
         dst_transform=grid_tr, dst_crs=GRID_CRS,
         resampling=Resampling.average,  # fraction of each 30 m cell that is water
     )
-    return dst  # 0..1 water fraction per grid cell (no coarsening inflation)
+    return dst, chosen, len(items)
+
+
+def _season_scenes(tile, start, end, cc=40, n=12):
+    """Up to ``n`` clearest scenes for a tile in the melt window, cloud < ``cc``.
+    These are the candidates whose peak-melt date tile_water_on_grid picks. If
+    none clear the cap, fall back to the single clearest scene up to 80% cloud
+    so the tile is still represented."""
+    from pystac_client import Client
+    cl = Client.open(melt.STAC_API)
+    items = list(cl.search(
+        collections=["sentinel-2-l2a"],
+        query={"grid:code": {"eq": f"MGRS-{tile}"}, "eo:cloud_cover": {"lt": cc}},
+        datetime=f"{start}/{end}", limit=100).items())
+    if not items:
+        items = list(cl.search(
+            collections=["sentinel-2-l2a"],
+            query={"grid:code": {"eq": f"MGRS-{tile}"}, "eo:cloud_cover": {"lt": 80}},
+            datetime=f"{start}/{end}", limit=100).items())
+    items.sort(key=lambda x: x.properties.get("eo:cloud_cover", 99))
+    return items[:n]
 
 
 def _peak_scene(tile, start, end, cc=70):
-    """Clearest scene for a tile in a date range. The cloud cap is generous
-    (default 70%) and the clearest available scene is taken, so every tile is
-    represented every season rather than dropped to zero when no near-clear
-    scene exists in a narrow window - residual cloud is handled per pixel by the
-    NDSI cloud mask. Returns None only if the tile has no scene at all."""
+    """Single clearest scene for a tile in a date range (used by the per-tile
+    blind validation, validate_shelf_tile.py). Returns None if none exist."""
     from pystac_client import Client
     items = list(Client.open(melt.STAC_API).search(
         collections=["sentinel-2-l2a"],
@@ -263,9 +316,9 @@ def run_season(label, peak_window=("12-01", "02-28"), grid=None):
     dec_start = f"{start_year-1}-12-01" if peak_window[0].startswith("12") else start
     end = f"{start_year}-{peak_window[1]}"
 
-    scenes = {t: _peak_scene(t, dec_start, end) for t in SHELF_TILES}
-    scenes = {t: it for t, it in scenes.items() if it is not None}
-    if not scenes:
+    cands = {t: _season_scenes(t, dec_start, end) for t in SHELF_TILES}
+    cands = {t: v for t, v in cands.items() if v}
+    if not cands:
         print(f"[{label}] no scenes in {dec_start}..{end}")
         return
 
@@ -273,25 +326,26 @@ def run_season(label, peak_window=("12-01", "02-28"), grid=None):
     cell_km2 = (GRID_RES**2) / 1e6
     shelf_km2 = shelf.sum() * cell_km2
     print(f"[{label}] fixed grid {gw}x{gh}, shelf {shelf_km2:,.0f} km2, "
-          f"tiles imaged {len(scenes)}/{len(SHELF_TILES)}")
+          f"tiles imaged {len(cands)}/{len(SHELF_TILES)}")
 
     # water fraction per grid cell, taking the best (max) estimate where tiles
     # overlap - a union that dedups without double-counting.
     water = np.zeros((gh, gw), "f4")
-    clouds = []
-    for t, it in scenes.items():
+    clouds, n_scenes = [], 0
+    for t, items in cands.items():
         try:
-            wm = tile_water_on_grid(it, grid_tr, gw, gh)
+            wm, chosen, k = tile_water_on_grid(items, grid_tr, gw, gh)
         except Exception as e:
             print(f"  {t}: ERROR {type(e).__name__}: {str(e)[:50]}")
             continue
         if wm is None:
             continue
-        cc = it.properties.get("eo:cloud_cover", 0.0)
+        cc = chosen.properties.get("eo:cloud_cover", 0.0)
         clouds.append(cc)
+        n_scenes += k
         on_shelf_km2 = float((wm * shelf).sum()) * cell_km2
         np.maximum(water, np.where(shelf, wm, 0), out=water)
-        print(f"  {t}  {it.datetime.date()}  cloud {cc:4.1f}  "
+        print(f"  {t}  peak {chosen.datetime.date()} of {k:2d}  cloud {cc:4.1f}  "
               f"+{on_shelf_km2:6.2f} km2 on shelf")
 
     total = float(water.sum()) * cell_km2
@@ -300,7 +354,8 @@ def run_season(label, peak_window=("12-01", "02-28"), grid=None):
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     return {"season": label, "shelf_km2": round(total, 2),
             "shelf_area_km2": round(shelf_km2, 1),
-            "tiles": len(scenes), "tiles_total": len(SHELF_TILES),
+            "tiles": len(cands), "tiles_total": len(SHELF_TILES),
+            "scenes_scanned": n_scenes,
             "mean_cloud": round(float(np.mean(clouds)), 1) if clouds else None}
 
 
