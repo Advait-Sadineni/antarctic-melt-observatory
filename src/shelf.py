@@ -131,6 +131,74 @@ def build_grid(ref_items):
     return transform, width, height, shelf
 
 
+# --- fixed grid (season-independent, so every season shares one denominator) -
+
+GRID_CACHE = OUT_DIR / "grid_fixed.npz"
+
+
+def _reference_items():
+    """One clear Sentinel-2 item per shelf tile, for a season-independent
+    footprint. A summer 2020 scene is picked so the tile is fully imaged."""
+    from pystac_client import Client
+    cl = Client.open(melt.STAC_API)
+    items = {}
+    for t in SHELF_TILES:
+        r = list(cl.search(collections=["sentinel-2-l2a"],
+                 query={"grid:code": {"eq": f"MGRS-{t}"},
+                        "eo:cloud_cover": {"lt": 30}},
+                 datetime="2020-01-01/2020-02-28", limit=50).items())
+        if r:
+            items[t] = min(r, key=lambda x: x.properties.get("eo:cloud_cover", 99))
+    return items
+
+
+def build_fixed_grid(rebuild=False):
+    """Season-INDEPENDENT common grid + shelf mask.
+
+    The grid extent is fixed by the 11 shelf tiles' footprints (which never
+    change), and the shelf mask is the George VI polygon clipped to the tiles'
+    combined coverage. Because it does not depend on which scenes a given season
+    happened to have, every season is normalised to the SAME shelf area - the
+    fix for seasons whose denominator otherwise shrank when tiles were cloudy.
+    Cached to disk so it is built once.
+    """
+    if GRID_CACHE.exists() and not rebuild:
+        z = np.load(GRID_CACHE, allow_pickle=False)
+        tr = rasterio.transform.Affine(*z["transform"])
+        return tr, int(z["w"]), int(z["h"]), z["shelf"].astype(bool)
+
+    items = _reference_items()
+    tr, w, h, _ = build_grid(list(items.values()))
+
+    # tile coverage: union of each tile's imaged footprint on the grid
+    cover = np.zeros((h, w), bool)
+    for it in items.values():
+        g = it.geometry
+        polys = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
+        rings3031 = []
+        for poly in polys:
+            rr = []
+            for ring in poly:
+                xs, ys = warp_transform("EPSG:4326", GRID_CRS,
+                                        [c[0] for c in ring], [c[1] for c in ring])
+                rr.append(list(zip(xs, ys)))
+            rings3031.append(rr)
+        geom = {"type": "MultiPolygon", "coordinates": rings3031}
+        cover |= rasterize([(geom, 1)], out_shape=(h, w), transform=tr,
+                           dtype="uint8", all_touched=True).astype(bool)
+
+    poly = rasterize([(g, 1) for g in _boundary_3031()], out_shape=(h, w),
+                     transform=tr, fill=0, dtype="uint8", all_touched=True).astype(bool)
+    shelf = poly & cover
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    np.savez(GRID_CACHE, transform=np.array(tr[:6], "f8"),
+             w=w, h=h, shelf=shelf)
+    print(f"[grid] fixed {w}x{h} @ {GRID_RES:.0f} m, shelf mask "
+          f"{shelf.sum()*(GRID_RES**2)/1e6:,.0f} km2 (cached)")
+    return tr, w, h, shelf
+
+
 # --- per-tile detection warped onto the grid ---------------------------------
 
 def _tile_window(item):
@@ -170,37 +238,47 @@ def tile_water_on_grid(item, grid_tr, gw, gh):
     return dst  # 0..1 water fraction per grid cell (no coarsening inflation)
 
 
-def _peak_scene(tile, start, end):
-    """Clearest scene for a tile in a date range (crude peak-melt pick)."""
+def _peak_scene(tile, start, end, cc=70):
+    """Clearest scene for a tile in a date range. The cloud cap is generous
+    (default 70%) and the clearest available scene is taken, so every tile is
+    represented every season rather than dropped to zero when no near-clear
+    scene exists in a narrow window - residual cloud is handled per pixel by the
+    NDSI cloud mask. Returns None only if the tile has no scene at all."""
     from pystac_client import Client
     items = list(Client.open(melt.STAC_API).search(
         collections=["sentinel-2-l2a"],
-        query={"grid:code": {"eq": f"MGRS-{tile}"}, "eo:cloud_cover": {"lt": 15}},
+        query={"grid:code": {"eq": f"MGRS-{tile}"}, "eo:cloud_cover": {"lt": cc}},
         datetime=f"{start}/{end}", limit=100).items())
     return min(items, key=lambda x: x.properties.get("eo:cloud_cover", 99)) if items else None
 
 
-def run_season(label, peak_window=("01-05", "02-20")):
-    """Shelf-wide seasonal-maximum meltwater: each tile's clearest peak-melt
-    scene, unioned on the common grid, masked to the shelf polygon."""
-    start_year = int(label.split("-")[0]) + 1  # Jan/Feb of the second year
+def run_season(label, peak_window=("12-01", "02-28"), grid=None):
+    """Shelf-wide seasonal-maximum meltwater: each tile's clearest scene in the
+    melt window, unioned on ONE fixed shelf grid so the denominator is the same
+    every season. The window spans the whole Dec-Feb melt season and the cloud
+    cap is generous, so all 11 tiles are represented every season."""
+    start_year = int(label.split("-")[0]) + 1  # peak melt is the second year
     start = f"{start_year}-{peak_window[0]}"
+    # Dec belongs to the FIRST year of the label; split the query if needed.
+    dec_start = f"{start_year-1}-12-01" if peak_window[0].startswith("12") else start
     end = f"{start_year}-{peak_window[1]}"
 
-    scenes = {t: _peak_scene(t, start, end) for t in SHELF_TILES}
+    scenes = {t: _peak_scene(t, dec_start, end) for t in SHELF_TILES}
     scenes = {t: it for t, it in scenes.items() if it is not None}
     if not scenes:
-        print(f"[{label}] no scenes in {start}..{end}")
+        print(f"[{label}] no scenes in {dec_start}..{end}")
         return
 
-    grid_tr, gw, gh, shelf = build_grid(list(scenes.values()))
-    print(f"[{label}] grid {gw}x{gh} @ {GRID_RES:.0f} m, "
-          f"shelf mask {shelf.sum() * (GRID_RES**2) / 1e6:,.0f} km2")
-
+    grid_tr, gw, gh, shelf = grid if grid is not None else build_fixed_grid()
     cell_km2 = (GRID_RES**2) / 1e6
+    shelf_km2 = shelf.sum() * cell_km2
+    print(f"[{label}] fixed grid {gw}x{gh}, shelf {shelf_km2:,.0f} km2, "
+          f"tiles imaged {len(scenes)}/{len(SHELF_TILES)}")
+
     # water fraction per grid cell, taking the best (max) estimate where tiles
     # overlap - a union that dedups without double-counting.
     water = np.zeros((gh, gw), "f4")
+    clouds = []
     for t, it in scenes.items():
         try:
             wm = tile_water_on_grid(it, grid_tr, gw, gh)
@@ -209,18 +287,21 @@ def run_season(label, peak_window=("01-05", "02-20")):
             continue
         if wm is None:
             continue
+        cc = it.properties.get("eo:cloud_cover", 0.0)
+        clouds.append(cc)
         on_shelf_km2 = float((wm * shelf).sum()) * cell_km2
         np.maximum(water, np.where(shelf, wm, 0), out=water)
-        print(f"  {t}  {it.datetime.date()}  cloud {it.properties.get('eo:cloud_cover'):4.1f}  "
+        print(f"  {t}  {it.datetime.date()}  cloud {cc:4.1f}  "
               f"+{on_shelf_km2:6.2f} km2 on shelf")
 
     total = float(water.sum()) * cell_km2
     print(f"\n[{label}] shelf-wide seasonal-max meltwater: {total:.1f} km2 "
-          f"({100*total/(shelf.sum()*cell_km2):.2f}% of shelf)")
+          f"({100*total/max(shelf_km2,1):.2f}% of shelf)")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     return {"season": label, "shelf_km2": round(total, 2),
-            "shelf_area_km2": round(shelf.sum() * (GRID_RES**2) / 1e6, 1),
-            "tiles": len(scenes)}
+            "shelf_area_km2": round(shelf_km2, 1),
+            "tiles": len(scenes), "tiles_total": len(SHELF_TILES),
+            "mean_cloud": round(float(np.mean(clouds)), 1) if clouds else None}
 
 
 # 9 austral melt seasons with reliable Sentinel-2 coverage over the shelf,
@@ -236,13 +317,13 @@ def run_history(seasons=SEASONS):
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     hist_path = OUT_DIR / "history.json"
     results = {}
-    if hist_path.exists():
-        results = {r["season"]: r for r in json.loads(hist_path.read_text())}
+
+    grid = build_fixed_grid()  # one denominator shared by every season
 
     for label in seasons:
         print(f"\n{'='*64}\n{label}\n{'='*64}")
         try:
-            r = run_season(label)
+            r = run_season(label, grid=grid)
         except Exception as e:
             print(f"[{label}] FAILED: {type(e).__name__}: {str(e)[:80]}")
             continue
@@ -252,13 +333,16 @@ def run_history(seasons=SEASONS):
             hist_path.write_text(json.dumps(ordered, indent=1))
 
     print(f"\n{'='*64}\nSHELF-WIDE SEASONAL-MAX MELTWATER (George VI)\n{'='*64}")
-    print(f"  {'season':9s} {'meltwater km2':>14} {'% of shelf':>11} {'tiles':>6}")
+    print(f"  {'season':9s} {'meltwater km2':>14} {'% of shelf':>11} "
+          f"{'tiles':>7} {'mean cloud':>11}")
     for s in seasons:
         if s not in results:
             print(f"  {s:9s} {'--':>14}"); continue
         r = results[s]
         pct = 100 * r["shelf_km2"] / r["shelf_area_km2"]
-        print(f"  {s:9s} {r['shelf_km2']:14.1f} {pct:10.2f}% {r['tiles']:6d}")
+        tiles = f"{r['tiles']}/{r.get('tiles_total', len(SHELF_TILES))}"
+        mc = f"{r['mean_cloud']:.1f}%" if r.get("mean_cloud") is not None else "--"
+        print(f"  {s:9s} {r['shelf_km2']:14.1f} {pct:10.2f}% {tiles:>7} {mc:>11}")
     print(f"\n  saved -> {hist_path.relative_to(melt.ROOT)}")
     return results
 
