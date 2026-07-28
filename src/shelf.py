@@ -24,11 +24,12 @@ Per-tile detection reuses the validated single-tile detector via melt.set_aoi,
 so the shelf number is produced by exactly the method the rest of the project
 validated (Moussavi shadow test + hysteresis).
 
-STATUS: the engine is validated and now uses an authoritative boundary. Per-
-tile detection reprojects and unions correctly on the common grid; the MEaSUReS
+STATUS: the engine is validated, uses an authoritative boundary, and the
+dominant tile has now passed blind reference-point validation. Per-tile
+detection reprojects and unions correctly on the common grid; the MEaSUReS
 polygon correctly delineates the flat shelf (mountain tiles 19DDA/19DDC read 0,
-and its outline hugs the shelf edge on inspection). Two of the three issues
-found earlier are resolved:
+and its outline hugs the shelf edge on inspection). All three issues found
+earlier are resolved:
 
   - [fixed] Boundary precision. Swapped the cartographic Natural Earth polygon
     for the authoritative MEaSUReS Antarctic Boundaries v2 outline (23,260 km2,
@@ -38,16 +39,21 @@ found earlier are resolved:
     giving each 30 m grid cell its true water fraction instead of marking the
     whole cell water if any 10 m pixel is. This trimmed the tile areas ~15-25%.
 
-  - [OPEN] Per-tile validation. For 2020-21 the shelf-wide seasonal-max is
-    138 km2 (0.77% of an 17,878 km2 shelf), but it is dominated by tile 19DEA
-    (127 km2). Inspection shows that detection is spectrally water-like (green
-    ~7100, the confirmed-pond range) and spatially an organised field of
-    channel-like streaks on the shelf - consistent with the extensive
-    supraglacial meltwater channels George VI is documented to have, but the
-    regularity could also be flow-stripe features. It is real water, not slush
-    or cloud, but whether all of it is meltwater needs the same blind-label
-    validation used elsewhere in this project, applied per shelf tile. Until
-    that is done the absolute shelf-wide number is provisional.
+  - [resolved] Per-tile validation of 19DEA (the 127 km2 that dominates the
+    2020-21 shelf-wide 138 km2). 80 stratified blind points were labelled
+    (validate_shelf_tile.py). Result: precision 0.625 (95% CI 0.47-0.76),
+    recall 0.51. The detection is genuine meltwater - visually vivid blue
+    ponds/channels, spectrally dark-red + high-NDWI. Of the false positives,
+    about half are pond-margin mixed pixels (spectrally identical to water) and
+    half are crevasse-shadow / thin-cloud that are spectrally entangled with
+    shallow meltwater: sweeps of the NDWI core threshold (0.19->0.30) and the
+    shadow test (0.09->0.18) each trade real water for false positives ~1:1, so
+    no threshold cleanly removes them, and a shape filter would delete George
+    VI's real supraglacial channels. Crucially, those false positives are more
+    than offset by margin water the detector MISSES (recall 0.51): the
+    Horvitz-Thompson bias-corrected true-water area is 157 +/- 37 km2, i.e. the
+    reported 127 km2 is unbiased-to-conservative, not inflated. The absolute
+    shelf-wide number therefore stands. See output/shelf_val/19DEA/.
 
 The core sound tiles (19CDV + 19CEV, deduped) give ~15 km2 for 2020-21.
 
@@ -217,8 +223,50 @@ def run_season(label, peak_window=("01-05", "02-20")):
             "tiles": len(scenes)}
 
 
+# 9 austral melt seasons with reliable Sentinel-2 coverage over the shelf,
+# labelled by the first year (peak melt falls in Jan/Feb of the second year).
+SEASONS = ["2017-18", "2018-19", "2019-20", "2020-21", "2021-22",
+           "2022-23", "2023-24", "2024-25", "2025-26"]
+
+
+def run_history(seasons=SEASONS):
+    """Run every season, saving after each so a mid-run network failure on one
+    season keeps the others. Writes output/shelf/history.json and prints a
+    table of shelf-wide seasonal-maximum meltwater area."""
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    hist_path = OUT_DIR / "history.json"
+    results = {}
+    if hist_path.exists():
+        results = {r["season"]: r for r in json.loads(hist_path.read_text())}
+
+    for label in seasons:
+        print(f"\n{'='*64}\n{label}\n{'='*64}")
+        try:
+            r = run_season(label)
+        except Exception as e:
+            print(f"[{label}] FAILED: {type(e).__name__}: {str(e)[:80]}")
+            continue
+        if r is not None:
+            results[label] = r
+            ordered = [results[s] for s in seasons if s in results]
+            hist_path.write_text(json.dumps(ordered, indent=1))
+
+    print(f"\n{'='*64}\nSHELF-WIDE SEASONAL-MAX MELTWATER (George VI)\n{'='*64}")
+    print(f"  {'season':9s} {'meltwater km2':>14} {'% of shelf':>11} {'tiles':>6}")
+    for s in seasons:
+        if s not in results:
+            print(f"  {s:9s} {'--':>14}"); continue
+        r = results[s]
+        pct = 100 * r["shelf_km2"] / r["shelf_area_km2"]
+        print(f"  {s:9s} {r['shelf_km2']:14.1f} {pct:10.2f}% {r['tiles']:6d}")
+    print(f"\n  saved -> {hist_path.relative_to(melt.ROOT)}")
+    return results
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "season"
     if cmd == "season":
         label = sys.argv[2] if len(sys.argv) > 2 else "2020-21"
         run_season(label)
+    elif cmd == "history":
+        run_history()
