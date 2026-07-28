@@ -17,6 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import melt  # noqa: E402
 import season  # noqa: E402
 import validate_landsat as vl  # noqa: E402
+import uncertainty as unc  # noqa: E402
+import validate_points as vp  # noqa: E402
 
 
 class FakeItem:
@@ -316,6 +318,44 @@ def test_block_reducers_preserve_geometry():
 
 def test_resolution_ratio_matches_the_two_sensors():
     assert melt.PIXEL_M * vl.RES_RATIO == pytest.approx(30.0)
+
+
+# --- Uncertainty ranges ------------------------------------------------------
+
+def test_threshold_band_brackets_the_current_value():
+    """The range must straddle 0.16, or it is not an honest interval around it."""
+    lo, hi = unc.THRESHOLD_BAND
+    assert lo <= melt.NDWI_THRESHOLD <= hi
+    assert melt.NDWI_THRESHOLD in unc.THRESHOLDS
+
+
+def test_measured_bias_and_precision_are_consistent():
+    """Both come from the same reference-point run and must agree with it."""
+    assert 0.4 < unc.MEASURED_AREA_BIAS < 1.0  # detector under-reports
+    assert 0.5 < unc.MEASURED_PRECISION < 0.8
+
+
+def test_point_validation_strata_are_disjoint_and_ordered():
+    """A/B/C must partition the AOI: detected, near, and far, no overlap."""
+    ponds = np.zeros((200, 200), bool)
+    ponds[100, 100] = True
+    valid = np.ones((200, 200), bool)
+    strata = vp.build_strata(ponds, valid)
+
+    overlap = (strata["A"] & strata["B"]) | (strata["B"] & strata["C"]) | \
+              (strata["A"] & strata["C"])
+    assert not overlap.any()
+    total = strata["A"].sum() + strata["B"].sum() + strata["C"].sum()
+    assert total == valid.sum()
+    assert strata["A"][100, 100]           # the detection itself is stratum A
+    assert strata["B"][100, 110]           # 100 m away is "near"
+    assert strata["C"][0, 0]               # a far corner is "far"
+
+
+def test_wilson_interval_contains_point_estimate():
+    lo, hi = vp.wilson(24, 38)
+    assert lo < 24 / 38 < hi
+    assert 0.0 <= lo < hi <= 1.0
 
 
 def test_screen_output_is_decimated_not_full_res():

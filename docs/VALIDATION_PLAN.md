@@ -1,14 +1,29 @@
 # Validation plan
 
-Written 2026-07-21. **Tier 1 item 2 (Landsat cross-sensor) is done** — see
-`src/validate_landsat.py` and the Validation section of the README. Everything
-else below is still outstanding.
+Written 2026-07-21. **Done so far: Tier 1 (both items), Tier 4.** Outstanding:
+Tier 2 (literature + published methods), Tier 3 (ERA5). See the README's
+Validation section for full results.
 
-Headline from the completed work: area agreement with Landsat 8 is 0.90 on
-clean same-day pairs, with *r* = 0.83 and Spearman = 0.86 across all 11 pairs,
-while per-pixel IoU is 0.30–0.35 and is dominated by the 30 m versus 10 m
-resolution difference. One scene, 2019-02-17, failed validation outright and
-its season's peak is now marked unconfirmed.
+Status by item:
+
+- **[DONE] Landsat cross-sensor** — area agreement 0.90 on clean same-day
+  pairs, *r* = 0.83, Spearman = 0.86; per-pixel IoU 0.30–0.35, dominated by
+  the 30 m vs 10 m resolution gap. 2019-02-17 failed outright.
+- **[DONE] Reference-point accuracy** — precision 0.63, recall 0.36, F1 0.46
+  on 96 blind-labelled points. Every false positive is crevasse shadow at
+  NDWI 0.17–0.25; classes separate cleanly and the threshold sits in the
+  overlap. Precision reaches 1.00 by NDWI 0.25.
+- **[DONE] Uncertainty as ranges** (`src/uncertainty.py`) — median range is
+  98% of the point estimate. 2018-19's apparent peak collapses; 2025-26
+  survives as the robust maximum.
+- **[TODO] Literature comparison** — the one external anchor still missing.
+- **[TODO] Published detection methods** (Moussavi et al. thresholds).
+- **[TODO] ERA5 physical consistency** — needs a Copernicus CDS account.
+
+The single most actionable finding: the NDWI threshold is set too low.
+Reference points put every crevasse-shadow false positive at 0.17–0.25 and
+real ponds at 0.38+. Retuning is roadmap item 0, to be done on labels from
+*several* scenes, not the one done so far.
 
 ## Why this comes before new features
 

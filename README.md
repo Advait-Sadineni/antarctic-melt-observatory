@@ -7,10 +7,12 @@ disintegrate the shelf, as happened to Larsen B in 2002. Once a shelf is gone,
 the glaciers it buttressed accelerate into the ocean.
 
 Current scope: single-scene detection, per-season pond-area time series across
-nine melt seasons (2017-18 to 2025-26), a multi-year peak comparison, and a
-threshold sensitivity analysis — all over one 20 km study area on **George VI
-Ice Shelf** (Antarctic Peninsula). Roadmap below covers full-shelf coverage,
-ICESat-2 elevation, and ERA5-driven prediction.
+nine melt seasons (2017-18 to 2025-26), a multi-year peak comparison, a
+threshold sensitivity analysis, and two independent validations (cross-sensor
+against Landsat 8, and against blind visual interpretation) — all over one
+61 km study area on **George VI Ice Shelf** (Antarctic Peninsula). Roadmap
+below covers full-shelf coverage, ICESat-2 elevation, and ERA5-driven
+prediction.
 
 ## Run it
 
@@ -25,6 +27,9 @@ pip install rasterio matplotlib pystac-client numpy
 | `python src/season.py` | `output/season_2020_21.png` + `.csv` — pond area across one melt season |
 | `python src/season.py 2019-20` | same, for any season |
 | `python src/multiyear.py` | `output/multiyear_trend.png` — peak meltwater by season |
+| `python src/validate_landsat.py` | cross-sensor check against Landsat 8 |
+| `python src/validate_points.py make` / `score` | blind visual accuracy check |
+| `python src/uncertainty.py` | `output/uncertainty_peaks.png` — peaks as ranges, not points |
 
 No credentials required. Imagery comes from the **AWS Open Data** Sentinel-2 L2A
 archive as Cloud-Optimized GeoTIFFs, found via the Earth Search STAC API. Each
@@ -424,6 +429,56 @@ Area bias is 0.57×, so the absolute areas in this README are more likely
   cryospheric surfaces. Using it would have produced an official-looking
   validation built on unphysical numbers, so this module uses Level-1 and
   computes top-of-atmosphere reflectance itself.
+
+### Peaks as ranges, not points
+
+```
+python src/uncertainty.py
+```
+
+Every headline figure rests on choices that were made, not measured.
+Validation quantified the two that dominate, so the honest form of each
+season's peak is an interval. `uncertainty.py` re-thresholds each peak scene
+across NDWI 0.14–0.25 — from just below the current value to where the
+reference sample reached precision 1.00 — and reports the span.
+
+The result is humbling: **the median range is 98% of the point estimate.**
+Threshold choice alone makes each peak uncertain by roughly plus-or-minus
+half its value.
+
+| Season | Point (0.16) | Range (0.14–0.25) | Coverage |
+|---|---|---|---|
+| 2017-18 | 8.90 | 3.3 – 11.7 | 72% |
+| 2018-19 | *11.56* | **0.9 – 22.3** | 99% |
+| 2019-20 | 15.76 | 8.4 – 20.5 | 56% |
+| 2020-21 | 11.34 | 6.2 – 14.4 | 100% |
+| 2021-22 | *1.47* | 0.1 – 2.6 | 100% |
+| 2022-23 | 10.49 | 3.8 – 14.4 | 88% |
+| 2024-25 | 9.60 | 3.2 – 12.9 | 53% |
+| 2025-26 | **18.66** | 10.8 – 23.0 | 76% |
+
+Two things this makes unavoidable:
+
+- **2018-19 is not a real peak.** Its range runs from 0.9 to 22.3 km² — the
+  low end is below the noise floor. At any threshold above 0.16 the scene
+  (2019-02-17, the crevasse-shadow case that also failed cross-sensor
+  validation) collapses toward nothing. The apparent second-place season is
+  an artifact of the threshold sitting exactly where crevasse shadow gets
+  counted.
+- **2025-26 is robustly the largest.** Even at NDWI 0.25 it is 10.8 km², above
+  most other seasons' point estimates. This ranking survives the uncertainty;
+  the middle of the table does not.
+
+A *second*, independent source of error runs the other way. Blind
+reference-point sampling gives an area bias of 0.57× — the detector
+under-reports, because missed pond margins outweigh false crevasse
+detections. That is not folded into the ranges above (one scene is too thin
+to correct with), but it means the true areas likely sit toward or above the
+upper end of each range, not the middle.
+
+The takeaway the project now states plainly: **trust the ranking and the
+shape of a season, quote the threshold with any number, and treat a single
+absolute km² as indicative only.**
 
 ## Tests
 
