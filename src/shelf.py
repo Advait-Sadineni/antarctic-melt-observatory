@@ -15,35 +15,41 @@ Two problems make a naive per-tile sum wrong, and this module solves both:
      masked to an authoritative George VI ice-shelf polygon rasterised onto the
      common grid, so only the flat floating shelf counts.
 
-The shelf polygon is a drop-in parameter (reference/george_vi_boundary.geojson,
-currently Natural Earth 10 m - area 24,163 km2, matching the known ~24,000 km2
-whole shelf). Swap in MEaSUREs/SCAR for final precision without touching code.
+The shelf polygon is a drop-in parameter (reference/george_vi_measures.geojson,
+the authoritative MEaSUReS Antarctic Boundaries v2 outline - area 23,260 km2,
+matching the known ~24,000 km2 whole shelf, and tight at the calving front so
+open ocean and sea ice are excluded).
 
 Per-tile detection reuses the validated single-tile detector via melt.set_aoi,
 so the shelf number is produced by exactly the method the rest of the project
 validated (Moussavi shadow test + hysteresis).
 
-STATUS: the engine is validated (per-tile detection reprojects and unions
-correctly on the common grid; the shelf polygon correctly excludes the
-Alexander Island mountain tiles - 19DDA/19DDC read 0). The absolute shelf-wide
-number is NOT yet trustworthy, for three reasons found by inspection and
-recorded here rather than hidden:
+STATUS: the engine is validated and now uses an authoritative boundary. Per-
+tile detection reprojects and unions correctly on the common grid; the MEaSUReS
+polygon correctly delineates the flat shelf (mountain tiles 19DDA/19DDC read 0,
+and its outline hugs the shelf edge on inspection). Two of the three issues
+found earlier are resolved:
 
-  1. Boundary precision at the shelf front. The Natural Earth polygon is
-     cartographic-grade; near the calving front it can include a strip of open
-     ocean / sea ice that reads as high-NDWI water. A precise MEaSUREs/SCAR
-     boundary (a polygon swap) is the fix.
-  2. Slush / thin cloud at shelf scale. Tile 19DEA on 2021-01-24 contributes a
-     large bright detection (~140 km2) that inspection shows is mostly extensive
-     slush or thin cloud, not deep ponds - the known NDWI/slush ambiguity, now
-     visible at shelf scale where it dominates. Needs slush handling or a
-     per-tile plausibility gate.
-  3. Max-resampling inflation. Reprojecting the 10 m mask onto the 30 m grid
-     with Resampling.max marks a whole 30 m cell water if any 10 m pixel is,
-     inflating area ~20%. A fractional (area-weighted) reprojection removes it.
+  - [fixed] Boundary precision. Swapped the cartographic Natural Earth polygon
+    for the authoritative MEaSUReS Antarctic Boundaries v2 outline (23,260 km2,
+    matching the known shelf), which is tight at the calving front and excludes
+    open ocean / sea ice.
+  - [fixed] Resampling inflation. Reprojection is now area-weighted (average),
+    giving each 30 m grid cell its true water fraction instead of marking the
+    whole cell water if any 10 m pixel is. This trimmed the tile areas ~15-25%.
 
-The core sound tiles (19CDV + 19CEV, deduped) give ~15 km2 for 2020-21, which
-is the sensible part of the number; 19DEA's 176 km2 is the questionable part.
+  - [OPEN] Per-tile validation. For 2020-21 the shelf-wide seasonal-max is
+    138 km2 (0.77% of an 17,878 km2 shelf), but it is dominated by tile 19DEA
+    (127 km2). Inspection shows that detection is spectrally water-like (green
+    ~7100, the confirmed-pond range) and spatially an organised field of
+    channel-like streaks on the shelf - consistent with the extensive
+    supraglacial meltwater channels George VI is documented to have, but the
+    regularity could also be flow-stripe features. It is real water, not slush
+    or cloud, but whether all of it is meltwater needs the same blind-label
+    validation used elsewhere in this project, applied per shelf tile. Until
+    that is done the absolute shelf-wide number is provisional.
+
+The core sound tiles (19CDV + 19CEV, deduped) give ~15 km2 for 2020-21.
 
 Run:  python src/shelf.py season 2020-21
 """
@@ -66,7 +72,7 @@ SHELF_TILES = ["18DXF", "18DXG", "18DXH", "19CDV", "19CEV", "19DDA",
 
 GRID_CRS = "EPSG:3031"     # Antarctic Polar Stereographic - one grid, all zones
 GRID_RES = 30.0           # m; 30 m keeps the shelf-wide grid tractable
-BOUNDARY = melt.ROOT / "reference" / "george_vi_boundary.geojson"
+BOUNDARY = melt.ROOT / "reference" / "george_vi_measures.geojson"
 OUT_DIR = melt.ROOT / "output" / "shelf"
 
 
@@ -148,14 +154,14 @@ def tile_water_on_grid(item, grid_tr, gw, gh):
 
     src_crs, _ = melt.tile_georeference(item)
     src_tr = melt.aoi_transform(item)
-    dst = np.zeros((gh, gw), "uint8")
+    dst = np.zeros((gh, gw), "f4")
     reproject(
-        source=ponds.astype("uint8"), destination=dst,
+        source=ponds.astype("f4"), destination=dst,
         src_transform=src_tr, src_crs=src_crs,
         dst_transform=grid_tr, dst_crs=GRID_CRS,
-        resampling=Resampling.max,  # a pond present in any source pixel -> present
+        resampling=Resampling.average,  # fraction of each 30 m cell that is water
     )
-    return dst.astype(bool)
+    return dst  # 0..1 water fraction per grid cell (no coarsening inflation)
 
 
 def _peak_scene(tile, start, end):
@@ -185,7 +191,10 @@ def run_season(label, peak_window=("01-05", "02-20")):
     print(f"[{label}] grid {gw}x{gh} @ {GRID_RES:.0f} m, "
           f"shelf mask {shelf.sum() * (GRID_RES**2) / 1e6:,.0f} km2")
 
-    water = np.zeros((gh, gw), bool)
+    cell_km2 = (GRID_RES**2) / 1e6
+    # water fraction per grid cell, taking the best (max) estimate where tiles
+    # overlap - a union that dedups without double-counting.
+    water = np.zeros((gh, gw), "f4")
     for t, it in scenes.items():
         try:
             wm = tile_water_on_grid(it, grid_tr, gw, gh)
@@ -194,14 +203,14 @@ def run_season(label, peak_window=("01-05", "02-20")):
             continue
         if wm is None:
             continue
-        on_shelf = wm & shelf
-        water |= on_shelf
+        on_shelf_km2 = float((wm * shelf).sum()) * cell_km2
+        np.maximum(water, np.where(shelf, wm, 0), out=water)
         print(f"  {t}  {it.datetime.date()}  cloud {it.properties.get('eo:cloud_cover'):4.1f}  "
-              f"+{on_shelf.sum() * (GRID_RES**2)/1e6:6.2f} km2 on shelf")
+              f"+{on_shelf_km2:6.2f} km2 on shelf")
 
-    total = water.sum() * (GRID_RES**2) / 1e6
+    total = float(water.sum()) * cell_km2
     print(f"\n[{label}] shelf-wide seasonal-max meltwater: {total:.1f} km2 "
-          f"({100*total/(shelf.sum()*(GRID_RES**2)/1e6):.2f}% of shelf)")
+          f"({100*total/(shelf.sum()*cell_km2):.2f}% of shelf)")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     return {"season": label, "shelf_km2": round(total, 2),
             "shelf_area_km2": round(shelf.sum() * (GRID_RES**2) / 1e6, 1),

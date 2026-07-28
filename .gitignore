@@ -19,3 +19,9 @@ __pycache__/
 .venv/
 venv/
 .ipynb_checkpoints/
+
+# MEaSUReS raw shapefile bundle (redistribute the derived George VI polygon only)
+reference/measures/
+# Earthdata credentials
+_netrc
+.netrc
