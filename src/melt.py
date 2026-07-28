@@ -173,24 +173,51 @@ def _screen_shape(size=None):
 # Read from a real asset rather than hardcoded: an origin wrong by a couple of
 # pixels would misalign every cross-sensor comparison silently, and the error
 # would look like genuine disagreement between satellites.
-TILE_CRS = "EPSG:32719"
+TILE_CRS = "EPSG:32719"  # default tile 19CEV; other tiles carry their own
 _GEOREF_CACHE = {}
 
 
+def _tile_of(item):
+    return item.id.split("_")[1]
+
+
 def tile_georeference(item):
-    """(crs, transform) of the tile's 10 m grid, cached per session."""
-    if "v" not in _GEOREF_CACHE:
+    """(crs, transform) of a tile's 10 m grid, cached per tile.
+
+    Keyed by MGRS tile, not a single slot: the shelf spans several tiles across
+    three UTM zones, and handing them all the first tile's transform would
+    misplace every one silently.
+    """
+    key = _tile_of(item)
+    if key not in _GEOREF_CACHE:
         with rasterio.open(item.assets["green"].href) as src:
             if abs(src.res[0] - PIXEL_M) > 1e-6:
                 raise ValueError(f"expected a {PIXEL_M} m asset, got {src.res[0]} m")
-            _GEOREF_CACHE["v"] = (src.crs, src.transform)
-    return _GEOREF_CACHE["v"]
+            _GEOREF_CACHE[key] = (src.crs, src.transform)
+    return _GEOREF_CACHE[key]
 
 
 def aoi_transform(item):
     """Affine transform of the study area, in the tile's own CRS."""
     _, tile = tile_georeference(item)
     return tile * tile.identity().translation(WIN_COL, WIN_ROW)
+
+
+# --- multi-tile support ------------------------------------------------------
+# The single-tile pipeline is driven by the module globals above. For full-shelf
+# processing, set_aoi() repoints them at another tile/window plus an optional
+# shelf mask (which pixels are ice shelf vs ocean/mountain). It is used one tile
+# at a time, so the existing per-scene threading inside a tile stays safe; every
+# function keeps its signature, so single-tile callers and the tests are
+# unaffected (the defaults are exactly the original 19CEV window).
+AOI_SHELF_MASK = None  # full-res bool, True = ice shelf; None = whole window
+
+
+def set_aoi(tile, win_row, win_col, win_size, shelf_mask=None):
+    """Point the pipeline at a tile/window (and optional shelf mask)."""
+    global TILE, WIN_ROW, WIN_COL, WIN_SIZE, AOI_SHELF_MASK
+    TILE, WIN_ROW, WIN_COL, WIN_SIZE = tile, win_row, win_col, win_size
+    AOI_SHELF_MASK = shelf_mask
 
 
 def search_scenes(start, end, max_cloud_tile=100):
@@ -290,12 +317,22 @@ def cloud_mask(item, halo_km=CLOUD_HALO_KM):
     cells = int(round(halo_km * 1000 / SCREEN_PIXEL_M))
     halo = ndimage.binary_dilation(low, iterations=cells) if cells else low
 
-    scale = WIN_SIZE // low.shape[0]
     return {
         "nonice_frac": float(low.mean()),
         "halo_frac": float(halo.mean()),
-        "mask": np.kron(halo, np.ones((scale, scale), bool)),
+        "mask": _upsample_to_window(halo),
     }
+
+
+def _upsample_to_window(coarse):
+    """Nearest-neighbour upsample a coarse mask to exactly (WIN_SIZE, WIN_SIZE).
+
+    ceil-then-crop, so it is correct for any window size, not only those that
+    are a clean multiple of the 60 m screen grid (they are not, once the AOI
+    is a shelf tile of arbitrary extent).
+    """
+    scale = int(np.ceil(WIN_SIZE / coarse.shape[0]))
+    return np.kron(coarse, np.ones((scale, scale), bool))[:WIN_SIZE, :WIN_SIZE]
 
 
 def sun_elevation(item):
@@ -340,8 +377,13 @@ def screen(scl):
 
 
 def reject_mask(item):
-    """Full-resolution cloud/shadow mask, for scenes that passed screening."""
-    return np.isin(read_scl(item, full_res=True), list(SCL_REJECT))
+    """Full-resolution reject mask: cloud/shadow, plus non-shelf if an AOI shelf
+    mask is set. Everything downstream (detection, usable fraction) then counts
+    only ice-shelf ground."""
+    rej = np.isin(read_scl(item, full_res=True), list(SCL_REJECT))
+    if AOI_SHELF_MASK is not None:
+        rej = rej | ~AOI_SHELF_MASK
+    return rej
 
 
 def detect(green, nir, reject_mask=None, threshold=NDWI_THRESHOLD, red=None,
