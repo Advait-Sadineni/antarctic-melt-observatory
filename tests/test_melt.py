@@ -68,6 +68,55 @@ def test_reject_mask_removes_ponds():
     assert not melt.detect(green, nir, reject_mask=np.array([[True]]))[1][0, 0]
 
 
+def test_shadow_test_rejects_crevasse_shadow():
+    """Moussavi test: shaded snow clears NDWI but green barely exceeds red.
+
+    Both pixels have identical, pond-like NDWI. The first also has green far
+    above red (real water); the second has green barely above red (shadow,
+    which dims all visible bands together). Only the first survives.
+    """
+    green = np.array([[8000.0, 5200.0]])
+    nir = np.array([[4000.0, 2600.0]])   # both NDWI = 0.33
+    red = np.array([[3000.0, 5000.0]])   # water: g-r=5000; shadow: g-r=200
+
+    _, ponds, _ = melt.detect(green, nir, red=red)
+    assert ponds[0, 0]        # (8000-3000)/10000 = 0.50 > 0.09
+    assert not ponds[0, 1]    # (5200-5000)/10000 = 0.02 < 0.09
+
+
+def test_shadow_test_is_opt_in():
+    """Without red, the shadow test is skipped - for the pure sweep."""
+    green, nir, red = np.array([[5200.0]]), np.array([[2600.0]]), np.array([[5000.0]])
+    assert melt.detect(green, nir)[1][0, 0]              # no red: passes
+    assert not melt.detect(green, nir, red=red)[1][0, 0]  # with red: rejected
+
+
+def test_hysteresis_grows_margins_from_cores_only():
+    """A margin pixel (NDWI between grow and core) is kept only if connected
+    to a core; an isolated one is not."""
+    # Row 0: core, then a margin pixel touching it -> both kept.
+    # Row 2: an identical margin pixel with no core neighbour -> dropped.
+    green = np.full((3, 3), 6000.0)
+    red = np.full((3, 3), 3000.0)          # green-red = 3000 -> shadow ok everywhere
+    nir = np.full((3, 3), 6000.0)          # NDWI 0 (not water) by default
+    nir[0, 0] = 3000.0                      # NDWI 0.33 > 0.19  -> core
+    nir[0, 1] = 4200.0                      # NDWI 0.176 (between 0.14 and 0.19) -> margin, touches core
+    nir[2, 2] = 4200.0                      # same margin value, isolated
+
+    _, ponds, _ = melt.detect(green, nir, red=red)
+    assert ponds[0, 0]        # core
+    assert ponds[0, 1]        # margin connected to core -> recovered
+    assert not ponds[2, 2]    # margin with no core -> not grown
+
+
+def test_grow_threshold_none_gives_cores_only():
+    green = np.full((1, 2), 6000.0)
+    nir = np.array([[3000.0, 4200.0]])   # core, margin
+    red = np.full((1, 2), 3000.0)
+    _, ponds, _ = melt.detect(green, nir, red=red, grow_threshold=None)
+    assert ponds[0, 0] and not ponds[0, 1]  # only the core survives
+
+
 def test_threshold_is_monotonic():
     """Raising the threshold can never detect more water."""
     rng = np.random.default_rng(0)
@@ -322,8 +371,15 @@ def test_resolution_ratio_matches_the_two_sensors():
 
 # --- Uncertainty ranges ------------------------------------------------------
 
+def test_adopted_threshold_matches_moussavi():
+    """The retune adopted the published Moussavi Sentinel-2 value."""
+    assert melt.NDWI_THRESHOLD == pytest.approx(0.19)
+    assert melt.SHADOW_GREEN_MINUS_RED == pytest.approx(0.09)
+    assert melt.GROW_THRESHOLD < melt.NDWI_THRESHOLD  # margins are below cores
+
+
 def test_threshold_band_brackets_the_current_value():
-    """The range must straddle 0.16, or it is not an honest interval around it."""
+    """The range must straddle the adopted threshold to be an honest interval."""
     lo, hi = unc.THRESHOLD_BAND
     assert lo <= melt.NDWI_THRESHOLD <= hi
     assert melt.NDWI_THRESHOLD in unc.THRESHOLDS

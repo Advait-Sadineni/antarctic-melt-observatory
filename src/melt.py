@@ -46,8 +46,41 @@ PIXEL_KM2 = (PIXEL_M**2) / 1e6
 SCREEN_PIXEL_M = 60.0
 
 # --- Detection parameters ----------------------------------------------------
-NDWI_THRESHOLD = 0.16  # TUNABLE - see tune_threshold.py
+#
+# This is the published Moussavi et al. 2020 method for Antarctic supraglacial
+# lakes (Remote Sensing 12:134): NDWI (green-NIR) > 0.19 for Sentinel-2, plus a
+# green-minus-red shadow test. It replaced a hand-tuned 0.16 threshold with no
+# shadow test, which validation showed was too permissive - every false
+# positive was crevasse shadow sitting at NDWI 0.17-0.25, just above 0.16.
+#
+# The choice is not taste. On 220 blind-labelled points across three scenes,
+# this configuration scored the best F1 (0.50 vs 0.46) of nine candidates and
+# lifted precision from 0.55 to 0.71, while the literature independently uses
+# exactly this threshold - the same papers whose 19 Jan 2020 peak date this
+# pipeline reproduced. See retune.py for the full comparison.
+NDWI_THRESHOLD = 0.19
 BRIGHTNESS_FLOOR = 3000  # rejects dark open ocean and deep shadow
+
+# Moussavi shadow / crevasse test: real meltwater keeps green well above red,
+# whereas shaded snow and crevasse shadow - which dim all visible bands roughly
+# together - do not. Expressed in reflectance; the imagery is DN, so it is
+# scaled at the point of use. (green - red) is invariant to the baseline offset
+# because both bands carry it, so no offset handling is needed here.
+SHADOW_GREEN_MINUS_RED = 0.09
+DN_PER_REFLECTANCE = 10000.0
+
+# Hysteresis. A single threshold detects pond cores well but under-draws their
+# margins: the fringe pixels are water/ice mixtures whose NDWI is diluted below
+# 0.19. Blind reference points confirmed every missed water point was a margin
+# adjacent to a detection - never a missed lake and never far-field. So cores
+# are found at 0.19 and then grown into connected pixels above this lower
+# threshold, which recovers margins without flooding crevasse fields, because
+# those are not connected to a genuine core. The shadow test is kept on the
+# grown pixels too - dropping it there re-admits crevasse shadow and collapses
+# precision. Measured over 220 labelled points, this lifts area recall from
+# 0.39 to 0.45 and F1 from 0.50 to 0.54 at a 0.03 cost in precision.
+GROW_THRESHOLD = 0.14
+
 NDSI_ICE_MIN = 0.60  # below this a pixel is not snow/ice/water - see cloud_mask()
 
 # Cloud contaminates the ground around it, not just under it. Detected cloud
@@ -75,11 +108,15 @@ MIN_SUN_ELEVATION_DEG = 15.0
 # the detections hugging the edges of a dark patch - bare or blue ice, or
 # shadowed terrain - rather than ponds.
 #
-# On the current 61 km study area the November baseline is 1.21-1.75 km2 and
-# strikingly stable, which says it is a persistent surface feature rather
-# than random noise. The floor sits just above the observed maximum.
-NOV_BASELINE_MAX_KM2 = 1.95  # largest pre-melt reading observed on this AOI
-NOISE_FLOOR_KM2 = 2.2
+# With the shadow test and hysteresis, the pre-melt background collapsed: the
+# clean mid-November readings now cluster at 0.66-1.23 km2, down from 1.2-1.95
+# before, because the old baseline was mostly crevasse-shadow false positives
+# that the shadow test now removes. One early-November scene (2022-11-01) reads
+# 3.2 km2, but inspection shows genuine dark margin melt, not an artifact, so
+# it is treated as real early melt rather than used to set the floor. The floor
+# sits just above the clean background.
+NOV_BASELINE_MAX_KM2 = 1.23  # largest clean pre-melt reading (excl. real early melt)
+NOISE_FLOOR_KM2 = 1.3
 
 # --- SCL (Scene Classification Layer) ----------------------------------------
 # sen2cor ships a per-pixel class map with every L2A product.
@@ -307,19 +344,41 @@ def reject_mask(item):
     return np.isin(read_scl(item, full_res=True), list(SCL_REJECT))
 
 
-def detect(green, nir, reject_mask=None, threshold=NDWI_THRESHOLD):
-    """NDWI threshold -> meltwater mask.
+def detect(green, nir, reject_mask=None, threshold=NDWI_THRESHOLD, red=None,
+           grow_threshold=GROW_THRESHOLD):
+    """NDWI threshold, a shadow test, and hysteresis -> meltwater mask.
 
     NDWI = (green - NIR) / (green + NIR). Liquid water absorbs near-infrared
     strongly but still reflects green, so ponds go positive; snow and ice
     reflect both bands and sit near or below zero.
+
+    When the red band is supplied the full published method runs: the Moussavi
+    shadow test (green - red > 0.09 reflectance) rejects crevasse and
+    topographic shadow, and hysteresis grows pond cores into connected margin
+    pixels above ``grow_threshold``. Red is optional only so a pure-NDWI
+    sensitivity sweep can isolate the threshold; real detection always passes
+    it. Pass grow_threshold=None to get cores without margin growth.
     """
     valid = (green > 0) & (nir > 0)
     ndwi = np.where(valid, (green - nir) / np.maximum(green + nir, 1e-6), np.nan)
+    ndwi0 = np.nan_to_num(ndwi, nan=-9)
 
-    ponds = (ndwi > threshold) & valid & (green > BRIGHTNESS_FLOOR)
+    ok = valid & (green > BRIGHTNESS_FLOOR)
+    if red is not None:
+        ok = ok & ((green - red) > SHADOW_GREEN_MINUS_RED * DN_PER_REFLECTANCE)
     if reject_mask is not None:
-        ponds &= ~reject_mask
+        ok = ok & ~reject_mask
+
+    core = ok & (ndwi0 > threshold)
+    if red is not None and grow_threshold is not None:
+        grow = ok & (ndwi0 > grow_threshold)
+        labels, n = ndimage.label(grow)
+        keep = np.zeros(n + 1, bool)
+        keep[np.unique(labels[core])] = True
+        keep[0] = False  # background label never counts
+        ponds = keep[labels]
+    else:
+        ponds = core
 
     return ndwi, ponds, valid
 

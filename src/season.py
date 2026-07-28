@@ -143,10 +143,10 @@ def process(item):
         scr["usable_frac"] = max(approx_usable, 0.0)
         return None, scr
 
-    # Only now pay for full-resolution reads.
-    bands = melt.load_scene(item, bands=("green", "nir"))
+    # Only now pay for full-resolution reads. Red is needed for the shadow test.
+    bands = melt.load_scene(item, bands=("green", "nir", "red"))
     reject = melt.reject_mask(item) | cm["mask"]
-    _, ponds, valid = melt.detect(bands["green"], bands["nir"], reject)
+    _, ponds, valid = melt.detect(bands["green"], bands["nir"], reject, red=bands["red"])
 
     usable = valid & ~reject
     scr["usable_frac"] = float(usable.mean())

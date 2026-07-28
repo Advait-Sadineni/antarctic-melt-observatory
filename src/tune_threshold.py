@@ -23,14 +23,19 @@ OUT_PNG = melt.ROOT / "output" / "threshold_sensitivity.png"
 
 def main():
     item = melt.get_item(ITEM_ID)
-    bands = melt.load_scene(item, bands=("green", "nir"))
+    bands = melt.load_scene(item, bands=("green", "nir", "red"))
     reject = melt.reject_mask(item)  # full-res; screen() returns a decimated one
 
     areas = []
     print(f"[sweep] {ITEM_ID}\n")
     print("  thresh   pond km2   change vs prev")
     for t in THRESHOLDS:
-        _, ponds, valid = melt.detect(bands["green"], bands["nir"], reject, threshold=float(t))
+        # Core sweep: shadow test on, hysteresis off, so the curve isolates
+        # sensitivity to the NDWI cutoff itself. The full method's sensitivity
+        # (with hysteresis) is measured in uncertainty.py.
+        _, ponds, valid = melt.detect(bands["green"], bands["nir"], reject,
+                                      threshold=float(t), red=bands["red"],
+                                      grow_threshold=None)
         km2 = melt.pond_stats(ponds, valid)["pond_km2"]
         delta = "" if not areas else f"{(km2 - areas[-1]) / max(areas[-1], 1e-9) * 100:+7.1f}%"
         marker = "  <-- current default" if abs(t - melt.NDWI_THRESHOLD) < 1e-9 else ""

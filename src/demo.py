@@ -44,7 +44,7 @@ def main():
                             col=DETAIL_COL, size=DETAIL_SIZE)
     scr = melt.screen(melt.read_scl(item))
 
-    ndwi, ponds, valid = melt.detect(bands["green"], bands["nir"])
+    ndwi, ponds, valid = melt.detect(bands["green"], bands["nir"], red=bands["red"])
     st = melt.pond_stats(ponds, valid)
 
     print()

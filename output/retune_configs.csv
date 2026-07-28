@@ -1,0 +1,8 @@
+config,precision,recall,f1
+0.19 + shadow + hysteresis (adopted),0.6794,0.4525,0.5432
+0.19 + shadow (Moussavi full),0.7053,0.3904,0.5026
+raise 0.19 (Moussavi),0.6825,0.3904,0.4967
+0.16 + shadow test,0.6056,0.3957,0.4787
+current (NDWI>0.16),0.5554,0.3957,0.4622
+dual + shadow,0.8021,0.2957,0.4321
+dual-NDWI (Corr),0.7889,0.2957,0.4302

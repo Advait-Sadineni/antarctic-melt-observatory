@@ -1,0 +1,409 @@
+{
+ "scene": "S2B_19CEV_20260210_0_L2A",
+ "tag": "2026-02-10",
+ "seed": 20260727,
+ "stratum_px": {
+  "A": 142351,
+  "B": 1102024,
+  "C": 27546245
+ },
+ "valid_px": 28790620,
+ "picks": [
+  {
+   "stratum": "B",
+   "row": 5993,
+   "col": 4015,
+   "id": 1
+  },
+  {
+   "stratum": "A",
+   "row": 870,
+   "col": 317,
+   "id": 2
+  },
+  {
+   "stratum": "B",
+   "row": 4606,
+   "col": 4940,
+   "id": 3
+  },
+  {
+   "stratum": "B",
+   "row": 617,
+   "col": 449,
+   "id": 4
+  },
+  {
+   "stratum": "A",
+   "row": 4634,
+   "col": 4991,
+   "id": 5
+  },
+  {
+   "stratum": "C",
+   "row": 4264,
+   "col": 2641,
+   "id": 6
+  },
+  {
+   "stratum": "A",
+   "row": 676,
+   "col": 68,
+   "id": 7
+  },
+  {
+   "stratum": "A",
+   "row": 4627,
+   "col": 4984,
+   "id": 8
+  },
+  {
+   "stratum": "A",
+   "row": 648,
+   "col": 801,
+   "id": 9
+  },
+  {
+   "stratum": "A",
+   "row": 936,
+   "col": 342,
+   "id": 10
+  },
+  {
+   "stratum": "A",
+   "row": 2708,
+   "col": 5627,
+   "id": 11
+  },
+  {
+   "stratum": "C",
+   "row": 133,
+   "col": 2307,
+   "id": 12
+  },
+  {
+   "stratum": "B",
+   "row": 2254,
+   "col": 5980,
+   "id": 13
+  },
+  {
+   "stratum": "B",
+   "row": 4671,
+   "col": 4913,
+   "id": 14
+  },
+  {
+   "stratum": "A",
+   "row": 972,
+   "col": 342,
+   "id": 15
+  },
+  {
+   "stratum": "A",
+   "row": 1016,
+   "col": 321,
+   "id": 16
+  },
+  {
+   "stratum": "A",
+   "row": 778,
+   "col": 428,
+   "id": 17
+  },
+  {
+   "stratum": "A",
+   "row": 679,
+   "col": 730,
+   "id": 18
+  },
+  {
+   "stratum": "C",
+   "row": 3449,
+   "col": 3080,
+   "id": 19
+  },
+  {
+   "stratum": "A",
+   "row": 737,
+   "col": 410,
+   "id": 20
+  },
+  {
+   "stratum": "C",
+   "row": 5227,
+   "col": 3541,
+   "id": 21
+  },
+  {
+   "stratum": "C",
+   "row": 2903,
+   "col": 3593,
+   "id": 22
+  },
+  {
+   "stratum": "B",
+   "row": 3978,
+   "col": 5199,
+   "id": 23
+  },
+  {
+   "stratum": "C",
+   "row": 875,
+   "col": 1515,
+   "id": 24
+  },
+  {
+   "stratum": "A",
+   "row": 4899,
+   "col": 5007,
+   "id": 25
+  },
+  {
+   "stratum": "C",
+   "row": 4408,
+   "col": 3158,
+   "id": 26
+  },
+  {
+   "stratum": "C",
+   "row": 4370,
+   "col": 4447,
+   "id": 27
+  },
+  {
+   "stratum": "B",
+   "row": 4219,
+   "col": 5165,
+   "id": 28
+  },
+  {
+   "stratum": "A",
+   "row": 4900,
+   "col": 5022,
+   "id": 29
+  },
+  {
+   "stratum": "A",
+   "row": 2564,
+   "col": 5469,
+   "id": 30
+  },
+  {
+   "stratum": "B",
+   "row": 2785,
+   "col": 5491,
+   "id": 31
+  },
+  {
+   "stratum": "A",
+   "row": 32,
+   "col": 1243,
+   "id": 32
+  },
+  {
+   "stratum": "A",
+   "row": 472,
+   "col": 495,
+   "id": 33
+  },
+  {
+   "stratum": "B",
+   "row": 4720,
+   "col": 4907,
+   "id": 34
+  },
+  {
+   "stratum": "A",
+   "row": 1247,
+   "col": 183,
+   "id": 35
+  },
+  {
+   "stratum": "A",
+   "row": 583,
+   "col": 364,
+   "id": 36
+  },
+  {
+   "stratum": "C",
+   "row": 1750,
+   "col": 621,
+   "id": 37
+  },
+  {
+   "stratum": "C",
+   "row": 2790,
+   "col": 873,
+   "id": 38
+  },
+  {
+   "stratum": "A",
+   "row": 1380,
+   "col": 94,
+   "id": 39
+  },
+  {
+   "stratum": "B",
+   "row": 610,
+   "col": 889,
+   "id": 40
+  },
+  {
+   "stratum": "A",
+   "row": 4463,
+   "col": 5100,
+   "id": 41
+  },
+  {
+   "stratum": "A",
+   "row": 1057,
+   "col": 132,
+   "id": 42
+  },
+  {
+   "stratum": "B",
+   "row": 644,
+   "col": 410,
+   "id": 43
+  },
+  {
+   "stratum": "B",
+   "row": 4730,
+   "col": 5133,
+   "id": 44
+  },
+  {
+   "stratum": "A",
+   "row": 548,
+   "col": 831,
+   "id": 45
+  },
+  {
+   "stratum": "C",
+   "row": 3267,
+   "col": 2824,
+   "id": 46
+  },
+  {
+   "stratum": "B",
+   "row": 226,
+   "col": 79,
+   "id": 47
+  },
+  {
+   "stratum": "A",
+   "row": 4851,
+   "col": 5023,
+   "id": 48
+  },
+  {
+   "stratum": "A",
+   "row": 3959,
+   "col": 5180,
+   "id": 49
+  },
+  {
+   "stratum": "B",
+   "row": 4190,
+   "col": 5236,
+   "id": 50
+  },
+  {
+   "stratum": "C",
+   "row": 2232,
+   "col": 4595,
+   "id": 51
+  },
+  {
+   "stratum": "C",
+   "row": 5182,
+   "col": 1460,
+   "id": 52
+  },
+  {
+   "stratum": "A",
+   "row": 1959,
+   "col": 6064,
+   "id": 53
+  },
+  {
+   "stratum": "A",
+   "row": 3096,
+   "col": 5216,
+   "id": 54
+  },
+  {
+   "stratum": "B",
+   "row": 4482,
+   "col": 4943,
+   "id": 55
+  },
+  {
+   "stratum": "B",
+   "row": 2685,
+   "col": 5733,
+   "id": 56
+  },
+  {
+   "stratum": "C",
+   "row": 1472,
+   "col": 2401,
+   "id": 57
+  },
+  {
+   "stratum": "B",
+   "row": 4107,
+   "col": 5026,
+   "id": 58
+  },
+  {
+   "stratum": "B",
+   "row": 4070,
+   "col": 5091,
+   "id": 59
+  },
+  {
+   "stratum": "A",
+   "row": 617,
+   "col": 467,
+   "id": 60
+  },
+  {
+   "stratum": "B",
+   "row": 2086,
+   "col": 5710,
+   "id": 61
+  },
+  {
+   "stratum": "B",
+   "row": 5998,
+   "col": 4128,
+   "id": 62
+  },
+  {
+   "stratum": "A",
+   "row": 692,
+   "col": 97,
+   "id": 63
+  },
+  {
+   "stratum": "B",
+   "row": 4829,
+   "col": 5109,
+   "id": 64
+  },
+  {
+   "stratum": "A",
+   "row": 969,
+   "col": 245,
+   "id": 65
+  },
+  {
+   "stratum": "B",
+   "row": 4918,
+   "col": 4689,
+   "id": 66
+  }
+ ]
+}

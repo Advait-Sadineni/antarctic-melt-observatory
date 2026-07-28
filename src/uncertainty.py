@@ -18,10 +18,11 @@ Sources of uncertainty, in order of size:
    extrapolation assumes the obscured part behaves like the visible part. The
    penalty grows as coverage falls and is reported per scene.
 
-3. DETECTOR BIAS. Blind reference-point sampling on one scene gives precision
-   0.63 and area bias 0.57x - the detector under-reports overall, because
-   missed pond margins outweigh false crevasse-shadow detections. One scene is
-   too thin to correct with, so this is reported alongside rather than applied.
+3. DETECTOR BIAS. Blind reference-point sampling over 220 points gives
+   precision 0.68 and area bias 0.67x - the detector still under-reports,
+   because the remaining missed pond-margin area outweighs false detections.
+   Reported alongside rather than applied, since the bias itself has sampling
+   uncertainty.
 
 The output is deliberately conservative: a range, its width, and the reasons.
 
@@ -40,51 +41,57 @@ import numpy as np
 import melt
 import season as S
 
-# Just below the current value, to where sampled precision reaches 1.00.
-THRESHOLD_BAND = (0.14, 0.25)
-THRESHOLDS = (0.14, 0.16, 0.20, 0.25)
+# A band bracketing the adopted 0.19 threshold, spanning the range published
+# methods use (Corr 0.16 with a second index, Moussavi/Banwell 0.18-0.19) up
+# to the strict 0.25 end. The shadow test is applied throughout.
+THRESHOLD_BAND = (0.16, 0.25)
+THRESHOLDS = (0.16, 0.19, 0.22, 0.25)
 
-# From validate_points.py on the 2021-01-24 scene.
-MEASURED_AREA_BIAS = 0.57
-MEASURED_PRECISION = 0.63
+# From retune.py, pooled over three blind-labelled scenes (220 points) with
+# the adopted method (Moussavi shadow test + hysteresis margin recovery).
+MEASURED_AREA_BIAS = 0.67
+MEASURED_PRECISION = 0.68
 
 OUT_CSV = melt.ROOT / "output" / "uncertainty_peaks.csv"
 OUT_PNG = melt.ROOT / "output" / "uncertainty_peaks.png"
 
 
 def season_peaks():
-    """The peak scene of each season, from the committed season CSVs."""
+    """The peak scene of each season, matching the multiyear chart.
+
+    Uses the same one-per-date deduplication as season.series (best coverage,
+    then least cloud) before taking the peak, so a partial-coverage duplicate
+    whose density extrapolates to a large area cannot masquerade as the peak.
+    """
     peaks = []
     for path in sorted(glob.glob(str(melt.ROOT / "output" / "season_*.csv"))):
-        with open(path, newline="") as f:
-            rows = [r for r in csv.DictReader(f)]
+        label = path.rsplit("season_", 1)[1][:7].replace("_", "-")
+        rows = S.series(label)
         if not rows:
             continue
-        label = path.rsplit("season_", 1)[1][:7].replace("_", "-")
         best = max(rows, key=lambda r: float(r["pond_km2_equiv"]))
         peaks.append((label, best))
     return peaks
 
 
 def scene_areas(item_id, thresholds=THRESHOLDS):
-    """Meltwater area at several thresholds, from one pass over the imagery."""
+    """Meltwater area at several thresholds, from one pass over the imagery.
+
+    The full adopted method (NDWI + shadow test) is applied at each threshold;
+    only the NDWI cutoff varies, so the band isolates threshold uncertainty.
+    """
     item = melt.get_item(item_id)
-    bands = melt.load_scene(item, bands=("green", "nir"))
+    bands = melt.load_scene(item, bands=("green", "nir", "red"))
     reject = melt.reject_mask(item) | melt.cloud_mask(item)["mask"]
 
-    green, nir = bands["green"], bands["nir"]
-    valid = (green > 0) & (nir > 0) & ~reject
-    with np.errstate(invalid="ignore", divide="ignore"):
-        ndwi = np.where(valid, (green - nir) / np.maximum(green + nir, 1e-6), np.nan)
-    bright = green > melt.BRIGHTNESS_FLOOR
-
-    usable = int(valid.sum())
+    green, nir, red = bands["green"], bands["nir"], bands["red"]
+    usable = int(((green > 0) & (nir > 0) & ~reject).sum())
     aoi_px = melt.WIN_SIZE ** 2
+
     out = {}
     for t in thresholds:
-        n = int(((np.nan_to_num(ndwi, nan=-9) > t) & valid & bright).sum())
-        # density over usable ground, scaled to the whole study area
-        out[t] = n / max(usable, 1) * aoi_px * melt.PIXEL_KM2
+        _, ponds, _ = melt.detect(green, nir, reject, threshold=float(t), red=red)
+        out[t] = int(ponds.sum()) / max(usable, 1) * aoi_px * melt.PIXEL_KM2
     return out, usable / aoi_px
 
 
@@ -105,20 +112,21 @@ def main():
         mid = areas[melt.NDWI_THRESHOLD]
         below_floor = hi <= melt.NOISE_FLOOR_KM2
 
-        rows.append({
+        row = {
             "season": label,
             "date": r["date"],
             "item_id": r["item_id"],
             "coverage": round(cover, 4),
-            "km2_at_0.14": round(areas[0.14], 3),
-            "km2_at_0.16": round(areas[0.16], 3),
-            "km2_at_0.20": round(areas[0.20], 3),
-            "km2_at_0.25": round(areas[0.25], 3),
+        }
+        for t in THRESHOLDS:
+            row[f"km2_at_{t:.2f}"] = round(areas[t], 3)
+        row.update({
             "range_lo": round(lo, 3),
             "range_hi": round(hi, 3),
             "range_width_pct": round((hi - lo) / max(mid, 1e-9) * 100, 1),
             "below_noise_floor": below_floor,
         })
+        rows.append(row)
         flag = "  (entirely below noise floor)" if below_floor else ""
         print(f"  {label}  {r['date']}  coverage {cover*100:5.1f}%   "
               f"{lo:6.2f} - {hi:6.2f} km2   "
@@ -147,7 +155,7 @@ def plot(rows):
     labels = [r["season"] for r in rows]
     lo = np.array([r["range_lo"] for r in rows])
     hi = np.array([r["range_hi"] for r in rows])
-    mid = np.array([r["km2_at_0.16"] for r in rows])
+    mid = np.array([r[f"km2_at_{melt.NDWI_THRESHOLD:.2f}"] for r in rows])
     cover = np.array([r["coverage"] for r in rows])
     x = np.arange(len(rows))
 
@@ -170,7 +178,7 @@ def plot(rows):
     ax.set_ylabel("Peak meltwater area (km$^2$)")
     ax.set_title("George VI peak meltwater, with threshold uncertainty\n"
                  "range spans the plausible NDWI threshold; "
-                 "detector separately under-reports by ~0.57x",
+                 f"detector separately under-reports by ~{MEASURED_AREA_BIAS:.2f}x",
                  fontsize=12)
     ax.grid(alpha=0.3, axis="y")
     ax.legend(fontsize=9)

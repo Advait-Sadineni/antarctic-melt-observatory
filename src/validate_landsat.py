@@ -156,9 +156,10 @@ def _warp_to_aoi(href, ref_item, resampling):
 
 
 def landsat_scene(scene_dir, scene_name, ref_item):
-    """Green, NIR, SWIR as TOA reflectance plus a validity mask."""
+    """Green, NIR, red, SWIR as TOA reflectance plus a validity mask."""
     mtl = read_mtl(scene_dir, scene_name)
     green = landsat_toa(scene_dir, scene_name, "B3", mtl, ref_item)
+    red = landsat_toa(scene_dir, scene_name, "B4", mtl, ref_item)
     nir = landsat_toa(scene_dir, scene_name, "B5", mtl, ref_item)
     swir = landsat_toa(scene_dir, scene_name, "B6", mtl, ref_item)
 
@@ -170,23 +171,42 @@ def landsat_scene(scene_dir, scene_name, ref_item):
     bad |= ((bqa >> BQA_CIRRUS_CONF) & 3) == 3
 
     valid = np.isfinite(green) & np.isfinite(nir) & ~bad
-    return green, nir, swir, valid
+    return green, nir, red, swir, valid
 
 
 # --- Shared detection --------------------------------------------------------
 
-def detect_reflectance(green, nir, swir, valid):
-    """The pipeline's detector, expressed in reflectance so it is sensor-neutral."""
+def detect_reflectance(green, nir, swir, valid, red=None):
+    """The transferable core of the detector: NDWI threshold + hysteresis.
+
+    The shadow test is deliberately NOT applied here. Its 0.09 green-minus-red
+    threshold is calibrated on Sentinel-2 bottom-of-atmosphere reflectance, and
+    Landsat is only available as top-of-atmosphere over ice (L2 surface
+    reflectance is invalid there). Atmospheric haze compresses green-minus-red
+    at TOA, so the same absolute cutoff rejects almost all real water on the
+    Landsat side - it does not transfer across processing levels. The shadow
+    test is instead validated by the blind reference points; this cross-sensor
+    check validates the NDWI + hysteresis core, which does transfer because
+    NDWI is a normalised ratio. ``red`` is accepted but unused, kept so both
+    call sites pass the same arguments.
+    """
+    from scipy import ndimage
+
     with np.errstate(invalid="ignore", divide="ignore"):
         ndwi = np.where(valid, (green - nir) / np.maximum(green + nir, 1e-6), np.nan)
         ndsi = np.where(valid, (green - swir) / np.maximum(green + swir, 1e-6), np.nan)
+    ndwi0 = np.nan_to_num(ndwi, nan=-9)
 
-    ponds = (np.nan_to_num(ndwi, nan=-9) > melt.NDWI_THRESHOLD)
-    ponds &= valid & (np.nan_to_num(green, nan=0) > BRIGHTNESS_FLOOR_REFL)
+    ok = valid & (np.nan_to_num(green, nan=0) > BRIGHTNESS_FLOOR_REFL)
+    core = ok & (ndwi0 > melt.NDWI_THRESHOLD)
+    grow = ok & (ndwi0 > melt.GROW_THRESHOLD)
+    labels, ncc = ndimage.label(grow)
+    keep = np.zeros(ncc + 1, bool)
+    keep[np.unique(labels[core])] = True
+    keep[0] = False
+    ponds = keep[labels]
 
     # Same cloud-halo logic as the pipeline, at native resolution here.
-    from scipy import ndimage
-
     low = valid & (np.nan_to_num(ndsi, nan=1.0) < melt.NDSI_ICE_MIN)
     px = int(round(melt.CLOUD_HALO_KM * 1000 / melt.PIXEL_M))
     # Dilate on a decimated grid; a 100-pixel structuring element is ruinous.
@@ -199,9 +219,10 @@ def detect_reflectance(green, nir, swir, valid):
 
 
 def s2_scene(item):
-    bands = melt.load_scene(item, bands=("green", "nir"))
+    bands = melt.load_scene(item, bands=("green", "nir", "red"))
     green = bands["green"] * S2_SCALE
     nir = bands["nir"] * S2_SCALE
+    red = bands["red"] * S2_SCALE
     swir = melt.read_coarse(item, "swir16")
     off = melt.boa_offset(item)
     swir = np.where(swir > 0, (swir + off) * S2_SCALE, np.nan)
@@ -210,7 +231,7 @@ def s2_scene(item):
 
     valid = (bands["green"] > 0) & (bands["nir"] > 0)
     valid &= ~melt.reject_mask(item)
-    return green, nir, swir, valid
+    return green, nir, red, swir, valid
 
 
 # --- Pairing and comparison --------------------------------------------------
@@ -281,11 +302,11 @@ def compare(row, ls_item):
     if scene_dir is None:
         return None, "no Collection-1 scene on GCS"
 
-    lg, ln, lsw, lv = landsat_scene(scene_dir, scene_name, s2_item)
-    ls_ponds, lv = detect_reflectance(lg, ln, lsw, lv)
+    lg, ln, lr, lsw, lv = landsat_scene(scene_dir, scene_name, s2_item)
+    ls_ponds, lv = detect_reflectance(lg, ln, lsw, lv, red=lr)
 
-    sg, sn, ssw, sv = s2_scene(s2_item)
-    s2_ponds, sv = detect_reflectance(sg, sn, ssw, sv)
+    sg, sn, sr, ssw, sv = s2_scene(s2_item)
+    s2_ponds, sv = detect_reflectance(sg, sn, ssw, sv, red=sr)
 
     both = sv & lv
     if both.mean() < MIN_SHARED_FRAC:
@@ -299,12 +320,22 @@ def compare(row, ls_item):
     # test: at 10 m the two sensors are not measuring the same quantity,
     # because a 10 m channel is a sub-pixel mixture to Landsat and its NDWI is
     # diluted below threshold no matter how good either instrument is.
+    from scipy import ndimage
+
     sg3, sn3 = _block_mean(np.where(sv, sg, np.nan)), _block_mean(np.where(sv, sn, np.nan))
     v3 = np.isfinite(sg3) & np.isfinite(sn3)
     with np.errstate(invalid="ignore"):
         ndwi3 = (sg3 - sn3) / np.maximum(sg3 + sn3, 1e-6)
-    a3 = (np.nan_to_num(ndwi3, nan=-9) > melt.NDWI_THRESHOLD) & v3
-    a3 &= np.nan_to_num(sg3, nan=0) > BRIGHTNESS_FLOOR_REFL
+    ndwi3 = np.nan_to_num(ndwi3, nan=-9)
+    # Shadow test omitted here too - see detect_reflectance for why.
+    ok3 = v3 & (np.nan_to_num(sg3, nan=0) > BRIGHTNESS_FLOOR_REFL)
+    core3 = ok3 & (ndwi3 > melt.NDWI_THRESHOLD)
+    grow3 = ok3 & (ndwi3 > melt.GROW_THRESHOLD)
+    lab3, ncc3 = ndimage.label(grow3)
+    keep3 = np.zeros(ncc3 + 1, bool)
+    keep3[np.unique(lab3[core3])] = True
+    keep3[0] = False
+    a3 = keep3[lab3]
     both3 = _block_any(both) & v3
     a3, b3 = a3 & both3, _block_any(ls_ponds) & both3
     inter3, union3 = int((a3 & b3).sum()), int((a3 | b3).sum())
@@ -388,20 +419,23 @@ def main():
     best = [i for i, r in enumerate(results)
             if r["day_gap"] == 0 and r["shared_frac"] >= 0.8]
 
+    # IoU and ratio are NaN where a pair has no melt on either sensor (0/0);
+    # nanmedian excludes those so the statistic reflects real melt comparisons.
     print(f"\n  pairs compared              {len(results)}")
-    print(f"  median IoU, native res      {np.median(iou_n):.3f}")
-    print(f"  median IoU, matched 30 m    {np.median(iou_m):.3f}")
-    print(f"  median agreement within 1px {np.median(tol):.3f}")
-    print(f"  median LS/S2 area @30 m     {np.median(ratio):.2f}")
+    print(f"  median IoU, native res      {np.nanmedian(iou_n):.3f}")
+    print(f"  median IoU, matched 30 m    {np.nanmedian(iou_m):.3f}")
+    print(f"  median agreement within 1px {np.nanmedian(tol):.3f}")
+    print(f"  median LS/S2 area @30 m     {np.nanmedian(ratio):.2f}")
     if len(s2) > 2:
         print(f"  Pearson r (areas)           {np.corrcoef(s2, ls)[0, 1]:.3f}")
         rk = lambda v: np.argsort(np.argsort(v))
         print(f"  Spearman (rank)             {np.corrcoef(rk(s2), rk(ls))[0, 1]:.3f}")
     if best:
+        bi = np.array(best)
         print(f"\n  same-day pairs with >=80% shared ground: {len(best)}")
-        print(f"    median IoU matched        {np.median(iou_m[best]):.3f}")
-        print(f"    median within-1px         {np.median(tol[best]):.3f}")
-        print(f"    median LS/S2 area         {np.median(ratio[best]):.2f}")
+        print(f"    median IoU matched        {np.nanmedian(iou_m[bi]):.3f}")
+        print(f"    median within-1px         {np.nanmedian(tol[bi]):.3f}")
+        print(f"    median LS/S2 area         {np.nanmedian(ratio[bi]):.2f}")
 
     fig, (ax, ax2) = plt.subplots(1, 2, figsize=(14, 5.8))
     lim = float(max(s2.max(), ls.max())) * 1.15 or 1.0

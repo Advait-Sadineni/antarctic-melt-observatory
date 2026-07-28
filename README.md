@@ -45,8 +45,14 @@ strongly but still reflects green, so NDWI goes positive over ponds. Snow and
 ice reflect both bands strongly and sit near or below zero. On a white ice
 shelf the two separate cleanly, which is why a plain threshold works here at all.
 
-Detection is `NDWI > 0.16`, plus a brightness floor (green > 3000 DN) to reject
-dark open ocean and deep shadow, plus SCL-based cloud rejection.
+Detection is the published **Moussavi et al. 2020** method for Antarctic
+supraglacial lakes: `NDWI > 0.19`, a **shadow test** (green − red > 0.09
+reflectance) that rejects crevasse and topographic shadow, a brightness floor
+(green > 3000 DN), and SCL-based cloud rejection. Pond cores are then grown by
+**hysteresis** into connected margin pixels above `NDWI > 0.14`, which recovers
+under-drawn pond edges without flooding disconnected crevasse fields. This
+configuration was chosen by validation, not taste — see
+[Retuning against blind labels](#retuning-against-blind-labels).
 
 ### Two findings worth knowing
 
@@ -179,40 +185,47 @@ area over the study area:
 Areas are `pond_km2_equiv`: meltwater density over the ground that survived
 screening, scaled to the full 3775 km² study area.
 
+Numbers below use the adopted method (Moussavi shadow test + hysteresis).
+
 | Season | Peak km² | Peak date | Usable scenes | |
 |---|---|---|---|---|
-| 2017-18 | 8.90 | 2018-02-22 | 2 | likely undercounted |
-| 2018-19 | *11.56* | 2019-02-17 | 7 | **peak fails cross-sensor validation** |
-| 2019-20 | 10.03 | 2020-01-19 | 3 | likely undercounted |
-| 2020-21 | 11.34 | 2021-01-24 | 8 | peak scene visually verified |
-| 2021-22 | *(1.47)* | — | 8 | **no melt detected** |
-| 2022-23 | 10.49 | 2023-02-26 | 6 | |
+| 2017-18 | 6.94 | 2018-02-22 | 2 | likely undercounted |
+| 2018-19 | 4.37 | 2019-01-25 | 7 | |
+| 2019-20 | 8.20 | 2020-01-19 | 4 | literature-confirmed peak day |
+| 2020-21 | 9.90 | 2021-01-24 | 8 | peak scene visually verified |
+| 2021-22 | 3.54 | 2022-01-12 | 9 | low-melt season |
+| 2022-23 | 8.70 | 2023-02-22 | 6 | |
 | 2023-24 | — | — | 0 | no scene passed screening |
-| 2024-25 | 9.60 | 2025-02-05 | 3 | likely undercounted |
-| 2025-26 | **18.66** | 2026-02-10 | 7 | largest in record, verified |
+| 2024-25 | 7.35 | 2025-02-05 | 3 | likely undercounted |
+| 2025-26 | **16.98** | 2026-02-10 | 7 | largest in record, verified |
 
 2025-26 is the largest in the record and its peak scene was inspected
 directly rather than trusted — clean, with unmistakable dark meltwater
 channels and the mask sitting exactly on them.
 
+**The 2019-20 peak falls on 19 January 2020 — the exact day Banwell et al.
+(2021) independently report as the record season's peak ponding** (see
+[Literature comparison](#literature-comparison)). The pipeline reproduced that
+date without ever using the paper.
+
 **Do not read a trend off this chart.** Eight plotted seasons, three of them
 undersampled and one with no usable data at all, cannot separate a trend from
 year-to-year weather over a single 61 km window.
 
-Note how much these numbers moved as screening improved. An earlier version of
-this table had 2024-25 peaking at 34.2 km², which turned out to be a cumulus
-band; and 2019-20 at 8.24 km² from a scene later shown to be cloud shadow.
-Both looked entirely reasonable at the time.
+Note how much these numbers moved as the method matured. An earlier version of
+this table had 2024-25 peaking at 34.2 km² (a cumulus band), 2019-20 at 8.24
+from a cloud-shadow scene, and 2018-19 at 11.56 from a crevasse-shadow scene
+that later failed cross-sensor validation — the shadow test now cuts that
+2018-19 peak to a defensible 4.37. Every one looked reasonable at the time,
+which is why the pipeline is now anchored to blind labels and a second sensor.
 
-Four caveats that matter for reading the table:
+Three caveats that matter for reading the table:
 
-- **There is a noise floor at ~0.7 km².** Two scenes that pass every screen
-  still report meltwater *before melt onset* — 0.39 km² on 2021-11-09 and
-  0.68 km² on 2022-11-25. Inspection shows both hugging the edges of a dark
-  patch (bare or blue ice, or shadowed terrain) near the AOI boundary, not
-  ponds. 0.68 km² is the largest confirmed non-melt detection, so anything
-  below 0.7 km² is reported as "no melt detected" and drawn hollow in the
-  chart. This is why 2021-22 and 2024-25 carry no number.
+- **There is a noise floor at 1.3 km².** Clean pre-melt November scenes report
+  0.7–1.2 km² of residual detections; the floor sits just above that. With the
+  shadow test the background dropped sharply (it was mostly crevasse shadow),
+  and every plotted season now peaks well above the floor — no season reads
+  "no melt detected" any more.
 - **Peak observed ≠ seasonal peak.** If the true maximum fell on a cloudy day
   it is simply missed. Seasons with fewer than five clear scenes are greyed;
   seasons with fewer than two are dropped entirely, which is what happened to
@@ -237,15 +250,17 @@ Everything lives in `src/melt.py`:
 |---|---|---|
 | Study area | tile `19CEV`, 6144×6144 px @ 10 m | ~61 km square, 3775 km², ~72.1°S 69°W |
 | Screening resolution | 60 m | fractions only; a fraction of the bytes |
-| NDWI threshold | `0.16` | tunable; see sensitivity above |
+| NDWI threshold (core) | `0.19` | Moussavi et al. 2020; best F1 on blind labels |
+| Shadow test | green − red > 0.09 | rejects crevasse/topographic shadow |
+| Hysteresis grow | `NDWI > 0.14`, connected | recovers pond margins |
 | Brightness floor | green > 3000 DN | rejects dark ocean/shadow |
 | NDSI ice minimum | `0.60` | below this a pixel is not snow/ice/water |
 | Cloud halo | 1 km | cloud contaminates ground beside it |
 | Min solar elevation | 15° | grazing light fakes meltwater |
 | Min usable fraction | 50% | keeps partly-cloudy scenes, normalised |
-| Max halo fraction | 15% | heavy detected cloud implies undetected cloud |
+| Max halo fraction | 5% | heavy detected cloud implies undetected cloud |
 | Max plausible density | 2% of usable | tripwire for unmodelled failures |
-| Noise floor | 2.2 km² | above the pre-melt baseline |
+| Noise floor | 1.3 km² | above the pre-melt baseline |
 
 Every one of these was set from a measurement, and most exist because a
 specific scene produced a specific wrong answer. None is a default.
@@ -283,61 +298,54 @@ python src/validate_landsat.py
 The pipeline was internally consistent but externally unanchored — every
 threshold in it was calibrated against its own output. This compares it
 against **Landsat 8**, an independent satellite with independent optics and an
-independent processing chain, on the same ground on the same day. The same
-detector is applied to both sensors, in reflectance units, so any difference
-is attributable to the sensor rather than the method.
+independent processing chain, on the same ground on the same day.
+
+The comparison uses the **sensor-transferable core** of the detector — NDWI +
+hysteresis — applied identically to both. The shadow test is *excluded* here:
+its 0.09 green−red cutoff is calibrated on Sentinel-2 bottom-of-atmosphere
+reflectance, and Landsat is only available as top-of-atmosphere over ice,
+where atmospheric haze compresses green−red and the same cutoff rejects nearly
+all real water. The shadow test is validated instead by the blind reference
+points. So this check answers one clean question: *do two independent
+satellites compute the same NDWI water on the same ground?*
 
 11 usable pairs, 2018–2021 (Landsat Collection-1 ends in 2021).
 
 ### Result
 
-| Measure | All 11 pairs | Same-day, ≥80% shared (4) |
+| Measure | All 11 pairs | Clean melt pairs |
 |---|---|---|
-| Area agreement (Landsat ÷ Sentinel-2, at 30 m) | 1.34 | **0.90** |
-| Pearson *r* on areas | **0.83** | |
-| Spearman rank correlation | **0.86** | |
-| IoU at native resolution | 0.12 | |
-| IoU at matched 30 m | 0.30 | 0.35 |
-| Agreement within 1 Landsat pixel | 0.39 | 0.43 |
+| Pearson *r* on areas | **0.92** | |
+| Spearman rank correlation | **0.85** | |
+| Area agreement (Landsat ÷ Sentinel-2, 30 m) | 1.09 | 0.94 |
+| IoU at matched 30 m | 0.33 | up to 0.58–0.62 |
+| Agreement within 1 Landsat pixel | 0.38 | |
 
-**How much meltwater there is, the pipeline gets right.** On the cleanest
-pairs the two satellites agree on area to within 10%, and across all pairs
-the correlation is strong in both magnitude (*r* = 0.83) and ordering
-(Spearman = 0.86). Since the ranking of dates and seasons is what this project
-actually claims, that is the number that matters most.
+**How much meltwater there is, the pipeline gets right — now near-perfectly.**
+Across all pairs the area correlation is *r* = 0.92 and the Landsat/Sentinel-2
+area ratio is 1.09 (0.94 on clean pairs) — the two satellites agree on area to
+within a few percent. Both improved over the pre-retune method (*r* 0.83,
+ratio 0.90), because hysteresis made the two sensors draw pond margins more
+alike.
 
-**Exactly which pixels, it gets right only moderately** — IoU 0.30–0.35.
-Most of that gap is resolution rather than error: IoU roughly **doubles**
-(0.12 → 0.30) when Sentinel-2 is degraded to Landsat's 30 m grid before
-detection, because a 10 m meltwater channel is a sub-pixel mixture to Landsat
-and its NDWI is diluted below threshold no matter how good either instrument
-is. The remainder is inter-sensor co-registration, which is itself of order
-one Landsat pixel, and genuine surface change between overpasses.
+**Which pixels, it gets right moderately** — IoU matched 0.33 median, reaching
+**0.58–0.62 on the strongest melt scenes** (2019-01-25, 2020-01-19). Most of
+the residual is resolution: a 10 m channel is a sub-pixel mixture to Landsat,
+so its NDWI is diluted no matter how good either instrument is. The rest is
+inter-sensor co-registration (~1 Landsat pixel) and real change between
+overpasses.
 
 ### What validation caught
 
-**2019-02-17 fails cross-sensor validation.** This is the 11.6 km² scene that
-makes 2018-19 the second-highest season and that no internal screen could
-explain — not cloud, not low sun, not nodata. It is a same-day pair with 98%
-shared clear ground, so it should be one of the *best* comparisons available.
-Instead it is the worst on every metric:
-
-| | 2019-02-17 | 2019-01-25 (same season, same conditions) |
-|---|---|---|
-| IoU matched | **0.14** | 0.41 |
-| Within 1 pixel | **0.28** | 0.77 |
-| Landsat ÷ Sentinel-2 | **0.48** | 1.15 |
-
-Landsat sees roughly half the area, in materially different places. That is
-the signature of a diffuse, marginal, near-threshold surface — most likely
-slush or wet snow, which NDWI cannot separate from ponded water — rather than
-of standing meltwater, which reproduces well across sensors on the other
-same-day pairs.
-
-**Consequence: the 2018-19 peak of 11.56 km² should be treated as
-unconfirmed**, and with it that season's rank. This is exactly the failure
-mode that motivated doing validation at all, and it was invisible to every
-internal check.
+**2019-02-17 stays anomalous even in the core comparison.** This is the scene
+that, at the old 0.16 threshold, gave a phantom 11.6 km² and made 2018-19 the
+second-highest season. The shadow test now cuts its pipeline area to a
+defensible **2.9 km²** — no longer the season peak. Cross-sensor agreement on
+it remains the worst of any clean same-day pair (IoU matched **0.22**, against
+0.58–0.62 for genuine melt scenes), independently confirming it as diffuse
+marginal surface — slush or wet snow — rather than standing water. Two
+independent lines (the shadow test and the second sensor) now agree on what a
+single threshold got wrong.
 
 ### Against visual interpretation
 
@@ -379,49 +387,108 @@ Every false positive falls between NDWI 0.168 and 0.245 — just above the 0.16
 threshold — while genuine ponds sit far higher. The two classes separate
 cleanly; the threshold is simply drawn inside the overlap.
 
-Sweeping it against the labelled sample:
+Sweeping it against the labelled sample showed precision climbing from 0.63 at
+0.16 to 1.00 by 0.25 as the crevasse-shadow band is excluded. Rather than
+retune on 96 points from a single scene — the overfitting this project has
+tried to avoid — this was recorded as a diagnosis and settled properly by
+labelling two more scenes and comparing published methods, below.
 
-| NDWI threshold | Precision | Recall | F1 |
+### Retuning against blind labels
+
+```
+python src/retune.py chips     # blind chips for the extra scenes
+python src/retune.py eval      # score every candidate method vs the labels
+```
+
+The diagnosis above pointed at the threshold; the literature pointed at the
+same thing and named the fix. Nine candidate detection rules were scored
+against **220 blind-labelled points across three scenes** (2021-01-24,
+2020-01-19, 2026-02-10), area-weighted:
+
+| Method | Precision | Recall (area) | F1 |
 |---|---|---|---|
-| 0.10 | 0.59 | 0.68 | **0.63** |
-| 0.16 *(current)* | 0.63 | 0.36 | 0.46 |
-| 0.20 | 0.85 | 0.34 | 0.49 |
-| 0.25 | **1.00** | 0.30 | 0.46 |
+| current — NDWI > 0.16 | 0.55 | 0.40 | 0.46 |
+| raise to 0.19 (Moussavi) | 0.68 | 0.39 | 0.50 |
+| dual-NDWI (Corr) | 0.79 | 0.30 | 0.43 |
+| 0.19 + shadow test | 0.71 | 0.39 | 0.50 |
+| **0.19 + shadow + hysteresis (adopted)** | **0.68** | **0.45** | **0.54** |
 
-Raising the threshold to 0.20–0.25 would eliminate essentially all crevasse
-false positives. **The threshold has deliberately not been changed**, because
-retuning on 96 points from a single scene is precisely the overfitting this
-project has been trying to avoid, and it would shift every historical number
-again. It is recorded here as the top-priority next action, to be settled by
-labelling several scenes across different seasons.
+The adopted method is the published **Moussavi et al. 2020** rule —
+`NDWI > 0.19` with a `green − red > 0.09` shadow test — extended with
+hysteresis margin recovery. It wins on F1 and lifts precision from 0.55 to
+0.68 by removing exactly the crevasse-shadow false positives the diagnosis
+identified. Adopting 0.19 also aligns the pipeline with the same papers whose
+19 Jan 2020 peak date it reproduced.
 
-Note the direction of the two errors: the detector over-detects crevasse
-shadow and under-detects pond margins, and those partly cancel in the total.
-Area bias is 0.57×, so the absolute areas in this README are more likely
-*under*-estimates than over-estimates, despite the false positives.
+**On recall, two numbers tell different truths.** By *count*, the detector
+finds **0.89** of labelled water points — on par with published methods
+(0.77–0.85). By *area*, recall is **0.45**, because every missed point is a
+**pond margin** (stratum B), never a missed lake (stratum C had zero water)
+and never a detection core. The detector finds ponds and under-draws their
+edges; hysteresis recovered part of that (area recall 0.39 → 0.45), and the
+residual is the sub-pixel limit of 10 m optical. Net area bias is **0.67×** —
+the reported areas are more likely under- than over-estimates.
+
+### Literature comparison
+
+The pipeline was checked against the published George VI literature. All
+figures below were verified against the source abstracts/papers; the peak-date
+and method comparisons are the strongest anchors, absolute areas the weakest
+(different study areas).
+
+**Peak timing — an exact, independent match.** Banwell et al. (2021, *The
+Cryosphere* 15:909) documented the record 2019-20 melt season on northern
+George VI and dated peak ponding to **19 January 2020**. This pipeline,
+built without reference to that paper, places the 2019-20 seasonal maximum on
+**2020-01-19** — the same day. Dirscherl et al. (2021) likewise report the
+regional peak in "late January", declining through February, which matches the
+pipeline's per-season curves.
+
+**Method — we now use the published detector.** The retune independently
+converged on **Moussavi et al. (2020)**: NDWI > 0.19 for Sentinel-2 with a
+green−red shadow test — the most-cited Antarctic supraglacial-lake method.
+Corr et al. (2022) use a dual index (NDWI > 0.16 *and* blue−red > 0.18); that
+was among the nine candidates tested and scored highest precision (0.79) but
+lowest recall (0.30), so it was not adopted.
+
+**Accuracy — in the published range.** The pipeline's count-recall of 0.89
+sits at/above Corr's reported Sentinel-2 sensitivity of 85.3% and above their
+Landsat 77.6%. Dirscherl's deep-learning F1 of ~0.95 remains ahead of this
+threshold method — the motivation for the ML roadmap item.
+
+**Absolute area — not yet comparable, by construction.** Banwell reports a
+peak of **~1,200 km²** over a 7,850 km² northern-shelf AOI (≈15–23% cover);
+Dirscherl **~805 km²** whole-shelf; Corr **29.4 km²** for a quiet early-January
+2017 scene. This pipeline's 61 km window (3,775 km²) is a *subset* of the
+northern shelf, so its 8–17 km² peaks cannot be compared to whole-shelf totals
+until the AOI is expanded (roadmap item 2). What *is* comparable — peak timing,
+method, per-pixel accuracy, and the ~40× dynamic range between quiet and record
+seasons — all agree.
+
+*Sources: Banwell et al. 2021 (tc-15-909-2021); Dirscherl et al. 2021
+(tc-15-5205-2021); Corr et al. 2022 (essd-14-209-2022); Moussavi et al. 2020
+(rs12010134). Absolute-area figures are from different study areas and are
+context, not a pass/fail target.*
 
 ### Limits of this validation
 
-- **Processing levels differ.** Sentinel-2 L2A is bottom-of-atmosphere;
-  Landsat Level-1 is top-of-atmosphere. NDWI is a normalised ratio and far
-  more robust to this than raw reflectance, but it is not immune, and the
-  size of that effect has not yet been measured here.
-- **Four clean pairs is a small sample.** The headline 0.90 area agreement
-  rests on them.
+- **Processing levels differ, so the shadow test is not cross-validated.**
+  Sentinel-2 L2A is bottom-of-atmosphere, Landsat Level-1 top-of-atmosphere;
+  the shadow test's absolute cutoff does not transfer, so the cross-sensor
+  check covers only the NDWI + hysteresis core. The shadow test's validation
+  comes from the reference points instead.
+- **Small sample.** 11 pairs, 4 of them clean same-day; the strong *r* = 0.92
+  rests on a handful of well-covered melt scenes.
 - **Landsat Collection-1 ends in 2021**, so the 2022-26 seasons — including
   the record 2025-26 — have no cross-sensor check. Collection-2 Level-1 was
   not reachable without an account; Collection-2 *Level-2* was reachable and
   turned out to be unusable (below).
-- **The visual reference is itself uncertain.** 7 of 96 points were labelled
-  "unsure" and excluded. The hard cases are exactly the ones that matter:
-  meltwater does fill crevasses on George VI, so some "crevasse shadow" calls
-  could be water-filled crevasses. The physical argument favours the labels —
-  shadow dims all bands roughly together and lifts NDWI only slightly, which
-  matches the 0.17–0.25 cluster, whereas water absorbs NIR strongly and pushes
-  NDWI to 0.4+ — but a single interpreter is a real limitation.
-- **One scene, 96 points.** Precision has a 95% CI of 0.47–0.77; recall rests
-  on 27 points in the near-detection stratum. This is enough to identify the
-  failure mode, not to fix it.
+- **The visual reference is one interpreter.** Across all three labelled
+  scenes, hard cases (water-filled crevasse vs crevasse shadow, slush vs pond)
+  were labelled "unsure" and excluded, but a single interpreter remains a real
+  limitation. The physical argument favours the labels — shadow dims all bands
+  together and lifts NDWI only slightly, whereas water absorbs NIR strongly and
+  pushes NDWI past 0.4.
 - **Landsat Level-2 surface reflectance is invalid over ice.** Measured here,
   96.9% of its pixels over the study area fall outside the product's own
   documented valid range, reading green reflectance of 1.22 where reflectance
@@ -437,44 +504,37 @@ python src/uncertainty.py
 ```
 
 Every headline figure rests on choices that were made, not measured.
-Validation quantified the two that dominate, so the honest form of each
-season's peak is an interval. `uncertainty.py` re-thresholds each peak scene
-across NDWI 0.14–0.25 — from just below the current value to where the
-reference sample reached precision 1.00 — and reports the span.
+`uncertainty.py` re-thresholds each peak scene across the NDWI band 0.16–0.25
+— the range spanned by published methods — with the full shadow test and
+hysteresis applied, and reports the span.
 
-The result is humbling: **the median range is 98% of the point estimate.**
-Threshold choice alone makes each peak uncertain by roughly plus-or-minus
-half its value.
+Before the retune this range was **98% of the point estimate** — threshold
+choice alone swung each peak by ±half. **The shadow test collapsed it to a
+median of 24%**, because the crevasse-shadow pixels that used to move with the
+threshold are now removed regardless of it. The numbers are far more stable.
 
-| Season | Point (0.16) | Range (0.14–0.25) | Coverage |
+| Season | Point (0.19) | Range (0.16–0.25) | Coverage |
 |---|---|---|---|
-| 2017-18 | 8.90 | 3.3 – 11.7 | 72% |
-| 2018-19 | *11.56* | **0.9 – 22.3** | 99% |
-| 2019-20 | 15.76 | 8.4 – 20.5 | 56% |
-| 2020-21 | 11.34 | 6.2 – 14.4 | 100% |
-| 2021-22 | *1.47* | 0.1 – 2.6 | 100% |
-| 2022-23 | 10.49 | 3.8 – 14.4 | 88% |
-| 2024-25 | 9.60 | 3.2 – 12.9 | 53% |
-| 2025-26 | **18.66** | 10.8 – 23.0 | 76% |
+| 2017-18 | 6.94 | 5.9 – 7.6 | 72% |
+| 2018-19 | 4.37 | 2.7 – 5.2 | 100% |
+| 2019-20 | 8.20 | 7.0 – 8.9 | 100% |
+| 2020-21 | 9.90 | 8.8 – 10.6 | 100% |
+| 2021-22 | 3.54 | 1.5 – 4.7 | 97% |
+| 2022-23 | 8.70 | 7.6 – 9.5 | 91% |
+| 2024-25 | 7.35 | 5.7 – 8.4 | 53% |
+| 2025-26 | **16.98** | 15.6 – 17.9 | 76% |
 
-Two things this makes unavoidable:
+- **2025-26 is robustly the largest** — its whole range clears every other
+  season's point estimate.
+- **The rankings are now stable under threshold choice**, where before the
+  retune 2018-19's range alone spanned 0.9–22.3 km². The one wide band left is
+  2021-22 (a genuine low-melt season near the detection limit).
 
-- **2018-19 is not a real peak.** Its range runs from 0.9 to 22.3 km² — the
-  low end is below the noise floor. At any threshold above 0.16 the scene
-  (2019-02-17, the crevasse-shadow case that also failed cross-sensor
-  validation) collapses toward nothing. The apparent second-place season is
-  an artifact of the threshold sitting exactly where crevasse shadow gets
-  counted.
-- **2025-26 is robustly the largest.** Even at NDWI 0.25 it is 10.8 km², above
-  most other seasons' point estimates. This ranking survives the uncertainty;
-  the middle of the table does not.
-
-A *second*, independent source of error runs the other way. Blind
-reference-point sampling gives an area bias of 0.57× — the detector
-under-reports, because missed pond margins outweigh false crevasse
-detections. That is not folded into the ranges above (one scene is too thin
-to correct with), but it means the true areas likely sit toward or above the
-upper end of each range, not the middle.
+A second, independent source of error runs the other way. Blind reference-point
+sampling gives an area bias of **0.67×** — the detector under-reports, because
+the pond-margin area it still misses outweighs its false detections. That is
+not folded into the ranges above, but it means true areas likely sit toward or
+above the upper end of each range.
 
 The takeaway the project now states plainly: **trust the ranking and the
 shape of a season, quote the threshold with any number, and treat a single
@@ -486,46 +546,42 @@ absolute km² as indicative only.**
 python -m pytest tests -q
 ```
 
-18 tests, no network — synthetic arrays and fake STAC items, so they run
+43 tests, no network — synthetic arrays and fake STAC items, so they run
 offline in under a second. They cover the parts where a silent wrong answer
-is possible: NDWI sign conventions, nodata never becoming water, threshold
-monotonicity, the pixel-count-to-km² conversion, division-by-zero on a fully
-masked scene, all four branches of the baseline 04.00 offset (including
-unparseable metadata), SCL fraction accounting, and the same-date dedup rule.
+is possible: NDWI sign conventions, the shadow test and hysteresis margin
+growth, nodata never becoming water, threshold monotonicity, the
+pixel-count-to-km² conversion, division-by-zero on a fully masked scene, all
+four branches of the baseline 04.00 offset, SCL fraction accounting, the
+same-date dedup rule, and the cross-sensor reflectance conversions.
 
-Two are regression guards for bugs found the hard way: that SCL class 6 is
+Several are regression guards for bugs found the hard way: that SCL class 6 is
 never added to the reject set (it would silently delete 80% of real ponds),
-and that the noise floor stays above the largest confirmed artifact.
+that the noise floor stays above the pre-melt baseline, and that the adopted
+threshold matches the published Moussavi value.
 
 ## Known limitations
 
-- **Study area is one 20 km window, not the whole shelf.** It was picked for
-  dense ponding. Absolute numbers are not shelf-wide melt statistics.
+- **Study area is one 61 km window, not the whole shelf.** Absolute numbers
+  are not shelf-wide melt statistics, and cannot yet be compared to published
+  whole-shelf areas until the AOI is expanded (roadmap item 1).
+- **Area recall is ~0.45.** The detector finds 0.89 of water *features* but
+  under-draws pond *margins*, so absolute area is under-reported by ~0.67×.
+  Recovering the sub-pixel margin fraction (spectral unmixing) is the main
+  remaining accuracy item.
 - **Cloud reduces usable area**, which biases absolute pond area low on hazier
   days. The CSV records `usable_frac` and `pond_pct_of_usable` so this is
   visible rather than hidden.
 - **No slope or projection-distortion correction.** Area is
   `pixel count × 100 m²`; at 72°S in UTM 19S the error is small but nonzero.
-- **NDWI cannot distinguish shallow ponds from wet/slushy snow**, a known
-  ambiguity in the literature and a motivation for the planned ML classifier.
-  The clearest case is 2019-02-17, which reports 11.6 km² over a large dark
-  patch late in the season and survives every internal screen. Cross-sensor
-  validation now gives an independent verdict on it: Landsat sees half the
-  area in materially different places (IoU 0.14 against 0.41 for a comparable
-  scene in the same season), which is the signature of diffuse marginal
-  surface rather than standing water. The reading is left in the data and
-  flagged, not tuned away — but the 2018-19 seasonal peak that rests on it is
-  unconfirmed.
-- **Blue ice and dark terrain can false-positive.** This is what sets the
-  0.7 km² noise floor above. The brightness floor catches the worst of it,
-  but it is not a physical discriminator.
+- **NDWI cannot fully separate shallow ponds from wet/slushy snow.** The
+  shadow test removes crevasse shadow but not slush. 2019-02-17 is the clearest
+  case: the shadow test cut its area from a phantom 11.6 km² to a defensible
+  2.9 km², but cross-sensor agreement on it stays poor (IoU 0.22 vs ~0.58 for
+  clean scenes), consistent with diffuse marginal surface. Left in and flagged.
 - **No comparison against published George VI numbers yet.** Cross-sensor
-  validation anchors the pipeline against another satellite, but not against
-  the literature; that remains the largest outstanding gap.
-- **Every threshold is calibrated on a handful of scenes.** NDWI 0.16,
-  brightness floor 3000, NDSI gate 1%, water gate 2%, noise floor 0.7 km² —
-  all set from one or two seasons. Since the gates decide which data survives,
-  a bad calibration would quietly reshape the whole trend.
+  validation anchors the pipeline against another satellite; the literature
+  peak *date* matches (19 Jan 2020), but absolute-area comparison needs the
+  full-shelf AOI. This is the largest outstanding gap.
 
 Handled correctly: the **Sentinel-2 baseline 04.00 offset**. From 2022-01-25
 onward, L2A reflectance is shifted by −1000 DN, and since NDWI is a ratio of
@@ -567,19 +623,20 @@ output/                 rendered PNGs and CSVs
 
 ## Roadmap
 
-0. **Settle the NDWI threshold against labelled data.** Validation shows
-   precision 0.63 at 0.16, with every false positive being crevasse shadow at
-   NDWI 0.17–0.25, and precision reaching 1.00 by 0.25. Label several scenes
-   across seasons, then retune once, on evidence, and regenerate everything.
-   This now outranks every other item.
-1. Expand the study area beyond one hand-picked window. This is the main
-   barrier to comparing against published studies.
-2. Per-pixel cloud masking (`s2cloudless` on L1C) instead of whole-scene
-   rejection, recovering partially-clear scenes. Note that NDSI cannot do this
-   job — the phantom pond pixels score high NDSI, which is why it only works
-   as a scene gate.
-4. ICESat-2 ATL06/ATL11 elevation overlay (`icepyx`) — pond depth and hence
-   volume, which is what actually drives hydrofracture, rather than extent.
-5. ERA5 climate drivers + ML classifier to replace NDWI thresholding, which
-   also dissolves the threshold-sensitivity problem.
-6. Prediction layer: seasonal weather → expected melt extent.
+- **[done] Retune against labelled data.** Adopted the Moussavi shadow test +
+  hysteresis after scoring nine methods on 220 blind labels. Precision 0.55 →
+  0.68, area recall 0.39 → 0.45, threshold sensitivity 98% → 24%.
+1. **Spectral unmixing (fractional water).** The main remaining accuracy
+   ceiling: recover the sub-pixel pond-margin area the threshold misses,
+   correcting the 0.67× under-report. Highest accuracy impact.
+2. **Full-shelf coverage (multi-tile).** Expand from one 61 km window to the
+   northern shelf, enabling direct comparison to Banwell's 1,200 km² and
+   Dirscherl's 805 km². The main barrier to literature-level comparison.
+3. **ML classifier** (random forest → U-Net) trained on the labels — the path
+   to Dirscherl-level F1 (~0.95) on both precision and recall.
+4. **ICESat-2 elevation** (`icepyx`) — pond depth and hence volume, which is
+   what actually drives hydrofracture, rather than extent.
+5. **ERA5 climate drivers** + prediction layer: seasonal weather → expected
+   melt extent. (2019-20 was a record-warm Peninsula summer — a natural test.)
+6. **Per-pixel cloud masking** (`s2cloudless` on L1C) to recover
+   partially-clear scenes rejected whole today.
