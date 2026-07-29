@@ -145,12 +145,13 @@ def set_shelf(name, tiles, boundary_path):
     cache and the shelf-mask cache so the exact same validated machinery runs on
     any shelf. Defaults (no call) keep the original George VI configuration, so
     single-shelf callers and tests are unaffected."""
-    global BOUNDARY, SHELF_TILES, GRID_CACHE, CURRENT_SHELF, _COARSE_SHELF
+    global BOUNDARY, SHELF_TILES, GRID_CACHE, CURRENT_SHELF, _COARSE_SHELF, _SHELF_BBOX
     CURRENT_SHELF = name
     BOUNDARY = Path(boundary_path)
     SHELF_TILES = list(tiles)
     GRID_CACHE = OUT_DIR / f"grid_{name}.npz"
     _COARSE_SHELF = {}   # per-tile coarse shelf masks are shelf-specific; reset
+    _SHELF_BBOX = None   # bbox follows the new boundary; recompute lazily
 
 
 def _reference_items():
@@ -159,13 +160,21 @@ def _reference_items():
     from pystac_client import Client
     cl = Client.open(melt.STAC_API)
     items = {}
+    # widen until every tile has a footprint scene - a tile silently missing
+    # here would clip its part of the shelf out of the mask (wrong denominator)
+    windows = [("2020-01-01/2020-02-28", 30), ("2020-01-01/2020-02-28", 80),
+               ("2021-01-01/2021-02-28", 80), ("2022-01-01/2022-02-28", 95)]
     for t in SHELF_TILES:
-        r = list(cl.search(collections=["sentinel-2-l2a"],
-                 query={"grid:code": {"eq": f"MGRS-{t}"},
-                        "eo:cloud_cover": {"lt": 30}},
-                 datetime="2020-01-01/2020-02-28", limit=50).items())
-        if r:
-            items[t] = min(r, key=lambda x: x.properties.get("eo:cloud_cover", 99))
+        for dt, cc in windows:
+            r = list(cl.search(collections=["sentinel-2-l2a"],
+                     query={"grid:code": {"eq": f"MGRS-{t}"},
+                            "eo:cloud_cover": {"lt": cc}},
+                     datetime=dt, limit=50).items())
+            if r:
+                items[t] = min(r, key=lambda x: x.properties.get("eo:cloud_cover", 99))
+                break
+        else:
+            print(f"[grid] WARNING: no footprint scene for {t}; shelf mask may be clipped")
     return items
 
 
@@ -218,11 +227,36 @@ def build_fixed_grid(rebuild=False):
 
 # --- per-tile detection warped onto the grid ---------------------------------
 
+_SHELF_BBOX = None   # lon/lat bbox of the CURRENT shelf boundary, cached
+
+
+def _shelf_bbox():
+    """Bounding box (w, s, e, n) of the current BOUNDARY polygon, padded a
+    little so shelf margins are never clipped. Derived from the boundary file so
+    it follows set_shelf() - the window is shelf-specific, never hard-coded
+    (a hard-coded George VI bbox here silently dropped other shelves' tiles)."""
+    global _SHELF_BBOX
+    if _SHELF_BBOX is None:
+        gj = json.loads(BOUNDARY.read_text())
+        xs, ys = [], []
+        for f in gj["features"]:
+            g = f["geometry"]
+            polys = (g["coordinates"] if g["type"] == "MultiPolygon"
+                     else [g["coordinates"]])
+            for poly in polys:
+                for ring in poly:
+                    for x, y in ring:
+                        xs.append(x); ys.append(y)
+        _SHELF_BBOX = (min(xs) - 0.15, min(ys) - 0.05,
+                       max(xs) + 0.15, max(ys) + 0.05)
+    return _SHELF_BBOX
+
+
 def _tile_window(item):
-    """Window on this tile that overlaps the shelf-tile bbox, capped for memory."""
+    """Window on this tile that overlaps the current shelf's bbox."""
     crs, tile_tr = melt.tile_georeference(item)
-    # shelf-tile lon/lat bbox -> this tile's UTM -> pixel window
-    w, s, e, n = -70.5, -72.6, -66.0, -70.0
+    # shelf lon/lat bbox -> this tile's UTM -> pixel window
+    w, s, e, n = _shelf_bbox()
     xs, ys = warp_transform("EPSG:4326", crs, [w, e, w, e], [s, s, n, n])
     col0 = max(0, int((min(xs) - tile_tr.c) / melt.PIXEL_M))
     col1 = min(melt.TILE_PX if hasattr(melt, "TILE_PX") else 10980,
@@ -428,10 +462,11 @@ def run_season(label, peak_window=("01-01", "02-28"), grid=None):
             continue
         if wm is None:
             continue
-        on_shelf_km2 = float((wm * shelf).sum()) * cell_km2
+        wm *= shelf                       # in place: no gh x gw temps (Amery-
+        on_shelf_km2 = float(wm.sum()) * cell_km2   # sized grids risk OOM)
         if on_shelf_km2 > 0.05:
             water_tiles.append((on_shelf_km2, halo, poorly))
-        np.maximum(water, np.where(shelf, wm, 0), out=water)
+        np.maximum(water, wm, out=water)
         date = chosen.datetime.date() if hasattr(chosen, "datetime") else "-"
         print(f"  {t}  {date} of {k:2d}  halo {100*halo:4.1f}%"
               f"{' POORLY' if poorly else ''}  +{on_shelf_km2:7.2f} km2 on shelf")
