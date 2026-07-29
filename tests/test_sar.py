@@ -25,3 +25,43 @@ def test_s1_source_band_and_orbit():
     assert src.band_href(it, "hh") == "https://pc/hh.tif"
     assert src.relative_orbit(it) == 65
     assert Sentinel1Source.COLLECTION == "sentinel-1-rtc"
+
+
+def test_to_db_handles_zeros_and_scales():
+    from sar import to_db
+    g = np.array([[1.0, 0.1], [0.0, -1.0]], "f4")
+    db = to_db(g)
+    assert db[0, 0] == 0.0 and abs(db[0, 1] + 10.0) < 1e-4
+    assert np.isnan(db[1, 0]) and np.isnan(db[1, 1])
+
+
+def test_baseline_median_ignores_nan():
+    import sar
+    stack = [np.array([[1.0, np.nan]], "f4"),
+             np.array([[3.0, 5.0]], "f4"),
+             np.array([[2.0, np.nan]], "f4")]
+    out = sar._median_stack(stack)
+    assert out[0, 0] == 2.0 and out[0, 1] == 5.0
+
+
+def test_wet_mask_nan_safe():
+    import sar
+    db = np.array([[-20.0, -10.0], [np.nan, -14.0]], "f4")
+    base = np.array([[-15.0, -12.0], [-13.0, np.nan]], "f4")
+    wet, obs = sar.wet_mask(db, base)
+    assert wet[0, 0] and not wet[0, 1]
+    assert not wet[1, 0] and not wet[1, 1]
+    assert obs[0, 0] and obs[0, 1] and not obs[1, 0] and not obs[1, 1]
+
+
+def test_composite_accumulator_first_last_wet():
+    import sar
+    acc = sar.CompositeAccumulator(shape=(1, 2))
+    w1 = np.array([[True, False]]); o1 = np.array([[True, True]])
+    w2 = np.array([[True, True]]); o2 = np.array([[True, True]])
+    w3 = np.array([[False, True]]); o3 = np.array([[True, True]])
+    acc.add(w1, o1, day=10); acc.add(w2, o2, day=22); acc.add(w3, o3, day=40)
+    assert acc.wet_days[0, 0] == 2 and acc.wet_days[0, 1] == 2
+    assert acc.n_obs[0, 0] == 3
+    assert acc.first_wet[0, 0] == 10 and acc.first_wet[0, 1] == 22
+    assert acc.last_wet[0, 0] == 22 and acc.last_wet[0, 1] == 40
