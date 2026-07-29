@@ -157,8 +157,7 @@ def set_shelf(name, tiles, boundary_path):
 def _reference_items():
     """One clear Sentinel-2 item per shelf tile, for a season-independent
     footprint. A summer 2020 scene is picked so the tile is fully imaged."""
-    from pystac_client import Client
-    cl = Client.open(melt.STAC_API)
+    src = melt.get_source()
     items = {}
     # widen until every tile has a footprint scene - a tile silently missing
     # here would clip its part of the shelf out of the mask (wrong denominator)
@@ -166,10 +165,9 @@ def _reference_items():
                ("2021-01-01/2021-02-28", 80), ("2022-01-01/2022-02-28", 95)]
     for t in SHELF_TILES:
         for dt, cc in windows:
-            r = list(cl.search(collections=["sentinel-2-l2a"],
-                     query={"grid:code": {"eq": f"MGRS-{t}"},
-                            "eo:cloud_cover": {"lt": cc}},
-                     datetime=dt, limit=50).items())
+            r = src.search(query={**src.tile_query(t),
+                                  "eo:cloud_cover": {"lt": cc}},
+                           datetime=dt, limit=50)
             if r:
                 items[t] = min(r, key=lambda x: x.properties.get("eo:cloud_cover", 99))
                 break
@@ -448,17 +446,13 @@ def _season_scenes(tile, start, end, cc=85, n=25):
     metadata would discard exactly those clear-over-shelf scenes, so we gather
     broadly and let the cloud-mask (halo_frac) judge actual clarity per scene.
     The n clearest by metadata are kept only to bound how many masks we build."""
-    from pystac_client import Client
-    cl = Client.open(melt.STAC_API)
-    items = list(cl.search(
-        collections=["sentinel-2-l2a"],
-        query={"grid:code": {"eq": f"MGRS-{tile}"}, "eo:cloud_cover": {"lt": cc}},
-        datetime=f"{start}/{end}", limit=100).items())
+    src = melt.get_source()
+    items = src.search(
+        query={**src.tile_query(tile), "eo:cloud_cover": {"lt": cc}},
+        datetime=f"{start}/{end}", limit=100)
     if not items:
-        items = list(cl.search(
-            collections=["sentinel-2-l2a"],
-            query={"grid:code": {"eq": f"MGRS-{tile}"}},
-            datetime=f"{start}/{end}", limit=100).items())
+        items = src.search(query=src.tile_query(tile),
+                           datetime=f"{start}/{end}", limit=100)
     items.sort(key=lambda x: x.properties.get("eo:cloud_cover", 99))
     return items[:n]
 
@@ -484,11 +478,10 @@ def production_scene(tile, start, end):
 
 def _peak_scene(tile, start, end, cc=70):
     """Single clearest-by-metadata scene (legacy; kept for comparisons)."""
-    from pystac_client import Client
-    items = list(Client.open(melt.STAC_API).search(
-        collections=["sentinel-2-l2a"],
-        query={"grid:code": {"eq": f"MGRS-{tile}"}, "eo:cloud_cover": {"lt": cc}},
-        datetime=f"{start}/{end}", limit=100).items())
+    src = melt.get_source()
+    items = src.search(
+        query={**src.tile_query(tile), "eo:cloud_cover": {"lt": cc}},
+        datetime=f"{start}/{end}", limit=100)
     return min(items, key=lambda x: x.properties.get("eo:cloud_cover", 99)) if items else None
 
 

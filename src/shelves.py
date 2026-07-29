@@ -61,18 +61,18 @@ def discover_tiles(boundary_path):
     """Sentinel-2 MGRS tiles intersecting the shelf's bounding box. Tiles that
     do not actually overlap the polygon read zero (on-shelf mask + dry-skip), so
     a bbox-level list is safe; it just may include a few empty tiles."""
-    from pystac_client import Client
+    src = melt.get_source()
     bbox = _bbox(boundary_path)
     tiles = set()
     for yr in ("2020", "2021", "2022"):        # a few summers to enumerate tiles
-        items = Client.open(melt.STAC_API).search(
-            collections=["sentinel-2-l2a"], bbox=bbox,
-            datetime=f"{yr}-12-15/{int(yr)+1}-02-15",
-            query={"eo:cloud_cover": {"lt": 50}}, limit=100).items()
+        items = src.search(bbox=bbox,
+                           datetime=f"{yr}-12-15/{int(yr)+1}-02-15",
+                           query={"eo:cloud_cover": {"lt": 50}}, limit=100)
         for it in items:
-            code = it.properties.get("grid:code", "")
-            if code.startswith("MGRS-"):
-                tiles.add(code[5:])
+            try:
+                tiles.add(src.tile_of(it))
+            except (KeyError, IndexError):
+                pass
     return sorted(tiles), bbox
 
 

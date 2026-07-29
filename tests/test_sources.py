@@ -69,3 +69,32 @@ def test_pc_tile_of_uses_property_not_id():
 def test_pc_tile_query_shape():
     src = PlanetaryComputerSource.__new__(PlanetaryComputerSource)
     assert src.tile_query("19DEA") == {"s2:mgrs_tile": {"eq": "19DEA"}}
+
+
+import melt  # noqa: E402
+
+
+class RecordingSource:
+    BAND_MAP = {b: b for b in ("red", "green", "blue", "nir", "swir16", "scl")}
+    def __init__(self):
+        self.calls = []
+    def band_href(self, item, band):
+        self.calls.append(("band_href", band))
+        return item.assets[band].href
+    def tile_of(self, item):
+        return "19DEA"
+    def search(self, **kw):
+        self.calls.append(("search", kw)); return []
+    def tile_query(self, tile):
+        return {"grid:code": {"eq": f"MGRS-{tile}"}}
+
+
+def test_set_source_swaps_and_tile_of_delegates():
+    rec = RecordingSource()
+    old = melt.get_source()
+    try:
+        melt.set_source(rec)
+        assert melt.get_source() is rec
+        assert melt._tile_of(FakeESItem()) == "19DEA"   # delegated, not id-parsed
+    finally:
+        melt.set_source(old)

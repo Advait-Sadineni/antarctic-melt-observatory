@@ -9,11 +9,11 @@ class PlanetaryComputerSource(SceneSource):
     BAND_MAP = {"red": "B04", "green": "B03", "blue": "B02",
                 "nir": "B08", "swir16": "B11", "scl": "SCL"}
 
-    def __init__(self):
+    def _make_client(self):
         import planetary_computer
         from pystac_client import Client
-        self.client = Client.open(self.STAC_API,
-                                  modifier=planetary_computer.sign_inplace)
+        return Client.open(self.STAC_API,
+                           modifier=planetary_computer.sign_inplace)
 
     def tile_of(self, item):
         return item.properties["s2:mgrs_tile"]

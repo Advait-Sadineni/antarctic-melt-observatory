@@ -13,8 +13,18 @@ class SceneSource:
     BAND_MAP = {}            # logical band -> provider asset key
 
     def __init__(self):
+        self._client = None
+
+    def _make_client(self):
         from pystac_client import Client
-        self.client = Client.open(self.STAC_API)
+        return Client.open(self.STAC_API)
+
+    @property
+    def client(self):
+        """Lazy: constructing a source is offline; only search() connects."""
+        if self._client is None:
+            self._client = self._make_client()
+        return self._client
 
     def search(self, collections=None, query=None, datetime=None,
                bbox=None, ids=None, limit=100):

@@ -177,8 +177,29 @@ TILE_CRS = "EPSG:32719"  # default tile 19CEV; other tiles carry their own
 _GEOREF_CACHE = {}
 
 
+_SOURCE = None
+
+
+def get_source():
+    """Active SceneSource. Defaults to Earth Search, constructed lazily and
+    offline (tests never touch the network just by importing melt)."""
+    global _SOURCE
+    if _SOURCE is None:
+        from core.sources import EarthSearchSource
+        _SOURCE = EarthSearchSource()
+    return _SOURCE
+
+
+def set_source(source):
+    """Swap the scene provider. Clears per-tile georefs: they were read from
+    the old provider's files and must not leak across sources."""
+    global _SOURCE
+    _SOURCE = source
+    _GEOREF_CACHE.clear()
+
+
 def _tile_of(item):
-    return item.id.split("_")[1]
+    return get_source().tile_of(item)
 
 
 def tile_georeference(item):
@@ -190,7 +211,7 @@ def tile_georeference(item):
     """
     key = _tile_of(item)
     if key not in _GEOREF_CACHE:
-        with rasterio.open(item.assets["green"].href) as src:
+        with rasterio.open(get_source().band_href(item, "green")) as src:
             if abs(src.res[0] - PIXEL_M) > 1e-6:
                 raise ValueError(f"expected a {PIXEL_M} m asset, got {src.res[0]} m")
             _GEOREF_CACHE[key] = (src.crs, src.transform)
@@ -222,28 +243,19 @@ def set_aoi(tile, win_row, win_col, win_size, shelf_mask=None):
 
 def search_scenes(start, end, max_cloud_tile=100):
     """All scenes on our tile between two dates, newest processing first."""
-    from pystac_client import Client
-
-    items = list(
-        Client.open(STAC_API)
-        .search(
-            collections=[COLLECTION],
-            bbox=[-70.0, -72.5, -66.0, -70.5],
-            datetime=f"{start}/{end}",
-            limit=100,
-        )
-        .items()
+    items = get_source().search(
+        bbox=[-70.0, -72.5, -66.0, -70.5],
+        datetime=f"{start}/{end}",
+        limit=100,
     )
-    items = [i for i in items if TILE in i.id]
+    items = [i for i in items if get_source().tile_of(i) == TILE]
     if max_cloud_tile < 100:
         items = [i for i in items if (i.properties.get("eo:cloud_cover") or 0) <= max_cloud_tile]
     return sorted(items, key=lambda x: x.datetime)
 
 
 def get_item(item_id):
-    from pystac_client import Client
-
-    return next(Client.open(STAC_API).search(collections=[COLLECTION], ids=[item_id]).items())
+    return get_source().search(ids=[item_id])[0]
 
 
 def boa_offset(item):
@@ -271,7 +283,7 @@ def read_coarse(item, asset):
     than full-resolution pixels, so screening reads a tiny fraction of the
     bytes a detection read would.
     """
-    with rasterio.open(item.assets[asset].href) as src:
+    with rasterio.open(get_source().band_href(item, asset)) as src:
         native10 = abs(src.res[0] - 10.0) < 1e-6
         n = _screen_shape()
         return src.read(
@@ -341,7 +353,7 @@ def sun_elevation(item):
 
 def read_scl(item, full_res=False):
     """SCL is 20 m. Screening wants it decimated; masking wants the 10 m grid."""
-    with rasterio.open(item.assets["scl"].href) as src:
+    with rasterio.open(get_source().band_href(item, "scl")) as src:
         n = WIN_SIZE if full_res else _screen_shape()
         return src.read(
             1,
@@ -352,7 +364,7 @@ def read_scl(item, full_res=False):
 
 
 def read_band(item, name):
-    with rasterio.open(item.assets[name].href) as src:
+    with rasterio.open(get_source().band_href(item, name)) as src:
         return src.read(1, window=_window()).astype("f4")
 
 
@@ -461,7 +473,7 @@ def load_scene(item, bands=("red", "green", "blue", "nir"), use_cache=False,
     else:
         arrays, profile = [], None
         for name in bands:
-            with rasterio.open(item.assets[name].href) as src:
+            with rasterio.open(get_source().band_href(item, name)) as src:
                 arrays.append(src.read(1, window=win))
                 if profile is None:
                     profile = src.profile.copy()
