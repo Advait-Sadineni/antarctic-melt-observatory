@@ -9,6 +9,16 @@ class PlanetaryComputerSource(SceneSource):
     BAND_MAP = {"red": "B04", "green": "B03", "blue": "B02",
                 "nir": "B08", "swir16": "B11", "scl": "SCL"}
 
+    def band_href(self, item, band):
+        """Re-sign at ACCESS time, not search time. PC SAS tokens live ~1 h;
+        long runs (winter baselines, season composites) outlive them and every
+        later read 403s. planetary_computer.sign() keeps a token cache and
+        refreshes expired ones, so signing the bare URL here makes reads
+        expiry-proof for any run length."""
+        import planetary_computer
+        href = item.assets[self.BAND_MAP[band]].href.split("?")[0]
+        return planetary_computer.sign(href)
+
     def _make_client(self):
         import planetary_computer
         from pystac_client import Client

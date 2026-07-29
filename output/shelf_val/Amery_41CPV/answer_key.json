@@ -1,0 +1,492 @@
+{
+ "scene": "S2B_41CPV_20190212_0_L2A",
+ "tile": "41CPV",
+ "stratum_px": {
+  "A": 9306711,
+  "B": 17831466,
+  "C": 14977040
+ },
+ "shelf_px": 42115217,
+ "picks": [
+  {
+   "stratum": "A",
+   "row": 3109,
+   "col": 3282,
+   "id": 1
+  },
+  {
+   "stratum": "A",
+   "row": 8494,
+   "col": 2456,
+   "id": 2
+  },
+  {
+   "stratum": "A",
+   "row": 4036,
+   "col": 9002,
+   "id": 3
+  },
+  {
+   "stratum": "A",
+   "row": 3614,
+   "col": 4314,
+   "id": 4
+  },
+  {
+   "stratum": "A",
+   "row": 3722,
+   "col": 8066,
+   "id": 5
+  },
+  {
+   "stratum": "B",
+   "row": 2446,
+   "col": 6378,
+   "id": 6
+  },
+  {
+   "stratum": "A",
+   "row": 506,
+   "col": 4998,
+   "id": 7
+  },
+  {
+   "stratum": "A",
+   "row": 1155,
+   "col": 3584,
+   "id": 8
+  },
+  {
+   "stratum": "C",
+   "row": 3576,
+   "col": 2868,
+   "id": 9
+  },
+  {
+   "stratum": "A",
+   "row": 3525,
+   "col": 8803,
+   "id": 10
+  },
+  {
+   "stratum": "C",
+   "row": 7707,
+   "col": 3967,
+   "id": 11
+  },
+  {
+   "stratum": "B",
+   "row": 5597,
+   "col": 3467,
+   "id": 12
+  },
+  {
+   "stratum": "B",
+   "row": 6787,
+   "col": 2294,
+   "id": 13
+  },
+  {
+   "stratum": "B",
+   "row": 1998,
+   "col": 3708,
+   "id": 14
+  },
+  {
+   "stratum": "B",
+   "row": 3236,
+   "col": 3540,
+   "id": 15
+  },
+  {
+   "stratum": "A",
+   "row": 3815,
+   "col": 7833,
+   "id": 16
+  },
+  {
+   "stratum": "A",
+   "row": 4016,
+   "col": 6472,
+   "id": 17
+  },
+  {
+   "stratum": "B",
+   "row": 579,
+   "col": 9009,
+   "id": 18
+  },
+  {
+   "stratum": "C",
+   "row": 4705,
+   "col": 3006,
+   "id": 19
+  },
+  {
+   "stratum": "A",
+   "row": 811,
+   "col": 9002,
+   "id": 20
+  },
+  {
+   "stratum": "A",
+   "row": 1022,
+   "col": 4634,
+   "id": 21
+  },
+  {
+   "stratum": "A",
+   "row": 9015,
+   "col": 2432,
+   "id": 22
+  },
+  {
+   "stratum": "A",
+   "row": 2301,
+   "col": 3976,
+   "id": 23
+  },
+  {
+   "stratum": "A",
+   "row": 354,
+   "col": 3863,
+   "id": 24
+  },
+  {
+   "stratum": "B",
+   "row": 3271,
+   "col": 3045,
+   "id": 25
+  },
+  {
+   "stratum": "A",
+   "row": 4349,
+   "col": 9039,
+   "id": 26
+  },
+  {
+   "stratum": "B",
+   "row": 2459,
+   "col": 6792,
+   "id": 27
+  },
+  {
+   "stratum": "A",
+   "row": 3943,
+   "col": 6398,
+   "id": 28
+  },
+  {
+   "stratum": "A",
+   "row": 5546,
+   "col": 2945,
+   "id": 29
+  },
+  {
+   "stratum": "C",
+   "row": 5603,
+   "col": 3028,
+   "id": 30
+  },
+  {
+   "stratum": "B",
+   "row": 3554,
+   "col": 4823,
+   "id": 31
+  },
+  {
+   "stratum": "B",
+   "row": 4956,
+   "col": 3750,
+   "id": 32
+  },
+  {
+   "stratum": "A",
+   "row": 6768,
+   "col": 2653,
+   "id": 33
+  },
+  {
+   "stratum": "A",
+   "row": 3953,
+   "col": 8034,
+   "id": 34
+  },
+  {
+   "stratum": "B",
+   "row": 3452,
+   "col": 4798,
+   "id": 35
+  },
+  {
+   "stratum": "A",
+   "row": 3722,
+   "col": 8589,
+   "id": 36
+  },
+  {
+   "stratum": "B",
+   "row": 7039,
+   "col": 2331,
+   "id": 37
+  },
+  {
+   "stratum": "B",
+   "row": 794,
+   "col": 6488,
+   "id": 38
+  },
+  {
+   "stratum": "A",
+   "row": 1660,
+   "col": 6633,
+   "id": 39
+  },
+  {
+   "stratum": "B",
+   "row": 6865,
+   "col": 2609,
+   "id": 40
+  },
+  {
+   "stratum": "B",
+   "row": 2690,
+   "col": 6290,
+   "id": 41
+  },
+  {
+   "stratum": "C",
+   "row": 6185,
+   "col": 4738,
+   "id": 42
+  },
+  {
+   "stratum": "C",
+   "row": 4903,
+   "col": 2999,
+   "id": 43
+  },
+  {
+   "stratum": "A",
+   "row": 1038,
+   "col": 4509,
+   "id": 44
+  },
+  {
+   "stratum": "B",
+   "row": 6222,
+   "col": 4814,
+   "id": 45
+  },
+  {
+   "stratum": "A",
+   "row": 4484,
+   "col": 6629,
+   "id": 46
+  },
+  {
+   "stratum": "B",
+   "row": 1161,
+   "col": 7563,
+   "id": 47
+  },
+  {
+   "stratum": "B",
+   "row": 294,
+   "col": 4901,
+   "id": 48
+  },
+  {
+   "stratum": "B",
+   "row": 4582,
+   "col": 6672,
+   "id": 49
+  },
+  {
+   "stratum": "A",
+   "row": 3547,
+   "col": 8793,
+   "id": 50
+  },
+  {
+   "stratum": "B",
+   "row": 9001,
+   "col": 3323,
+   "id": 51
+  },
+  {
+   "stratum": "C",
+   "row": 4021,
+   "col": 4743,
+   "id": 52
+  },
+  {
+   "stratum": "A",
+   "row": 121,
+   "col": 5539,
+   "id": 53
+  },
+  {
+   "stratum": "A",
+   "row": 1826,
+   "col": 8364,
+   "id": 54
+  },
+  {
+   "stratum": "C",
+   "row": 3365,
+   "col": 3449,
+   "id": 55
+  },
+  {
+   "stratum": "A",
+   "row": 886,
+   "col": 6401,
+   "id": 56
+  },
+  {
+   "stratum": "B",
+   "row": 8293,
+   "col": 1658,
+   "id": 57
+  },
+  {
+   "stratum": "A",
+   "row": 5695,
+   "col": 3398,
+   "id": 58
+  },
+  {
+   "stratum": "C",
+   "row": 7909,
+   "col": 4211,
+   "id": 59
+  },
+  {
+   "stratum": "A",
+   "row": 6199,
+   "col": 2711,
+   "id": 60
+  },
+  {
+   "stratum": "C",
+   "row": 5098,
+   "col": 4553,
+   "id": 61
+  },
+  {
+   "stratum": "A",
+   "row": 1728,
+   "col": 3568,
+   "id": 62
+  },
+  {
+   "stratum": "B",
+   "row": 993,
+   "col": 3831,
+   "id": 63
+  },
+  {
+   "stratum": "B",
+   "row": 1840,
+   "col": 4901,
+   "id": 64
+  },
+  {
+   "stratum": "A",
+   "row": 3702,
+   "col": 8146,
+   "id": 65
+  },
+  {
+   "stratum": "C",
+   "row": 5555,
+   "col": 3868,
+   "id": 66
+  },
+  {
+   "stratum": "C",
+   "row": 3316,
+   "col": 3352,
+   "id": 67
+  },
+  {
+   "stratum": "A",
+   "row": 4017,
+   "col": 8492,
+   "id": 68
+  },
+  {
+   "stratum": "A",
+   "row": 9081,
+   "col": 2398,
+   "id": 69
+  },
+  {
+   "stratum": "A",
+   "row": 1655,
+   "col": 6194,
+   "id": 70
+  },
+  {
+   "stratum": "A",
+   "row": 3608,
+   "col": 8334,
+   "id": 71
+  },
+  {
+   "stratum": "A",
+   "row": 60,
+   "col": 8427,
+   "id": 72
+  },
+  {
+   "stratum": "A",
+   "row": 6748,
+   "col": 1855,
+   "id": 73
+  },
+  {
+   "stratum": "C",
+   "row": 1464,
+   "col": 3987,
+   "id": 74
+  },
+  {
+   "stratum": "A",
+   "row": 6729,
+   "col": 2946,
+   "id": 75
+  },
+  {
+   "stratum": "C",
+   "row": 7533,
+   "col": 3735,
+   "id": 76
+  },
+  {
+   "stratum": "B",
+   "row": 4841,
+   "col": 2404,
+   "id": 77
+  },
+  {
+   "stratum": "A",
+   "row": 804,
+   "col": 7163,
+   "id": 78
+  },
+  {
+   "stratum": "B",
+   "row": 7995,
+   "col": 1852,
+   "id": 79
+  },
+  {
+   "stratum": "B",
+   "row": 6401,
+   "col": 2730,
+   "id": 80
+  }
+ ]
+}
