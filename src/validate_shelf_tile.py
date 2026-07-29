@@ -35,10 +35,19 @@ PEAK = ("01-05", "02-20")
 OUT = melt.ROOT / "output" / "shelf_val"
 
 
-def _setup(tile):
-    # validate the scene the PRODUCTION selection picks, not merely the
-    # clearest-by-metadata one - blind labels must test the real pipeline
-    it = shelf.production_scene(tile, f"2021-{PEAK[0]}", f"2021-{PEAK[1]}")
+def _outdir(tile):
+    """Per-shelf chip directory (plain tile name kept for the original
+    George VI validation so its answer key stays where it was)."""
+    if shelf.CURRENT_SHELF == "george_vi":
+        return OUT / tile
+    return OUT / f"{shelf.CURRENT_SHELF}_{tile}"
+
+
+def _setup(tile, season="2020-21"):
+    # validate the scene the PRODUCTION selection picks, over the production
+    # window - blind labels must test the real pipeline
+    year = int(season.split("-")[0]) + 1
+    it = shelf.production_scene(tile, f"{year}-01-01", f"{year}-02-28")
     row, col, size = shelf._tile_window(it)
     melt.set_aoi(tile, row, col, size)
     bands = melt.load_scene(it, bands=("red", "green", "blue", "nir"))
@@ -64,8 +73,8 @@ def _setup(tile):
     return it, bands, ponds, valid, shelfmask
 
 
-def make(tile):
-    it, bands, ponds, valid, shelfmask = _setup(tile)
+def make(tile, season="2020-21"):
+    it, bands, ponds, valid, shelfmask = _setup(tile, season)
     on = valid & shelfmask
     det = ponds & on
     near = ndimage.binary_dilation(det, iterations=int(NEAR_M / melt.PIXEL_M))
@@ -96,7 +105,7 @@ def make(tile):
     lo, hi = np.percentile(s[s > 0], [1, 99])
     disp = np.clip((rgb - lo) / max(hi - lo, 1e-6), 0, 1) ** GAMMA
 
-    d = OUT / tile
+    d = _outdir(tile)
     d.mkdir(parents=True, exist_ok=True)
     per = GRID[0] * GRID[1]
     for f0 in range(0, len(picks), per):
@@ -130,8 +139,8 @@ def make(tile):
     print(f"[{tile}] wrote {len(picks)} chips to {d.relative_to(melt.ROOT)}")
 
 
-def score(tile):
-    d = OUT / tile
+def score(tile, season="2020-21"):
+    d = _outdir(tile)
     key = json.loads((d / "answer_key.json").read_text())
     truth = {p["id"]: p for p in key["picks"]}
     labels = {int(r["id"]): r["label"].strip().lower()
@@ -168,6 +177,12 @@ def score(tile):
 
 
 if __name__ == "__main__":
+    # usage: validate_shelf_tile.py <tile> <make|score> [shelf_name] [season]
     tile = sys.argv[1] if len(sys.argv) > 1 else "19DEA"
     cmd = sys.argv[2] if len(sys.argv) > 2 else "make"
-    {"make": make, "score": score}[cmd](tile)
+    if len(sys.argv) > 3 and sys.argv[3] != "george_vi":
+        import shelves
+        cfg = shelves.prepare(sys.argv[3])
+        shelf.set_shelf(cfg["name"], cfg["tiles"], cfg["boundary"])
+    season = sys.argv[4] if len(sys.argv) > 4 else "2020-21"
+    {"make": make, "score": score}[cmd](tile, season)
