@@ -36,7 +36,9 @@ OUT = melt.ROOT / "output" / "shelf_val"
 
 
 def _setup(tile):
-    it = shelf._peak_scene(tile, f"2021-{PEAK[0]}", f"2021-{PEAK[1]}")
+    # validate the scene the PRODUCTION selection picks, not merely the
+    # clearest-by-metadata one - blind labels must test the real pipeline
+    it = shelf.production_scene(tile, f"2021-{PEAK[0]}", f"2021-{PEAK[1]}")
     row, col, size = shelf._tile_window(it)
     melt.set_aoi(tile, row, col, size)
     bands = melt.load_scene(it, bands=("red", "green", "blue", "nir"))

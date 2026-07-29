@@ -326,10 +326,47 @@ def _coarse_water_mask(item):
 CLEAN_HALO = 0.08    # a scene this clear over the shelf shows real water, not haze
 MELT_META = 15.0     # % metadata cloud: clear sky (used when halo is melt-lifted)
 MELT_HALO_MAX = 0.30  # cap on halo in the extreme-melt branch (rejects real cloud)
+UNION_CLEAN = False   # EXPERIMENT: union all qualifying scenes (see tile_water_on_grid)
 
 
 def _onshelf_coarse_water(item, shelf_coarse):
     return int((_coarse_water_mask(item) & shelf_coarse).sum())
+
+
+def select_scene(scored, water_score):
+    """Two-branch clear-scene selection - pure logic, unit-tested offline.
+
+    ``scored`` is [(halo_frac, metadata_cloud_pct, item), ...] for a tile's
+    candidate scenes; ``water_score(item)`` ranks melt (bigger = more water).
+
+      branch 1 (normal years):  among scenes actually clear over the shelf
+        (halo < CLEAN_HALO) take the peak-melt one - local haze reads high halo
+        and can never be picked, so cloud false positives cannot inflate a year.
+      branch 2 (extreme melt):  if nothing clears CLEAN_HALO because melt itself
+        depresses NDSI on every scene, metadata is trustworthy (no local haze,
+        just melt): take the peak among scenes with metadata < MELT_META and
+        halo < MELT_HALO_MAX. Haze fails one gate or the other.
+      branch 3 (poorly observed): nothing qualifies at all - fall back to the
+        least-cloudy scene and FLAG the tile.
+
+    Returns (chosen_item, halo_of_chosen, poorly_observed).
+    """
+    pool, poorly = select_pool(scored)
+    halo, _, chosen = max(pool, key=lambda x: water_score(x[2]))
+    return chosen, halo, poorly
+
+
+def select_pool(scored):
+    """The qualifying-scene pool behind select_scene (same three branches);
+    returned separately so union mode can composite over every qualifying
+    scene. Returns (pool, poorly_observed)."""
+    pool = [x for x in scored if x[0] < CLEAN_HALO]
+    if pool:
+        return pool, False
+    pool = [x for x in scored if x[1] < MELT_META and x[0] < MELT_HALO_MAX]
+    if pool:
+        return pool, False
+    return [min(scored, key=lambda x: x[0])], True
 
 
 def tile_water_on_grid(candidates, grid_tr, gw, gh):
@@ -369,20 +406,27 @@ def tile_water_on_grid(candidates, grid_tr, gw, gh):
 
     scored = [(melt.cloud_mask(it)["halo_frac"],
                it.properties.get("eo:cloud_cover", 100.0), it) for it in candidates]
-    poorly = False
-    pool = [x for x in scored if x[0] < CLEAN_HALO]
-    if not pool:                                   # extreme-melt / cloudy fallback
-        pool = [x for x in scored if x[1] < MELT_META and x[0] < MELT_HALO_MAX]
-    if not pool:                                   # genuinely poorly observed
-        pool = [min(scored, key=lambda x: x[0])]
-        poorly = True
+    chosen, halo, poorly = select_scene(scored, lambda it: _onshelf_coarse_water(it, sc))
 
-    _, _, chosen = max(pool, key=lambda x: _onshelf_coarse_water(x[2], sc))
-    halo = next(h for h, m, it in scored if it is chosen)
+    def _detect_one(it):
+        bands = melt.load_scene(it, bands=("green", "nir", "red"))
+        reject = melt.reject_mask(it) | melt.cloud_mask(it)["mask"]
+        _, p, _ = melt.detect(bands["green"], bands["nir"], reject, red=bands["red"])
+        return p
 
-    bands = melt.load_scene(chosen, bands=("green", "nir", "red"))
-    reject = melt.reject_mask(chosen) | melt.cloud_mask(chosen)["mask"]
-    _, ponds, _ = melt.detect(bands["green"], bands["nir"], reject, red=bands["red"])
+    if UNION_CLEAN and not poorly:
+        # EXPERIMENTAL seasonal max: union detections across EVERY qualifying
+        # scene (same pool the selector trusts), so ponds that peak on different
+        # dates in different parts of the tile all count. Only scenes the
+        # two-branch gates already accept contribute, so haze stays excluded.
+        # Off by default until the anchor validation passes.
+        pool, _ = select_pool(scored)
+        ponds = None
+        for _, _, it in pool:
+            p = _detect_one(it)
+            ponds = p if ponds is None else (ponds | p)
+    else:
+        ponds = _detect_one(chosen)
 
     src_crs, _ = melt.tile_georeference(ref)
     src_tr = melt.aoi_transform(ref)
@@ -419,8 +463,27 @@ def _season_scenes(tile, start, end, cc=85, n=25):
     return items[:n]
 
 
+def production_scene(tile, start, end):
+    """The exact scene run_season's selection would use for this tile/window.
+    validate_shelf_tile uses this so blind labels always test the PRODUCTION
+    scene choice - validating a scene chosen any other way would validate a
+    pipeline that does not exist."""
+    items = _season_scenes(tile, start, end)
+    if not items:
+        return None
+    row, col, size = _tile_window(items[0])
+    if size < 256:
+        return None
+    melt.set_aoi(melt._tile_of(items[0]), row, col, size)
+    sc = _coarse_shelf_mask(items[0])
+    scored = [(melt.cloud_mask(it)["halo_frac"],
+               it.properties.get("eo:cloud_cover", 100.0), it) for it in items]
+    chosen, _, _ = select_scene(scored, lambda it: _onshelf_coarse_water(it, sc))
+    return chosen
+
+
 def _peak_scene(tile, start, end, cc=70):
-    """Single clearest-by-metadata scene (used by validate_shelf_tile.py)."""
+    """Single clearest-by-metadata scene (legacy; kept for comparisons)."""
     from pystac_client import Client
     items = list(Client.open(melt.STAC_API).search(
         collections=["sentinel-2-l2a"],

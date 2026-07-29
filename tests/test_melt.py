@@ -460,3 +460,48 @@ def test_aoi_stays_inside_the_tile():
     """A Sentinel-2 10 m tile is 10980 px. The window must fit."""
     assert melt.WIN_ROW + melt.WIN_SIZE <= 10980
     assert melt.WIN_COL + melt.WIN_SIZE <= 10980
+
+
+# --- shelf.select_scene: the two-branch clear-scene selection ----------------
+# The scene selector is where every cloud-inflation bug lived; it is pure logic
+# (no I/O), so it gets exhaustive offline tests. scored = [(halo, meta, item)].
+
+import shelf  # noqa: E402
+
+
+def _sel(scored, water):
+    return shelf.select_scene(scored, lambda it: water[it])
+
+
+def test_select_picks_peak_melt_among_clean_scenes():
+    scored = [(0.01, 5.0, "a"), (0.05, 8.0, "b"), (0.07, 2.0, "c")]
+    chosen, halo, poorly = _sel(scored, {"a": 10, "b": 500, "c": 200})
+    assert chosen == "b" and halo == 0.05 and not poorly
+
+
+def test_select_never_picks_hazy_scene_even_with_most_water():
+    # the 2024-25 failure mode: haze reads as huge water but high halo
+    scored = [(0.02, 5.0, "clean"), (0.13, 8.0, "hazy")]
+    chosen, _, poorly = _sel(scored, {"clean": 50, "hazy": 5000})
+    assert chosen == "clean" and not poorly
+
+
+def test_select_extreme_melt_falls_back_to_metadata():
+    # the 2019-20 record: melt lifts every halo above CLEAN_HALO, but the
+    # clear-sky scene has low metadata and must win over the truly cloudy one
+    scored = [(0.17, 7.0, "record"), (0.68, 12.0, "cloudy"), (0.61, 20.0, "worse")]
+    chosen, halo, poorly = _sel(scored, {"record": 800, "cloudy": 100, "worse": 60})
+    assert chosen == "record" and halo == 0.17 and not poorly
+
+
+def test_select_extreme_melt_rejects_high_metadata_haze():
+    # fallback must not admit a scene that fails the metadata gate
+    scored = [(0.16, 40.0, "hazy"), (0.29, 9.0, "clearish")]
+    chosen, _, poorly = _sel(scored, {"hazy": 900, "clearish": 300})
+    assert chosen == "clearish" and not poorly
+
+
+def test_select_flags_poorly_observed_and_takes_least_cloudy():
+    scored = [(0.55, 60.0, "bad"), (0.35, 45.0, "less-bad")]
+    chosen, halo, poorly = _sel(scored, {"bad": 10, "less-bad": 5})
+    assert chosen == "less-bad" and halo == 0.35 and poorly
