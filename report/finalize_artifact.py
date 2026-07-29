@@ -29,7 +29,7 @@ def main():
     lines = []
     for r in rows:
         s = r["season"]
-        cloud = r.get("obs_meta", r.get("obs_cloud", 0.0)) or 0.0
+        cloud = r.get("obs_cloud", 0.0) or 0.0
         prov = bool(r.get("poorly_observed", False))
         flags = f'prov: {"true " if prov else "false"}'
         if r["shelf_km2"] == record_km2:

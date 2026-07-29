@@ -216,56 +216,118 @@ def _tile_window(item):
     return row0, col0, size
 
 
-def _coarse_water_score(item):
-    """Cheap 60 m proxy for detected water in the AOI, to rank clear scenes by
-    melt. Reads COG overviews only; same NDWI + shadow gates as detect()."""
+MIN_PERSIST = 2   # a pixel must read water on >= this many clear scenes to count
+DRY_COARSE_PX = 20  # on-shelf 60 m water below this in every scene => tile is dry
+
+_COARSE_SHELF = {}   # per-MGRS-tile coarse (60 m) shelf mask, cached
+
+
+def _boundary_in_crs(crs):
+    """George VI polygon rings reprojected from EPSG:4326 to ``crs``."""
+    gj = json.loads(BOUNDARY.read_text())
+    geoms = []
+    for f in gj["features"]:
+        g = f["geometry"]
+        polys = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
+        new = []
+        for poly in polys:
+            rings = []
+            for ring in poly:
+                xs, ys = warp_transform("EPSG:4326", crs,
+                                        [c[0] for c in ring], [c[1] for c in ring])
+                rings.append(list(zip(xs, ys)))
+            new.append(rings)
+        geoms.append({"type": "MultiPolygon", "coordinates": new})
+    return geoms
+
+
+def _coarse_shelf_mask(item):
+    """Shelf polygon rasterised onto this tile's 60 m screening grid (cached),
+    so the dry-tile check counts only water that falls on the actual ice shelf -
+    not sea ice or ocean at the calving front that off-shelf tiles are full of."""
+    tile = melt._tile_of(item)
+    if tile not in _COARSE_SHELF:
+        crs, _ = melt.tile_georeference(item)
+        ctr = melt.aoi_transform(item) * rasterio.Affine.scale(6)  # 10 m -> 60 m
+        cs = melt._screen_shape()
+        _COARSE_SHELF[tile] = rasterize(
+            [(g, 1) for g in _boundary_in_crs(crs)], out_shape=(cs, cs),
+            transform=ctr, dtype="uint8", all_touched=True).astype(bool)
+    return _COARSE_SHELF[tile]
+
+
+def _coarse_water_mask(item):
+    """Cheap 60 m water mask (COG overviews only), used only to skip full
+    compositing of tiles with no on-shelf water. Requires ice-like NDSI so cloud
+    - water-like in NDWI but low in NDSI - does not block a dry tile's skip."""
     g = melt.read_coarse(item, "green")
     n = melt.read_coarse(item, "nir")
     r = melt.read_coarse(item, "red")
-    valid = (g > 0) & (n > 0)
+    s = melt.read_coarse(item, "swir16")
+    valid = (g > 0) & (n > 0) & (s > 0)
     ndwi = np.where(valid, (g - n) / np.maximum(g + n, 1e-6), -9)
-    ok = (valid & (g > melt.BRIGHTNESS_FLOOR)
+    ndsi = np.where(valid, (g - s) / np.maximum(g + s, 1e-6), -9)
+    ok = (valid & (g > melt.BRIGHTNESS_FLOOR) & (ndsi > melt.NDSI_ICE_MIN)
           & ((g - r) > melt.SHADOW_GREEN_MINUS_RED * melt.DN_PER_REFLECTANCE))
-    return int((ok & (ndwi > melt.NDWI_THRESHOLD)).sum())
+    return ok & (ndwi > melt.NDWI_THRESHOLD)
 
 
-# A scene is "as clear as the clearest" if its actual cloud fraction is within
-# this margin (5 percentage points) of the lowest-cloud candidate. Among those,
-# the peak-melt one is taken as the seasonal snapshot.
-CLEAR_BAND = 0.05
+CLEAN_HALO = 0.08    # a scene this clear over the shelf shows real water, not haze
+MELT_META = 15.0     # % metadata cloud: clear sky (used when halo is melt-lifted)
+MELT_HALO_MAX = 0.30  # cap on halo in the extreme-melt branch (rejects real cloud)
+
+
+def _onshelf_coarse_water(item, shelf_coarse):
+    return int((_coarse_water_mask(item) & shelf_coarse).sum())
 
 
 def tile_water_on_grid(candidates, grid_tr, gw, gh):
-    """Per-tile meltwater on the grid, from the best-observed scene.
+    """Per-tile seasonal-maximum meltwater from the peak-melt clear-sky scene.
 
-    Scene metadata cloud cover is tile-wide and badly under-reports local haze
-    over ice, and thin cloud/haze is spectrally water-like - so picking the
-    lowest-metadata scene can land on a hazy one whose detection is mostly cloud
-    false positive (e.g. 19DEA 5 Jan 2025 read 462 km2 at 11% actual cloud,
-    while the genuinely clear 12 Feb scene read 30). So each candidate's ACTUAL
-    cloud fraction is measured from the cloud mask (halo_frac).
+    No single scene separates thin cloud/haze from meltwater spectrally, and the
+    scene-level cloud metadata is tile-wide and misses local haze - so the actual
+    cloud fraction over the shelf is measured per scene from the cloud mask
+    (halo_frac). The rule, in two branches:
 
-    Selection is clearest-first, then peak-melt among comparably clear scenes:
-    the lowest-cloud scene sets the bar, every scene within CLEAR_BAND of it is
-    treated as equally clean, and the one with the most detected water is taken.
-    This matters because on an extreme-melt day slush and ponds themselves
-    depress NDSI, lifting every scene's halo_frac together (the 2019-20 record
-    scenes all sit at ~16% while genuinely cloudy scenes sit at 60%+); a fixed
-    cloud threshold would either reject the whole season or, taking max-water
-    outright, grab a hazy scene. Returns
-    (grid_water, chosen_item, actual_cloud_frac, n_candidates).
+      * Normal years: keep scenes actually clear over the shelf (halo <
+        CLEAN_HALO) and take the peak-melt one. Local haze reads high halo and is
+        excluded, so it can never be picked (19DEA 10 Feb 2026 haze, halo 13%,
+        494 km2 is dropped; the clean 7 Feb, halo 7%, 82 km2 wins).
+
+      * Extreme-melt years: when melt is so widespread that slush and ponds
+        depress NDSI on every scene, halo is melt-confounded (2019-20's clear
+        record scenes all read ~16%) and no scene clears CLEAN_HALO. There the
+        tile-wide metadata IS reliable - there is no local haze, just melt - so
+        keep scenes with metadata < MELT_META (genuinely clear sky) and halo <
+        MELT_HALO_MAX, and take the peak among them (19DEA 29 Jan 2020, metadata
+        7%, halo 17%, 834 km2). A haze scene fails this because its metadata OR
+        halo is high.
+
+    Returns (grid_water, chosen, halo, n_candidates, poorly_observed).
     """
     ref = candidates[0]
     row, col, size = _tile_window(ref)
     if size < 256:
-        return None, None, None, 0
+        return None, None, None, 0, False
     melt.set_aoi(melt._tile_of(ref), row, col, size)
 
-    scored = [(melt.cloud_mask(it)["halo_frac"], it) for it in candidates]
-    min_halo = min(hf for hf, _ in scored)
-    band = [(hf, it) for hf, it in scored if hf <= min_halo + CLEAR_BAND]
-    chosen = max(band, key=lambda x: _coarse_water_score(x[1]))[1]
-    actual = next(hf for hf, it in scored if it is chosen)
+    # dry-tile early-out on ON-SHELF coarse water (off-shelf tiles read 0 always)
+    sc = _coarse_shelf_mask(ref)
+    if not any(_onshelf_coarse_water(it, sc) >= DRY_COARSE_PX for it in candidates):
+        return np.zeros((gh, gw), "f4"), candidates[0], 0.0, len(candidates), False
+
+    scored = [(melt.cloud_mask(it)["halo_frac"],
+               it.properties.get("eo:cloud_cover", 100.0), it) for it in candidates]
+    poorly = False
+    pool = [x for x in scored if x[0] < CLEAN_HALO]
+    if not pool:                                   # extreme-melt / cloudy fallback
+        pool = [x for x in scored if x[1] < MELT_META and x[0] < MELT_HALO_MAX]
+    if not pool:                                   # genuinely poorly observed
+        pool = [min(scored, key=lambda x: x[0])]
+        poorly = True
+
+    _, _, chosen = max(pool, key=lambda x: _onshelf_coarse_water(x[2], sc))
+    halo = next(h for h, m, it in scored if it is chosen)
 
     bands = melt.load_scene(chosen, bands=("green", "nir", "red"))
     reject = melt.reject_mask(chosen) | melt.cloud_mask(chosen)["mask"]
@@ -280,25 +342,30 @@ def tile_water_on_grid(candidates, grid_tr, gw, gh):
         dst_transform=grid_tr, dst_crs=GRID_CRS,
         resampling=Resampling.average,  # fraction of each 30 m cell that is water
     )
-    return dst, chosen, float(actual), len(candidates)
+    return dst, chosen, float(halo), len(candidates), poorly
 
 
-def _season_scenes(tile, start, end, cc=35, n=10):
-    """Candidate scenes for a tile in the Jan-Feb window (metadata cloud < cc,
-    the n clearest). Actual clarity is judged later from the cloud mask, so this
-    only needs to gather plausible scenes cheaply. Falls back to a looser cap so
-    a tile is still represented in cloudy seasons."""
+def _season_scenes(tile, start, end, cc=85, n=25):
+    """Candidate scenes for a tile in the Jan-Feb window. The metadata cloud cap
+    is deliberately GENEROUS (85%): metadata is tile-wide and a scene that is
+    cloudy off-shelf can be perfectly clear over the shelf itself (19DEA 7 Feb
+    2026 was 59% metadata but 7% actual over the shelf). Filtering hard on
+    metadata would discard exactly those clear-over-shelf scenes, so we gather
+    broadly and let the cloud-mask (halo_frac) judge actual clarity per scene.
+    The n clearest by metadata are kept only to bound how many masks we build."""
     from pystac_client import Client
     cl = Client.open(melt.STAC_API)
-    for cap in (cc, 60, 95):
+    items = list(cl.search(
+        collections=["sentinel-2-l2a"],
+        query={"grid:code": {"eq": f"MGRS-{tile}"}, "eo:cloud_cover": {"lt": cc}},
+        datetime=f"{start}/{end}", limit=100).items())
+    if not items:
         items = list(cl.search(
             collections=["sentinel-2-l2a"],
-            query={"grid:code": {"eq": f"MGRS-{tile}"}, "eo:cloud_cover": {"lt": cap}},
+            query={"grid:code": {"eq": f"MGRS-{tile}"}},
             datetime=f"{start}/{end}", limit=100).items())
-        if items:
-            items.sort(key=lambda x: x.properties.get("eo:cloud_cover", 99))
-            return items[:n]
-    return []
+    items.sort(key=lambda x: x.properties.get("eo:cloud_cover", 99))
+    return items[:n]
 
 
 def _peak_scene(tile, start, end, cc=70):
@@ -314,10 +381,9 @@ def _peak_scene(tile, start, end, cc=70):
 def run_season(label, peak_window=("01-01", "02-28"), grid=None):
     """Shelf-wide seasonal-maximum meltwater on ONE fixed shelf grid (so the
     denominator is identical every season). Each tile contributes the peak-melt
-    scene among those that are ACTUALLY clear over the shelf (judged from the
-    cloud mask, not the unreliable tile-wide metadata), across the Jan-Feb melt
-    window. The per-tile actual cloud fraction of the chosen scene is reported so
-    poorly-observed seasons are transparent."""
+    scene among those genuinely clear over the shelf (see tile_water_on_grid),
+    unioned across overlapping tiles. A season is flagged poorly observed when
+    its dominant water tile had no genuinely clear scene."""
     start_year = int(label.split("-")[0]) + 1  # peak melt is the second year
     start = f"{start_year}-{peak_window[0]}"
     end = f"{start_year}-{peak_window[1]}"
@@ -334,13 +400,12 @@ def run_season(label, peak_window=("01-01", "02-28"), grid=None):
     print(f"[{label}] fixed grid {gw}x{gh}, shelf {shelf_km2:,.0f} km2, "
           f"tiles imaged {len(cands)}/{len(SHELF_TILES)}")
 
-    # water fraction per grid cell, taking the best (max) estimate where tiles
-    # overlap - a union that dedups without double-counting.
+    # water fraction per grid cell, unioned (max) across overlapping tiles.
     water = np.zeros((gh, gw), "f4")
-    clear_clouds, meta_clouds = [], []   # halo & metadata cloud of water tiles
+    water_tiles = []   # (on_shelf_km2, halo, poorly) per water-bearing tile
     for t, items in cands.items():
         try:
-            wm, chosen, actual, k = tile_water_on_grid(items, grid_tr, gw, gh)
+            wm, chosen, halo, k, poorly = tile_water_on_grid(items, grid_tr, gw, gh)
         except Exception as e:
             print(f"  {t}: ERROR {type(e).__name__}: {str(e)[:50]}")
             continue
@@ -348,29 +413,28 @@ def run_season(label, peak_window=("01-01", "02-28"), grid=None):
             continue
         on_shelf_km2 = float((wm * shelf).sum()) * cell_km2
         if on_shelf_km2 > 0.05:
-            clear_clouds.append(actual)
-            meta_clouds.append(chosen.properties.get("eo:cloud_cover", 0.0))
+            water_tiles.append((on_shelf_km2, halo, poorly))
         np.maximum(water, np.where(shelf, wm, 0), out=water)
-        print(f"  {t}  {chosen.datetime.date()} of {k:2d}  actual-cloud {100*actual:4.1f}%"
-              f"  +{on_shelf_km2:6.2f} km2 on shelf")
+        date = chosen.datetime.date() if hasattr(chosen, "datetime") else "-"
+        print(f"  {t}  {date} of {k:2d}  halo {100*halo:4.1f}%"
+              f"{' POORLY' if poorly else ''}  +{on_shelf_km2:7.2f} km2 on shelf")
 
     total = float(water.sum()) * cell_km2
-    # Observation quality. halo_frac (obs_cloud) is confounded by melt - extensive
-    # slush/ponds depress NDSI - so on the biggest melt years it reads high even
-    # under a clear sky. The chosen scene's metadata cloud (obs_meta) is not melt-
-    # confounded, so a season is only genuinely poorly observed when BOTH are high.
-    obs_cloud = round(100 * max(clear_clouds), 1) if clear_clouds else 0.0
-    obs_meta = round(max(meta_clouds), 1) if meta_clouds else 0.0
-    poorly_observed = obs_cloud > 15.0 and obs_meta > 15.0
+    # Quality from the DOMINANT water tile: a season is only poorly observed when
+    # the tile carrying most of the water had no genuinely clear scene.
+    if water_tiles:
+        _, dom_halo, dom_poorly = max(water_tiles, key=lambda x: x[0])
+    else:
+        dom_halo, dom_poorly = 0.0, False
+    obs_cloud = round(100 * dom_halo, 1)
     print(f"\n[{label}] shelf-wide seasonal-max meltwater: {total:.1f} km2 "
-          f"({100*total/max(shelf_km2,1):.2f}% of shelf); water-tile halo {obs_cloud}% "
-          f"meta {obs_meta}%{'  [POORLY OBSERVED]' if poorly_observed else ''}")
+          f"({100*total/max(shelf_km2,1):.2f}% of shelf); dominant-tile halo {obs_cloud}%"
+          f"{'  [POORLY OBSERVED]' if dom_poorly else ''}")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     return {"season": label, "shelf_km2": round(total, 2),
             "shelf_area_km2": round(shelf_km2, 1),
             "tiles": len(cands), "tiles_total": len(SHELF_TILES),
-            "obs_cloud": obs_cloud, "obs_meta": obs_meta,
-            "poorly_observed": poorly_observed}
+            "obs_cloud": obs_cloud, "poorly_observed": dom_poorly}
 
 
 # 9 austral melt seasons with reliable Sentinel-2 coverage over the shelf,
@@ -403,17 +467,17 @@ def run_history(seasons=SEASONS):
 
     print(f"\n{'='*64}\nSHELF-WIDE SEASONAL-MAX MELTWATER (George VI)\n{'='*64}")
     print(f"  {'season':9s} {'meltwater km2':>14} {'% of shelf':>11} "
-          f"{'tiles':>7} {'sky cloud':>10}  quality")
+          f"{'tiles':>7} {'shelf halo':>11}  quality")
     for s in seasons:
         if s not in results:
             print(f"  {s:9s} {'--':>14}"); continue
         r = results[s]
         pct = 100 * r["shelf_km2"] / r["shelf_area_km2"]
         tiles = f"{r['tiles']}/{r.get('tiles_total', len(SHELF_TILES))}"
-        meta = r.get("obs_meta")
-        mc = f"{meta:.1f}%" if meta is not None else "--"
+        oc = r.get("obs_cloud")
+        ocs = f"{oc:.1f}%" if oc is not None else "--"
         q = "poorly observed" if r.get("poorly_observed") else "ok"
-        print(f"  {s:9s} {r['shelf_km2']:14.1f} {pct:10.2f}% {tiles:>7} {mc:>10}  {q}")
+        print(f"  {s:9s} {r['shelf_km2']:14.1f} {pct:10.2f}% {tiles:>7} {ocs:>11}  {q}")
     print(f"\n  saved -> {hist_path.relative_to(melt.ROOT)}")
     return results
 
