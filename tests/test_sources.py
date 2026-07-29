@@ -40,3 +40,32 @@ def test_earthsearch_tile_of_parses_id():
 def test_earthsearch_tile_query_shape():
     src = EarthSearchSource.__new__(EarthSearchSource)
     assert src.tile_query("19DEA") == {"grid:code": {"eq": "MGRS-19DEA"}}
+
+
+from core.pc import PlanetaryComputerSource  # noqa: E402
+
+
+class FakePCItem:
+    """PC style: id S2B_MSIL2A_..._T19DEA_..., B-number asset keys."""
+    def __init__(self):
+        self.id = "S2B_MSIL2A_20210124T120000_R000_T19DEA_20210124T150000"
+        self.properties = {"s2:mgrs_tile": "19DEA"}
+        self.assets = {k: FakeAsset(f"https://pc/{k}.tif")
+                       for k in ("B02", "B03", "B04", "B08", "B11", "SCL")}
+
+
+def test_pc_band_href_maps_logical_to_b_numbers():
+    src = PlanetaryComputerSource.__new__(PlanetaryComputerSource)
+    it = FakePCItem()
+    assert src.band_href(it, "green") == "https://pc/B03.tif"
+    assert src.band_href(it, "scl") == "https://pc/SCL.tif"
+
+
+def test_pc_tile_of_uses_property_not_id():
+    src = PlanetaryComputerSource.__new__(PlanetaryComputerSource)
+    assert src.tile_of(FakePCItem()) == "19DEA"
+
+
+def test_pc_tile_query_shape():
+    src = PlanetaryComputerSource.__new__(PlanetaryComputerSource)
+    assert src.tile_query("19DEA") == {"s2:mgrs_tile": {"eq": "19DEA"}}
