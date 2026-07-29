@@ -103,14 +103,23 @@ def list_scenes(source, bbox, start, end):
     return by_orbit
 
 
-def read_db_on_grid(item, grid_tr, gw, gh, source):
-    """gamma0 dB warped onto the fixed grid; NaN outside the swath."""
-    with rasterio.open(source.band_href(item, "hh")) as src:
-        with WarpedVRT(src, crs=shelf.GRID_CRS, transform=grid_tr,
-                       width=gw, height=gh,
-                       resampling=Resampling.average, nodata=0) as vrt:
-            g = vrt.read(1).astype("f4")
-    return to_db(g)
+def read_db_on_grid(item, grid_tr, gw, gh, source, retries=2):
+    """gamma0 dB warped onto the fixed grid; NaN outside the swath.
+
+    Retries once on transient blob/HTTP failures (a single flaky tile read
+    must never kill a multi-hour run); raises only after all attempts fail."""
+    last = None
+    for _ in range(retries):
+        try:
+            with rasterio.open(source.band_href(item, "hh")) as src:
+                with WarpedVRT(src, crs=shelf.GRID_CRS, transform=grid_tr,
+                               width=gw, height=gh,
+                               resampling=Resampling.average, nodata=0) as vrt:
+                    g = vrt.read(1).astype("f4")
+            return to_db(g)
+        except Exception as e:      # rasterio wraps CPLE errors variously
+            last = e
+    raise last
 
 
 def winter_baseline(year, orbit, grid, source, bbox, rebuild=False):
@@ -125,7 +134,12 @@ def winter_baseline(year, orbit, grid, source, bbox, rebuild=False):
     if len(items) > MAX_BASELINE_SCENES:   # evenly spaced subsample, RAM-bounded
         idx = np.linspace(0, len(items) - 1, MAX_BASELINE_SCENES).astype(int)
         items = [items[i] for i in idx]
-    stack = [read_db_on_grid(it, grid_tr, gw, gh, source) for it in items]
+    stack = []
+    for it in items:                        # per-scene tolerance: skip, never die
+        try:
+            stack.append(read_db_on_grid(it, grid_tr, gw, gh, source))
+        except Exception as e:
+            print(f"  [baseline skip] {type(e).__name__}: {str(e)[:60]}")
     if len(stack) < 3:
         raise ValueError(f"only {len(stack)} winter scenes for orbit {orbit}")
     base = _median_stack(stack)

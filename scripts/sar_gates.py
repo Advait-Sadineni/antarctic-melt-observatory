@@ -82,7 +82,11 @@ def gate14():
                 print(f"  [gate1 skip orbit {orbit}] {e}")
                 continue
             for it in items:
-                db = sar.read_db_on_grid(it, tr, gw4, gh4, src)
+                try:
+                    db = sar.read_db_on_grid(it, tr, gw4, gh4, src)
+                except Exception as e:
+                    print(f"  [gate1 skip scene] {type(e).__name__}: {str(e)[:50]}")
+                    continue
                 wet, obs = sar.wet_mask(db, base, thresh)
                 wet_any |= wet
                 obs_any |= obs
@@ -134,7 +138,10 @@ def gate23():
         except ValueError:
             continue
         for it in items[:3]:
-            db = sar.read_db_on_grid(it, tr, gw4, gh4, src)
+            try:
+                db = sar.read_db_on_grid(it, tr, gw4, gh4, src)
+            except Exception:
+                continue
             wet, obs = sar.wet_mask(db, base, thresh)
             on = sm & obs
             if on.sum():
