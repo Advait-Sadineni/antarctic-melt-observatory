@@ -539,6 +539,16 @@ def run_season(label, peak_window=("01-01", "02-28"), grid=None):
           f"({100*total/max(shelf_km2,1):.2f}% of shelf); dominant-tile halo {obs_cloud}%"
           f"{'  [POORLY OBSERVED]' if dom_poorly else ''}")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        from core.products import write_product
+        write_product(CURRENT_SHELF, label, water, grid_tr, GRID_CRS,
+                      {"area_km2": round(total, 2),
+                       "shelf_area_km2": round(shelf_km2, 1),
+                       "obs_cloud": obs_cloud, "poorly_observed": dom_poorly,
+                       "sensor": "sentinel-2"},
+                      root=melt.ROOT / "output" / "products")
+    except Exception as e:   # products are additive; never fail a season over them
+        print(f"  [products] WARNING: {type(e).__name__}: {str(e)[:60]}")
     return {"season": label, "shelf_km2": round(total, 2),
             "shelf_area_km2": round(shelf_km2, 1),
             "tiles": len(cands), "tiles_total": len(SHELF_TILES),

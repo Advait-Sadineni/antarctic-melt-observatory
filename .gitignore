@@ -25,3 +25,5 @@ reference/measures/
 # Earthdata credentials
 _netrc
 .netrc
+# Observatory products - regenerable, large
+output/products/

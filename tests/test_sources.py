@@ -98,3 +98,29 @@ def test_set_source_swaps_and_tile_of_delegates():
         assert melt._tile_of(FakeESItem()) == "19DEA"   # delegated, not id-parsed
     finally:
         melt.set_source(old)
+
+
+import json as _json
+import numpy as np
+import rasterio
+from rasterio.transform import from_origin
+from core.products import write_product  # noqa: E402
+
+
+def test_write_product_cog_and_item(tmp_path):
+    water = np.zeros((40, 50), "f4"); water[10:14, 20:26] = 0.5
+    tr = from_origin(-2_000_000, 1_000_000, 30, 30)
+    d = write_product("george_vi", "2020-21", water, tr, "EPSG:3031",
+                      {"area_km2": 142.48, "shelf_area_km2": 14390.6,
+                       "obs_cloud": 1.4, "poorly_observed": False,
+                       "sensor": "sentinel-2"}, root=tmp_path)
+    with rasterio.open(d / "water_fraction.tif") as src:
+        assert src.crs.to_string() == "EPSG:3031"
+        assert src.transform == tr
+        assert float(src.read(1)[12, 22]) == 0.5
+    item = _json.loads((d / "item.json").read_text())
+    p = item["properties"]
+    assert p["area_km2"] == 142.48 and p["sensor"] == "sentinel-2"
+    # reserved fields exist and are null until M3/M4 fill them
+    for k in ("volume_km3", "depth_mean_m", "uncertainty_km2", "sensor_confidence"):
+        assert k in p and p[k] is None
