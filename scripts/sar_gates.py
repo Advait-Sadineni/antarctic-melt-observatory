@@ -78,9 +78,9 @@ def gate14():
         for orbit, items in by_orbit.items():
             try:
                 base = sar.winter_baseline(2020, orbit, sgrid, src, GVI_BBOX)
-            except ValueError as e:
-                print(f"  [gate1 skip orbit {orbit}] {e}")
-                continue
+            except Exception as e:          # incl. API timeouts: lose the orbit,
+                print(f"  [gate1 skip orbit {orbit}] {type(e).__name__}: {str(e)[:60]}")
+                continue                    # never the run
             for it in items:
                 try:
                     db = sar.read_db_on_grid(it, tr, gw4, gh4, src)
@@ -135,7 +135,7 @@ def gate23():
     for orbit, items in by_orbit.items():
         try:
             base = sar.winter_baseline(2021, orbit, sgrid, src, GVI_BBOX)
-        except ValueError:
+        except Exception:
             continue
         for it in items[:3]:
             try:

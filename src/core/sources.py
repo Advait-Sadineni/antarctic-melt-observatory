@@ -27,7 +27,7 @@ class SceneSource:
         return self._client
 
     def search(self, collections=None, query=None, datetime=None,
-               bbox=None, ids=None, limit=100, attempts=3):
+               bbox=None, ids=None, limit=100, attempts=5):
         """Thin pystac-client wrapper; returns a LIST of items (limit is the
         page size - pystac paginates through everything).
 
@@ -52,7 +52,7 @@ class SceneSource:
                 last = e
                 self._client = None          # stale/broken session: reconnect
                 if a < attempts - 1:
-                    time.sleep(5 * (a + 1))
+                    time.sleep(10 * (a + 1))   # PC gateways can sulk for minutes
         raise last
 
     def band_href(self, item, band):
