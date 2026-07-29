@@ -63,6 +63,7 @@ Run:  python src/shelf.py season 2020-21
 import json
 import sys
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 import rasterio
@@ -134,6 +135,22 @@ def build_grid(ref_items):
 # --- fixed grid (season-independent, so every season shares one denominator) -
 
 GRID_CACHE = OUT_DIR / "grid_fixed.npz"
+CURRENT_SHELF = "george_vi"   # which shelf the module globals currently point at
+
+
+def set_shelf(name, tiles, boundary_path):
+    """Repoint the module at another ice shelf (region-agnostic operation).
+
+    Sets the boundary polygon, the Sentinel-2 tile list, the per-shelf grid
+    cache and the shelf-mask cache so the exact same validated machinery runs on
+    any shelf. Defaults (no call) keep the original George VI configuration, so
+    single-shelf callers and tests are unaffected."""
+    global BOUNDARY, SHELF_TILES, GRID_CACHE, CURRENT_SHELF, _COARSE_SHELF
+    CURRENT_SHELF = name
+    BOUNDARY = Path(boundary_path)
+    SHELF_TILES = list(tiles)
+    GRID_CACHE = OUT_DIR / f"grid_{name}.npz"
+    _COARSE_SHELF = {}   # per-tile coarse shelf masks are shelf-specific; reset
 
 
 def _reference_items():
@@ -448,7 +465,8 @@ def run_history(seasons=SEASONS):
     season keeps the others. Writes output/shelf/history.json and prints a
     table of shelf-wide seasonal-maximum meltwater area."""
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    hist_path = OUT_DIR / "history.json"
+    hist_path = OUT_DIR / ("history.json" if CURRENT_SHELF == "george_vi"
+                           else f"history_{CURRENT_SHELF}.json")
     results = {}
 
     grid = build_fixed_grid()  # one denominator shared by every season
