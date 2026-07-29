@@ -20,3 +20,14 @@ class PlanetaryComputerSource(SceneSource):
 
     def tile_query(self, tile):
         return {"s2:mgrs_tile": {"eq": tile}}
+
+
+class Sentinel1Source(PlanetaryComputerSource):
+    """Sentinel-1 RTC (terrain-corrected gamma0). Not MGRS-tiled: search by
+    bbox and group by relative orbit - radar geometry differs per track, so
+    baselines and detections must never mix orbits."""
+    COLLECTION = "sentinel-1-rtc"
+    BAND_MAP = {"hh": "hh"}
+
+    def relative_orbit(self, item):
+        return int(item.properties["sat:relative_orbit"])
