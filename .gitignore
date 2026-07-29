@@ -27,3 +27,4 @@ _netrc
 .netrc
 # Observatory products - regenerable, large
 output/products/
+output/sar/

@@ -23,7 +23,22 @@ import melt
 import shelf
 
 THRESH_DB = 3.0                       # spec: sweep 2-4 dB at gate time
+SAR_SCALE = 4                         # SAR grid = fixed grid at 4x (120 m).
+# Wet/dry is a regional signal; full 30 m warps would cost ~1 GB per scene
+# across ~200 scenes. Same origin and shelf mask, so pixels stay comparable;
+# the fusion phase may revisit resolution with better plumbing.
+MAX_BASELINE_SCENES = 12              # evenly-spaced cap; median is stable by ~10
 OUT = melt.ROOT / "output" / "sar"
+
+
+def sar_grid(grid):
+    """Derive the 120 m SAR grid from the fixed 30 m grid (same origin)."""
+    grid_tr, gw, gh, shelfmask = grid
+    tr = grid_tr * rasterio.Affine.scale(SAR_SCALE)
+    gw4, gh4 = gw // SAR_SCALE, gh // SAR_SCALE
+    sm = shelfmask[:gh4 * SAR_SCALE, :gw4 * SAR_SCALE]
+    sm = sm.reshape(gh4, SAR_SCALE, gw4, SAR_SCALE).any(axis=(1, 3))
+    return tr, gw4, gh4, sm
 
 
 # --- pure math (offline-tested) ----------------------------------------------
@@ -106,8 +121,11 @@ def winter_baseline(year, orbit, grid, source, bbox, rebuild=False):
         return np.load(cache)
     grid_tr, gw, gh, _ = grid
     scenes = list_scenes(source, bbox, f"{year}-06-01", f"{year}-08-31")
-    stack = [read_db_on_grid(it, grid_tr, gw, gh, source)
-             for it in scenes.get(orbit, [])]
+    items = scenes.get(orbit, [])
+    if len(items) > MAX_BASELINE_SCENES:   # evenly spaced subsample, RAM-bounded
+        idx = np.linspace(0, len(items) - 1, MAX_BASELINE_SCENES).astype(int)
+        items = [items[i] for i in idx]
+    stack = [read_db_on_grid(it, grid_tr, gw, gh, source) for it in items]
     if len(stack) < 3:
         raise ValueError(f"only {len(stack)} winter scenes for orbit {orbit}")
     base = _median_stack(stack)
