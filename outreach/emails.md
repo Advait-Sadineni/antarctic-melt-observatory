@@ -13,8 +13,8 @@ question, honest about student status and limitations. Placeholders:
 
 Dear Dr. Banwell,
 
-I'm a computer engineering student who spent the last months building an
-automated meltwater-mapping pipeline on free Sentinel-2 data, and your George
+I'm a computer science student who recently built an automated
+meltwater-mapping pipeline on free Sentinel-2 data, and your George
 VI work has been my ground truth throughout: my pipeline independently lands
 on 19 January 2020 as the record melt date, and blind point-validation against
 a hidden answer key puts its precision at 0.63 with a Horvitz-Thompson
