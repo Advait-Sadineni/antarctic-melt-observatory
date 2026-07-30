@@ -28,3 +28,5 @@ _netrc
 # Observatory products - regenerable, large
 output/products/
 output/sar/
+# grid caches - regenerable, huge
+output/shelf/*.npz
