@@ -1,18 +1,76 @@
-# Antarctic Surface Meltwater Detection
+# The Antarctic Meltwater Observatory
 
-Detects surface meltwater ponds on Antarctic ice shelves from free Sentinel-2
-satellite imagery. Meltwater matters because ponds drive *hydrofracture*: water
-pooling on an ice shelf wedges open crevasses under its own weight and can
-disintegrate the shelf, as happened to Larsen B in 2002. Once a shelf is gone,
-the glaciers it buttressed accelerate into the ocean.
+**A validated, multi-shelf, multi-sensor record of surface meltwater on
+Antarctic ice shelves — built entirely from free satellite data.**
 
-Current scope: single-scene detection, per-season pond-area time series across
-nine melt seasons (2017-18 to 2025-26), a multi-year peak comparison, a
-threshold sensitivity analysis, and two independent validations (cross-sensor
-against Landsat 8, and against blind visual interpretation) — all over one
-61 km study area on **George VI Ice Shelf** (Antarctic Peninsula). Roadmap
-below covers full-shelf coverage, ICESat-2 elevation, and ERA5-driven
-prediction.
+Meltwater matters because ponds drive *hydrofracture*: water pooling on an ice
+shelf wedges open crevasses under its own weight and can disintegrate the
+shelf, as happened to Larsen B in 2002. Once a shelf is gone, the glaciers it
+buttressed accelerate into the ocean. A circum-Antarctic record of where and
+when meltwater forms is, per the literature, "entirely lacking" — this project
+is building one, openly.
+
+![Six shelves, nine seasons](output/multishelf_comparison.png)
+
+## State of the project
+
+- **10+ ice shelves × 9 melt seasons (2017-18 → 2025-26)** of seasonal-maximum
+  meltwater area, every season on a fixed per-shelf grid (EPSG:3031) so years
+  are genuinely comparable. Shelves: George VI, Bach, Stange, Wilkins,
+  Larsen B, Larsen C, Amery, Shackleton, Fimbul (+ more in progress). The
+  record runs through the **current 2025-26 season** — more recent than any
+  published inventory we are aware of.
+- **Region-agnostic by construction**: any shelf runs from its MEaSUReS
+  boundary polygon (`python src/shelves.py <ShelfName>`); Sentinel-2 tiles are
+  auto-discovered.
+- **Two independent cloud backends** (Earth Search / Microsoft Planetary
+  Computer) behind a `SceneSource` adapter; the port is regression-gated on the
+  blind-validated George VI record (reproduces within 1.9%).
+- **Sentinel-1 SAR wet-snow detection** (per-pixel winter baselines, per-orbit)
+  is built and mid-validation: on first ground-truth contact, radar
+  independently confirmed **100% of blind-validated pond pixels** as wet
+  (containment gate; full gate suite in progress). Goal: a fused, cloud-proof
+  DRY / WET / PONDED melt-state record.
+- **Open data products**: every shelf-season is written as a cloud-optimized
+  GeoTIFF + STAC-style metadata with reserved fields for depth/volume and
+  sensor confidence (`output/products/`).
+
+### Validation — the point of this project
+
+Nothing here ships unvalidated. Detection is the published Moussavi et al.
+(2020) method (chosen by scoring 9 candidates on 220 blind-labelled points, not
+by taste), and the record is checked three independent ways: blind stratified
+reference points (hidden answer keys), cross-sensor against Landsat-8
+(r = 0.92), and against the published literature (independently reproduces the
+documented record 2019-20 George VI melt season).
+
+Per-region blind validation (80 stratified points each) has so far
+characterized **three distinct melt regimes**:
+
+| Shelf (tile) | Precision | Recall | Interpretation |
+|---|---|---|---|
+| George VI (19DEA) | 0.63 | 0.51 | channel-fed ponds; misses ≈ offset false positives → area unbiased-to-conservative (HT-corrected 157 ± 37 km² vs 127 reported) |
+| Larsen C (20DNM) | 0.60 | 1.00 | slush-dominated; ~×0.6 open-water correction |
+| Amery (41CPV) | 0.35 | 0.70 | frozen lake lids + slush; raw = "meltwater-affected area", strict open water ≈ ×0.5 |
+
+### Honest limitations
+
+- Seasonal maxima come from each tile's best genuinely-clear scene (cloud
+  measured over the shelf itself, not trusted from tile metadata) — a single
+  peak-date snapshot, not a sub-seasonal composite.
+- The blind labeller and the pipeline author are the same person; a paper-grade
+  claim needs independent labellers.
+- "Water" is definitionally fuzzy on ice shelves (open water vs slush vs lidded
+  lakes); we report per-region corrections rather than pretending one number.
+- Cloudy seasons are flagged `poorly_observed`, never silently filled.
+
+The sections below document the original single-shelf core pipeline in depth —
+its methods, tuning history, and validation protocol all still apply; the
+observatory scales exactly that validated detector.
+
+---
+
+# The George VI core pipeline
 
 ## Run it
 
@@ -35,7 +93,7 @@ pip install rasterio matplotlib pystac-client numpy
 | `python src/export_gis.py <scene>` | `output/gis/` — GeoTIFF mask + GeoJSON ponds for QGIS |
 
 Install: `pip install -r requirements.txt`. Tests: `python -m pytest tests -q`
-(46 tests, offline, ~1 s).
+(64 tests, offline, ~1 s).
 
 No credentials required. Imagery comes from the **AWS Open Data** Sentinel-2 L2A
 archive as Cloud-Optimized GeoTIFFs, found via the Earth Search STAC API. Each
