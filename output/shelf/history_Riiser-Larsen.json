@@ -1,0 +1,83 @@
+[
+ {
+  "season": "2017-18",
+  "shelf_km2": 10.66,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 66.1,
+  "poorly_observed": true
+ },
+ {
+  "season": "2018-19",
+  "shelf_km2": 458.19,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 0.0,
+  "poorly_observed": false
+ },
+ {
+  "season": "2019-20",
+  "shelf_km2": 278.89,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 0.1,
+  "poorly_observed": false
+ },
+ {
+  "season": "2020-21",
+  "shelf_km2": 194.02,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 1.0,
+  "poorly_observed": false
+ },
+ {
+  "season": "2021-22",
+  "shelf_km2": 74.29,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 0.0,
+  "poorly_observed": false
+ },
+ {
+  "season": "2022-23",
+  "shelf_km2": 129.81,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 0.1,
+  "poorly_observed": false
+ },
+ {
+  "season": "2023-24",
+  "shelf_km2": 61.97,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 0.0,
+  "poorly_observed": false
+ },
+ {
+  "season": "2024-25",
+  "shelf_km2": 182.73,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 1.5,
+  "poorly_observed": false
+ },
+ {
+  "season": "2025-26",
+  "shelf_km2": 123.91,
+  "shelf_area_km2": 24959.4,
+  "tiles": 22,
+  "tiles_total": 22,
+  "obs_cloud": 6.9,
+  "poorly_observed": false
+ }
+]

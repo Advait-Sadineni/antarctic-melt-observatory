@@ -1,0 +1,53 @@
+
+=== union experiment: 2020-21 (accept 145.0-195.0 km2) ===
+[2020-21] fixed grid 15820x14875, shelf 14,391 km2, tiles imaged 11/11
+  18DXF  2021-02-08 of 25  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2021-01-23 of 25  halo  0.0%  +   0.00 km2 on shelf
+  18DXH  2021-01-23 of 25  halo  0.0%  +   0.00 km2 on shelf
+  19CDV  2021-01-17 of 25  halo  6.2%  +  37.52 km2 on shelf
+  19CEV  2021-01-24 of 24  halo  0.3%  +  14.74 km2 on shelf
+  19DDA  2021-02-08 of 24  halo  0.0%  +   0.00 km2 on shelf
+  19DDC  2021-01-22 of 25  halo  0.0%  +   0.00 km2 on shelf
+  19DEA  2021-01-24 of 23  halo  1.4%  + 127.17 km2 on shelf
+  19DFA  2021-01-23 of 25  halo  0.0%  +   0.00 km2 on shelf
+  19DFC  2021-01-26 of 25  halo  0.0%  +   0.00 km2 on shelf
+  20CME  2021-01-13 of 25  halo  0.0%  +   0.00 km2 on shelf
+
+[2020-21] shelf-wide seasonal-max meltwater: 173.3 km2 (1.20% of shelf); dominant-tile halo 1.4%
+>>> 2020-21 union=173.29 km2  [PASS]
+
+=== union experiment: 2024-25 (accept 95.0-140.0 km2) ===
+[2024-25] fixed grid 15820x14875, shelf 14,391 km2, tiles imaged 11/11
+  18DXF  2025-02-20 of 16  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2025-02-28 of 14  halo  0.0%  +   0.00 km2 on shelf
+  18DXH  2025-01-24 of 20  halo  0.0%  +   0.00 km2 on shelf
+  19CDV  2025-01-19 of 15  halo  0.2%  +  43.74 km2 on shelf
+  19CEV  2025-01-19 of 18  halo  0.4%  +  53.23 km2 on shelf
+  19DDA  2025-01-05 of 13  halo  0.0%  +   0.00 km2 on shelf
+  19DDC  2025-01-05 of 18  halo  0.0%  +   0.00 km2 on shelf
+  19DEA  2025-01-03 of 14  halo  2.0%  +  91.19 km2 on shelf
+  19DFA  2025-02-12 of 15  halo  0.0%  +   0.00 km2 on shelf
+  19DFC  2025-02-28 of 20  halo  0.0%  +   0.00 km2 on shelf
+  20CME  2025-01-12 of 20  halo  0.0%  +   0.00 km2 on shelf
+
+[2024-25] shelf-wide seasonal-max meltwater: 173.9 km2 (1.21% of shelf); dominant-tile halo 2.0%
+>>> 2024-25 union=173.94 km2  [FAIL]
+
+=== union experiment: 2019-20 (accept 830.0-1000.0 km2) ===
+[2019-20] fixed grid 15820x14875, shelf 14,391 km2, tiles imaged 11/11
+  18DXF  2020-01-18 of 18  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2020-01-18 of 10  halo  0.0%  +   0.00 km2 on shelf
+  18DXH  2020-01-19 of 18  halo  0.0%  +   0.00 km2 on shelf
+  19CDV  2020-01-30 of 13  halo 12.4% POORLY  +   0.00 km2 on shelf
+  19CEV  2020-01-29 of 13  halo  0.2%  +  25.04 km2 on shelf
+  19DDA  2020-01-23 of 11  halo  0.0%  +   0.00 km2 on shelf
+  19DDC  2020-01-19 of 17  halo  0.0%  +   0.00 km2 on shelf
+  19DEA  2020-01-29 of 16  halo 16.8%  + 975.83 km2 on shelf
+  19DFA  2020-02-23 of 24  halo  0.0%  +   0.00 km2 on shelf
+  19DFC  2020-01-19 of 25  halo  0.0%  +   0.00 km2 on shelf
+  20CME  2020-01-19 of 25  halo  0.0%  +   0.00 km2 on shelf
+
+[2019-20] shelf-wide seasonal-max meltwater: 995.5 km2 (6.92% of shelf); dominant-tile halo 16.8%
+>>> 2019-20 union=995.5 km2  [PASS]
+
+UNION EXPERIMENT: 2/3 anchors pass -> DO NOT ADOPT

@@ -1,0 +1,37 @@
+{
+  "_about": "Per-region open-water correction factors from stratified blind point validation (80 points/tile, hidden answer keys, Horvitz-Thompson estimation). 'raw' detections are meltwater-affected area (open water + slush + lidded lakes); multiply by open_water_factor for strict same-day open water. Regimes and provenance in output/shelf_val/<tile>/.",
+  "george_vi": {
+    "regime": "channel-fed ponds",
+    "validated_tile": "19DEA",
+    "season": "2020-21",
+    "precision": 0.625,
+    "precision_ci95": [0.47, 0.758],
+    "recall_area_weighted": 0.506,
+    "open_water_factor": 1.0,
+    "note": "false positives offset by missed margin water; HT-corrected 157+/-37 km2 vs 127 detected -> raw is unbiased-to-conservative"
+  },
+  "LarsenC": {
+    "regime": "slush-dominated (east Peninsula)",
+    "validated_tile": "20DNM",
+    "season": "2024-25",
+    "precision": 0.60,
+    "precision_ci95": [0.446, 0.737],
+    "recall_area_weighted": 1.0,
+    "open_water_factor": 0.60,
+    "note": "recall 1.0 means no missed-water offset; non-water detections are predominantly slush"
+  },
+  "Amery": {
+    "regime": "frozen lake lids + slush (East Antarctica)",
+    "validated_tile": "41CPV",
+    "season": "2018-19",
+    "precision": 0.35,
+    "precision_ci95": [0.221, 0.505],
+    "recall_area_weighted": 0.704,
+    "open_water_factor": 0.50,
+    "note": "pale-cyan lids ARE stored meltwater (counted by published Amery inventories); raw = meltwater-affected area remains the hydrofracture-relevant quantity"
+  },
+  "_unvalidated_default": {
+    "open_water_factor": null,
+    "note": "shelves without per-region blind validation carry no correction; treat raw values as meltwater-affected area with regime unknown"
+  }
+}

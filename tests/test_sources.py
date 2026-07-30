@@ -124,3 +124,18 @@ def test_write_product_cog_and_item(tmp_path):
     # reserved fields exist and are null until M3/M4 fill them
     for k in ("volume_km3", "depth_mean_m", "uncertainty_km2", "sensor_confidence"):
         assert k in p and p[k] is None
+
+
+def test_products_carry_regional_correction(tmp_path):
+    from core.products import write_product
+    water = np.zeros((10, 10), "f4")
+    tr = from_origin(0, 0, 30, 30)
+    d = write_product("LarsenC", "2024-25", water, tr, "EPSG:3031",
+                      {"area_km2": 263.0}, root=tmp_path)
+    p = _json.loads((d / "item.json").read_text())["properties"]
+    assert p["validation"]["open_water_factor"] == 0.60
+    assert p["open_water_km2_est"] == 157.8
+    d2 = write_product("Nivl", "2024-25", water, tr, "EPSG:3031",
+                       {"area_km2": 100.0}, root=tmp_path)
+    p2 = _json.loads((d2 / "item.json").read_text())["properties"]
+    assert p2["validation"] is None and "open_water_km2_est" not in p2

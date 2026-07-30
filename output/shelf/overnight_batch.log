@@ -1,0 +1,1051 @@
+
+####################################################################
+#### SHELF: Bach
+####################################################################
+[Bach] boundary Bach.geojson, bbox [-73.8, -72.4, -70.2, -71.6], 6 tiles: ['18CWE', '18CXE', '18DWF', '18DXF', '19CDV', '19DDA']
+[grid] fixed 8935x8963 @ 30 m, shelf mask 1,427 km2 (cached)
+
+================================================================
+2017-18
+================================================================
+[2017-18] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2018-02-07 of  2  halo  0.0%  +   0.00 km2 on shelf
+  18CXE  2018-02-22 of  2  halo  0.1%  +   0.21 km2 on shelf
+  18DWF  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  18DXF  2018-02-22 of  2  halo  0.0%  +   0.00 km2 on shelf
+  19CDV  2018-02-22 of  2  halo  0.0%  +   0.21 km2 on shelf
+  19DDA  2018-02-22 of  2  halo  0.7%  +   0.17 km2 on shelf
+
+[2017-18] shelf-wide seasonal-max meltwater: 0.2 km2 (0.02% of shelf); dominant-tile halo 0.1%
+
+================================================================
+2018-19
+================================================================
+[2018-19] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2019-02-07 of 13  halo  0.0%  +   0.00 km2 on shelf
+  18CXE  2019-01-25 of 14  halo  0.0%  +   0.00 km2 on shelf
+  18DWF  2019-02-22 of  9  halo  7.0%  +   0.19 km2 on shelf
+  18DXF  2019-01-04 of 16  halo  2.5%  +   0.00 km2 on shelf
+  19CDV  2019-01-25 of 13  halo  0.0%  +   0.00 km2 on shelf
+  19DDA  2019-01-04 of  8  halo  2.4%  +   0.01 km2 on shelf
+
+[2018-19] shelf-wide seasonal-max meltwater: 0.2 km2 (0.01% of shelf); dominant-tile halo 7.0%
+
+================================================================
+2019-20
+================================================================
+[2019-20] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2020-01-18 of  7  halo  4.9%  +   0.00 km2 on shelf
+  18CXE  2020-01-30 of 12  halo  0.4%  +   0.00 km2 on shelf
+  18DWF  2020-01-18 of 11  halo  1.7%  +  13.80 km2 on shelf
+  18DXF  2020-01-29 of 18  halo  2.9%  +   0.00 km2 on shelf
+  19CDV  2020-01-30 of 13  halo  0.0%  +   0.00 km2 on shelf
+  19DDA  2020-01-29 of 11  halo  3.4%  +   0.47 km2 on shelf
+
+[2019-20] shelf-wide seasonal-max meltwater: 14.3 km2 (1.00% of shelf); dominant-tile halo 1.7%
+
+================================================================
+2020-21
+================================================================
+[2020-21] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2021-01-17 of 25  halo  3.3%  +   0.00 km2 on shelf
+  18CXE  2021-01-17 of 25  halo  6.9%  +   8.71 km2 on shelf
+  18DWF  2021-01-23 of 25  halo  7.7%  +  14.67 km2 on shelf
+  18DXF  2021-01-23 of 25  halo  5.3%  +   0.02 km2 on shelf
+  19CDV  2021-01-17 of 25  halo  7.8%  +   9.88 km2 on shelf
+  19DDA  2021-01-23 of 24  halo  2.6%  +   0.38 km2 on shelf
+
+[2020-21] shelf-wide seasonal-max meltwater: 25.8 km2 (1.81% of shelf); dominant-tile halo 7.7%
+
+================================================================
+2021-22
+================================================================
+[2021-22] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2022-01-12 of 12  halo  0.0%  +   0.00 km2 on shelf
+  18CXE  2022-01-12 of 14  halo  0.0%  +   0.00 km2 on shelf
+  18DWF  2022-01-11 of  9  halo  3.9%  +   0.51 km2 on shelf
+  18DXF  2022-01-11 of 20  halo  4.2%  +   0.00 km2 on shelf
+  19CDV  2022-01-14 of 13  halo  0.0%  +   0.00 km2 on shelf
+  19DDA  2022-01-11 of 17  halo  3.3%  +   0.00 km2 on shelf
+
+[2021-22] shelf-wide seasonal-max meltwater: 0.5 km2 (0.04% of shelf); dominant-tile halo 3.9%
+
+================================================================
+2022-23
+================================================================
+[2022-23] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2023-02-26 of 10  halo  0.8%  +   0.00 km2 on shelf
+  18CXE  2023-02-22 of 11  halo  0.1%  +   1.95 km2 on shelf
+  18DWF  2023-02-11 of  6  halo  0.6%  +  34.99 km2 on shelf
+  18DXF  2023-01-16 of  8  halo  6.9%  +   0.00 km2 on shelf
+  19CDV  2023-02-22 of 10  halo  0.0%  +   1.93 km2 on shelf
+  19DDA  2023-01-16 of  7  halo  5.7%  +   0.25 km2 on shelf
+
+[2022-23] shelf-wide seasonal-max meltwater: 37.2 km2 (2.61% of shelf); dominant-tile halo 0.6%
+
+================================================================
+2023-24
+================================================================
+[2023-24] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2024-01-07 of 14  halo  7.5%  +   0.00 km2 on shelf
+  18CXE  2024-01-25 of 12  halo  4.9%  +   0.19 km2 on shelf
+  18DWF  2024-01-25 of 10  halo  0.6%  +   0.12 km2 on shelf
+  18DXF  2024-02-10 of 14  halo  2.3%  +   0.00 km2 on shelf
+  19CDV  2024-01-25 of 12  halo  5.5%  +   0.19 km2 on shelf
+  19DDA  2024-02-10 of 10  halo  3.7%  +   0.00 km2 on shelf
+
+[2023-24] shelf-wide seasonal-max meltwater: 0.3 km2 (0.02% of shelf); dominant-tile halo 5.5%
+
+================================================================
+2024-25
+================================================================
+[2024-25] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2025-01-19 of 15  halo  4.8%  +   0.01 km2 on shelf
+  18CXE  2025-01-19 of 15  halo  0.1%  +   2.16 km2 on shelf
+  18DWF  2025-01-19 of 11  halo  0.6%  +   0.61 km2 on shelf
+  18DXF  2025-01-19 of 16  halo  2.4%  +   0.05 km2 on shelf
+  19CDV  2025-01-19 of 15  halo  0.0%  +   2.42 km2 on shelf
+  19DDA  2025-01-19 of 13  halo  2.4%  +   0.05 km2 on shelf
+
+[2024-25] shelf-wide seasonal-max meltwater: 3.3 km2 (0.23% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2025-26
+================================================================
+[2025-26] fixed grid 8935x8963, shelf 1,427 km2, tiles imaged 6/6
+  18CWE  2026-02-03 of 10  halo  4.4%  +   0.03 km2 on shelf
+  18CXE  2026-02-03 of 15  halo  5.0%  +   9.44 km2 on shelf
+  18DWF  2026-02-09 of  6  halo  5.8%  +  31.31 km2 on shelf
+  18DXF  2026-01-17 of 14  halo  2.3%  +   0.01 km2 on shelf
+  19CDV  2026-02-03 of 14  halo  4.5%  +   9.42 km2 on shelf
+  19DDA  2026-02-16 of 12  halo  2.3%  +   0.39 km2 on shelf
+
+[2025-26] shelf-wide seasonal-max meltwater: 41.2 km2 (2.89% of shelf); dominant-tile halo 5.8%
+
+================================================================
+SHELF-WIDE SEASONAL-MAX MELTWATER (George VI)
+================================================================
+  season     meltwater km2  % of shelf   tiles  shelf halo  quality
+  2017-18              0.2       0.02%     6/6        0.1%  ok
+  2018-19              0.2       0.01%     6/6        7.0%  ok
+  2019-20             14.3       1.00%     6/6        1.7%  ok
+  2020-21             25.8       1.81%     6/6        7.7%  ok
+  2021-22              0.5       0.04%     6/6        3.9%  ok
+  2022-23             37.2       2.61%     6/6        0.6%  ok
+  2023-24              0.3       0.02%     6/6        5.5%  ok
+  2024-25              3.3       0.23%     6/6        0.0%  ok
+  2025-26             41.2       2.89%     6/6        5.8%  ok
+
+  saved -> output\shelf\history_Bach.json
+
+####################################################################
+#### SHELF: Stange
+####################################################################
+[Stange] boundary Stange.geojson, bbox [-78.9, -73.8, -74.5, -72.5], 7 tiles: ['17CNU', '17CNV', '17CPV', '18CVD', '18CVE', '18CWD', '18CWE']
+[grid] fixed 7970x9598 @ 30 m, shelf mask 3,837 km2 (cached)
+
+================================================================
+2017-18
+================================================================
+[2017-18] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  17CNV  2018-02-26 of  2  halo  0.0%  +   0.00 km2 on shelf
+  17CPV  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  18CVD  2018-02-22 of  2  halo  0.0%  +   0.00 km2 on shelf
+  18CVE  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  18CWD  2018-02-14 of  3  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2018-02-07 of  2  halo  0.0%  +   0.00 km2 on shelf
+
+[2017-18] shelf-wide seasonal-max meltwater: 0.0 km2 (0.00% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2018-19
+================================================================
+[2018-19] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2019-01-13 of  8  halo 23.1%  +   1.74 km2 on shelf
+  17CNV  2019-02-21 of 14  halo  0.0%  +   0.00 km2 on shelf
+  17CPV  2019-01-13 of  7  halo 15.1% POORLY  +   0.10 km2 on shelf
+  18CVD  2019-02-22 of 15  halo  4.6%  +   1.13 km2 on shelf
+  18CVE  2019-01-13 of 10  halo 13.3%  +   0.76 km2 on shelf
+  18CWD  2019-01-23 of 22  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2019-02-07 of 13  halo  0.0%  +   0.00 km2 on shelf
+
+[2018-19] shelf-wide seasonal-max meltwater: 3.7 km2 (0.10% of shelf); dominant-tile halo 23.1%
+
+================================================================
+2019-20
+================================================================
+[2019-20] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2020-02-07 of 11  halo  0.0%  +   0.00 km2 on shelf
+  17CNV  2020-02-18 of  5  halo  0.0%  +   0.00 km2 on shelf
+  17CPV  2020-01-18 of  7  halo 61.7% POORLY  +   0.04 km2 on shelf
+  18CVD  2020-01-13 of 19  halo  0.0%  +   0.03 km2 on shelf
+  18CVE  2020-01-18 of  7  halo 61.3% POORLY  +   0.03 km2 on shelf
+  18CWD  2020-01-18 of 24  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2020-01-18 of  7  halo  0.0%  +   0.00 km2 on shelf
+
+[2019-20] shelf-wide seasonal-max meltwater: 0.1 km2 (0.00% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2020-21
+================================================================
+[2020-21] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2021-01-03 of 25  halo  1.9%  +   0.10 km2 on shelf
+  17CNV  2021-01-23 of 25  halo  0.0%  +   0.00 km2 on shelf
+  17CPV  2021-01-03 of 25  halo  0.0%  +   0.81 km2 on shelf
+  18CVD  2021-01-03 of 25  halo  3.8%  +   1.09 km2 on shelf
+  18CVE  2021-01-03 of 25  halo  0.0%  +   1.86 km2 on shelf
+  18CWD  2021-02-13 of 25  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2021-01-17 of 25  halo  0.0%  +   0.00 km2 on shelf
+
+[2020-21] shelf-wide seasonal-max meltwater: 2.7 km2 (0.07% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2021-22
+================================================================
+[2021-22] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2022-01-04 of  9  halo  0.3%  +   0.12 km2 on shelf
+  17CNV  2022-01-18 of  8  halo  0.0%  +   0.00 km2 on shelf
+  17CPV  2022-01-18 of 11  halo 16.1%  +   0.07 km2 on shelf
+  18CVD  2022-02-17 of 14  halo  2.0%  +   0.02 km2 on shelf
+  18CVE  2022-01-18 of 10  halo 13.6%  +   1.09 km2 on shelf
+  18CWD  2022-02-26 of 19  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2022-01-12 of 12  halo  0.0%  +   0.00 km2 on shelf
+
+[2021-22] shelf-wide seasonal-max meltwater: 1.3 km2 (0.03% of shelf); dominant-tile halo 13.6%
+
+================================================================
+2022-23
+================================================================
+[2022-23] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2023-01-22 of  9  halo  0.6%  +   2.11 km2 on shelf
+  17CNV  2023-02-07 of 10  halo  0.0%  +   0.00 km2 on shelf
+  17CPV  2023-02-22 of  8  halo  6.5%  +   7.21 km2 on shelf
+  18CVD  2023-02-11 of 12  halo  5.3%  +   0.35 km2 on shelf
+  18CVE  2023-02-22 of 10  halo  5.5%  +   6.99 km2 on shelf
+  18CWD  2023-02-01 of 12  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2023-01-29 of 10  halo  0.0%  +   0.00 km2 on shelf
+
+[2022-23] shelf-wide seasonal-max meltwater: 10.5 km2 (0.27% of shelf); dominant-tile halo 6.5%
+
+================================================================
+2023-24
+================================================================
+[2023-24] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2024-02-07 of 15  halo  4.1%  +   1.20 km2 on shelf
+  17CNV  2024-01-13 of 16  halo  0.0%  +   0.00 km2 on shelf
+  17CPV  2024-02-19 of 13  halo  0.0%  +   0.36 km2 on shelf
+  18CVD  2024-01-27 of 17  halo  3.5%  +   0.72 km2 on shelf
+  18CVE  2024-01-08 of 14  halo  7.4%  +   0.26 km2 on shelf
+  18CWD  2024-01-07 of 19  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2024-01-07 of 14  halo  0.0%  +   0.00 km2 on shelf
+
+[2023-24] shelf-wide seasonal-max meltwater: 2.4 km2 (0.06% of shelf); dominant-tile halo 4.1%
+
+================================================================
+2024-25
+================================================================
+[2024-25] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2025-02-23 of 20  halo  0.2%  +   2.31 km2 on shelf
+  17CNV  2025-01-20 of 17  halo  0.0%  +   0.00 km2 on shelf
+  17CPV  2025-01-28 of 13  halo  5.2%  +   3.79 km2 on shelf
+  18CVD  2025-02-23 of 20  halo  0.0%  +   0.98 km2 on shelf
+  18CVE  2025-01-28 of 15  halo  5.0%  +   3.73 km2 on shelf
+  18CWD  2025-02-20 of 24  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2025-02-05 of 15  halo  0.0%  +   0.00 km2 on shelf
+
+[2024-25] shelf-wide seasonal-max meltwater: 8.5 km2 (0.22% of shelf); dominant-tile halo 5.2%
+
+================================================================
+2025-26
+================================================================
+[2025-26] fixed grid 7970x9598, shelf 3,837 km2, tiles imaged 7/7
+  17CNU  2026-02-08 of 18  halo  0.2%  +   2.37 km2 on shelf
+  17CNV  2026-01-06 of 17  halo  0.0%  +  30.34 km2 on shelf
+  17CPV  2026-02-09 of 15  halo  0.2%  +   5.23 km2 on shelf
+  18CVD  2026-02-23 of 18  halo  4.8%  +   1.54 km2 on shelf
+  18CVE  2026-02-08 of 15  halo  4.4%  +   5.86 km2 on shelf
+  18CWD  2026-01-01 of 17  halo  0.0%  +   0.00 km2 on shelf
+  18CWE  2026-02-09 of 10  halo  0.0%  +   0.00 km2 on shelf
+
+[2025-26] shelf-wide seasonal-max meltwater: 44.9 km2 (1.17% of shelf); dominant-tile halo 0.0%
+
+================================================================
+SHELF-WIDE SEASONAL-MAX MELTWATER (George VI)
+================================================================
+  season     meltwater km2  % of shelf   tiles  shelf halo  quality
+  2017-18              0.0       0.00%     7/7        0.0%  ok
+  2018-19              3.7       0.10%     7/7       23.1%  ok
+  2019-20              0.1       0.00%     7/7        0.0%  ok
+  2020-21              2.7       0.07%     7/7        0.0%  ok
+  2021-22              1.3       0.03%     7/7       13.6%  ok
+  2022-23             10.5       0.27%     7/7        6.5%  ok
+  2023-24              2.4       0.06%     7/7        4.1%  ok
+  2024-25              8.5       0.22%     7/7        5.2%  ok
+  2025-26             44.9       1.17%     7/7        0.0%  ok
+
+  saved -> output\shelf\history_Stange.json
+
+####################################################################
+#### SHELF: Wilkins
+####################################################################
+[Wilkins] boundary Wilkins.geojson, bbox [-74.7, -71.2, -69.7, -69.6], 8 tiles: ['18DVG', '18DWG', '18DWH', '18DXF', '18DXG', '18DXH', '19DDB', '19DDC']
+[grid] fixed 8254x12886 @ 30 m, shelf mask 10,491 km2 (cached)
+
+================================================================
+2017-18
+================================================================
+[2017-18] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 5/8
+  18DXF  2018-02-22 of  2  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  18DXH  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  19DDB  2018-02-07 of  1  halo  0.0%  +   0.00 km2 on shelf
+  19DDC  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+
+[2017-18] shelf-wide seasonal-max meltwater: 0.0 km2 (0.00% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2018-19
+================================================================
+[2018-19] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 8/8
+  18DVG  2019-01-23 of  3  halo  0.0%  +   0.00 km2 on shelf
+  18DWG  2019-01-24 of 10  halo  1.6%  +   2.04 km2 on shelf
+  18DWH  2019-01-24 of  8  halo  0.0%  +   0.00 km2 on shelf
+  18DXF  2019-02-07 of 16  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2019-01-04 of  8  halo  6.0%  +   0.02 km2 on shelf
+  18DXH  2019-01-24 of  9  halo 21.8%  +   3.98 km2 on shelf
+  19DDB  2019-02-27 of 12  halo  1.4%  +   0.00 km2 on shelf
+  19DDC  2019-01-04 of  9  halo 18.0% POORLY  +   0.03 km2 on shelf
+
+[2018-19] shelf-wide seasonal-max meltwater: 6.0 km2 (0.06% of shelf); dominant-tile halo 21.8%
+
+================================================================
+2019-20
+================================================================
+[2019-20] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 8/8
+  18DVG  2020-01-18 of  4  halo  0.0%  +   0.00 km2 on shelf
+  18DWG  2020-01-18 of 10  halo  1.7%  +   1.10 km2 on shelf
+  18DWH  2020-02-28 of  8  halo  0.0%  +   0.00 km2 on shelf
+  18DXF  2020-01-18 of 18  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2020-01-19 of 10  halo  7.8%  +  13.81 km2 on shelf
+  18DXH  2020-01-18 of 18  halo 15.8%  + 119.32 km2 on shelf
+  19DDB  2020-01-08 of 18  halo  3.4%  +   0.84 km2 on shelf
+  19DDC  2020-01-19 of 17  halo 23.2%  +  40.84 km2 on shelf
+
+[2019-20] shelf-wide seasonal-max meltwater: 152.7 km2 (1.46% of shelf); dominant-tile halo 15.8%
+
+================================================================
+2020-21
+================================================================
+[2020-21] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 8/8
+  18DVG  2021-01-09 of 15  halo  0.0%  +   0.00 km2 on shelf
+  18DWG  2021-01-09 of 19  halo  0.9%  +   1.45 km2 on shelf
+  18DWH  2021-01-23 of 17  halo  0.0%  +   0.00 km2 on shelf
+  18DXF  2021-02-08 of 25  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2021-01-23 of 25  halo  6.5%  +  15.03 km2 on shelf
+  18DXH  2021-01-23 of 25  halo 16.9%  +  51.23 km2 on shelf
+  19DDB  2021-01-22 of 25  halo  5.2%  +  13.05 km2 on shelf
+  19DDC  2021-01-23 of 25  halo 22.3%  +  44.01 km2 on shelf
+
+[2020-21] shelf-wide seasonal-max meltwater: 71.1 km2 (0.68% of shelf); dominant-tile halo 16.9%
+
+================================================================
+2021-22
+================================================================
+[2021-22] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 8/8
+  18DVG  2022-01-11 of  5  halo  0.0%  +   0.00 km2 on shelf
+  18DWG  2022-01-01 of  9  halo 29.0%  +   3.12 km2 on shelf
+  18DWH  2022-01-11 of 11  halo  7.2%  +   0.09 km2 on shelf
+  18DXF  2022-01-02 of 20  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2022-01-11 of 10  halo  6.5%  +   5.23 km2 on shelf
+  18DXH  2022-01-11 of 10  halo 16.4%  +  17.60 km2 on shelf
+  19DDB  2022-02-06 of 13  halo  0.1%  +   0.06 km2 on shelf
+  19DDC  2022-01-11 of 12  halo 20.7%  +  16.56 km2 on shelf
+
+[2021-22] shelf-wide seasonal-max meltwater: 22.7 km2 (0.22% of shelf); dominant-tile halo 16.4%
+
+================================================================
+2022-23
+================================================================
+[2022-23] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 8/8
+  18DVG  2023-02-07 of  5  halo  0.0%  +   0.00 km2 on shelf
+  18DWG  2023-02-22 of  5  halo  0.0%  +   3.47 km2 on shelf
+  18DWH  2023-02-22 of  6  halo  0.0%  +   0.00 km2 on shelf
+  18DXF  2023-01-22 of  8  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2023-02-22 of  2  halo  6.1%  +   9.06 km2 on shelf
+  18DXH  2023-01-30 of 12  halo  0.0%  +   0.00 km2 on shelf
+  19DDB  2023-01-03 of  9  halo  7.9%  +   0.00 km2 on shelf
+  19DDC  2023-01-10 of  9  halo  7.5%  +   0.00 km2 on shelf
+
+[2022-23] shelf-wide seasonal-max meltwater: 12.5 km2 (0.12% of shelf); dominant-tile halo 6.1%
+
+================================================================
+2023-24
+================================================================
+[2023-24] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 8/8
+  18DVG  2024-01-24 of  8  halo  0.0%  +   0.00 km2 on shelf
+  18DWG  2024-01-24 of  6  halo  0.0%  +  16.63 km2 on shelf
+  18DWH  2024-01-08 of  5  halo  0.0%  +   0.00 km2 on shelf
+  18DXF  2024-01-27 of 14  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2024-01-27 of  8  halo  0.1%  +   0.82 km2 on shelf
+  18DXH  2024-02-09 of 15  halo  0.0%  +   0.00 km2 on shelf
+  19DDB  2024-02-01 of 11  halo  0.7%  +   0.00 km2 on shelf
+  19DDC  2024-02-04 of  9  halo  5.2%  +   0.00 km2 on shelf
+
+[2023-24] shelf-wide seasonal-max meltwater: 17.4 km2 (0.17% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2024-25
+================================================================
+[2024-25] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 8/8
+  18DVG  2025-02-23 of  7  halo  0.0%  +   0.00 km2 on shelf
+  18DWG  2025-02-20 of 12  halo  3.9%  +   0.16 km2 on shelf
+  18DWH  2025-01-08 of 14  halo  0.2%  +   0.95 km2 on shelf
+  18DXF  2025-02-20 of 16  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2025-02-28 of 14  halo  3.3%  +   0.17 km2 on shelf
+  18DXH  2025-01-24 of 20  halo  0.0%  +   0.00 km2 on shelf
+  19DDB  2025-02-28 of 17  halo  6.1%  +   0.16 km2 on shelf
+  19DDC  2025-02-28 of 18  halo  1.2%  +   0.12 km2 on shelf
+
+[2024-25] shelf-wide seasonal-max meltwater: 1.3 km2 (0.01% of shelf); dominant-tile halo 0.2%
+
+================================================================
+2025-26
+================================================================
+[2025-26] fixed grid 8254x12886, shelf 10,491 km2, tiles imaged 8/8
+  18DVG  2026-02-09 of  8  halo  0.0%  +   0.00 km2 on shelf
+  18DWG  2026-02-09 of  6  halo  0.0%  +  37.85 km2 on shelf
+  18DWH  2026-01-17 of 11  halo  0.0%  +   0.00 km2 on shelf
+  18DXF  2026-01-16 of 14  halo  0.0%  +   0.00 km2 on shelf
+  18DXG  2026-02-09 of 12  halo  7.9%  +   9.77 km2 on shelf
+  18DXH  2026-02-06 of 19  halo  5.5%  +  27.61 km2 on shelf
+  19DDB  2026-02-06 of 16  halo  2.3%  +   3.54 km2 on shelf
+  19DDC  2026-02-06 of 18  halo  0.7%  +  27.03 km2 on shelf
+
+[2025-26] shelf-wide seasonal-max meltwater: 70.0 km2 (0.67% of shelf); dominant-tile halo 0.0%
+
+================================================================
+SHELF-WIDE SEASONAL-MAX MELTWATER (George VI)
+================================================================
+  season     meltwater km2  % of shelf   tiles  shelf halo  quality
+  2017-18              0.0       0.00%     5/8        0.0%  ok
+  2018-19              6.0       0.06%     8/8       21.8%  ok
+  2019-20            152.7       1.46%     8/8       15.8%  ok
+  2020-21             71.1       0.68%     8/8       16.9%  ok
+  2021-22             22.7       0.22%     8/8       16.4%  ok
+  2022-23             12.5       0.12%     8/8        6.1%  ok
+  2023-24             17.4       0.17%     8/8        0.0%  ok
+  2024-25              1.3       0.01%     8/8        0.2%  ok
+  2025-26             70.0       0.67%     8/8        0.0%  ok
+
+  saved -> output\shelf\history_Wilkins.json
+
+####################################################################
+#### SHELF: LarsenC
+####################################################################
+[LarsenC] boundary LarsenC.geojson, bbox [-65.8, -68.8, -60.1, -66.0], 16 tiles: ['19DFD', '19DFE', '19DFF', '19DFG', '20DMJ', '20DMK', '20DML', '20DMM', '20DNJ', '20DNK', '20DNL', '20DNM', '20DPJ', '20DPK', '20DPL', '20DPM']
+[grid] fixed 18316x16683 @ 30 m, shelf mask 39,916 km2 (cached)
+
+================================================================
+2017-18
+================================================================
+[2017-18] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 15/16
+  19DFD  2018-02-25 of  3  halo  0.0%  +   0.00 km2 on shelf
+  19DFE  2018-02-25 of  3  halo  0.0%  +   0.00 km2 on shelf
+  19DFF  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2018-02-25 of  4  halo  0.0%  +   0.00 km2 on shelf
+  20DMK  2018-02-25 of  3  halo  0.0%  +   0.00 km2 on shelf
+  20DML  2018-02-25 of  3  halo  0.0%  +   0.00 km2 on shelf
+  20DMM  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  20DNJ  2018-02-25 of  4  halo  0.0%  +   0.00 km2 on shelf
+  20DNK  2018-02-25 of  4  halo  0.0%  +   0.00 km2 on shelf
+  20DNL  2018-02-25 of  3  halo  0.0%  +   0.00 km2 on shelf
+  20DNM  2018-02-07 of  3  halo  0.0%  +   0.00 km2 on shelf
+  20DPJ  2018-02-07 of  4  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2018-02-07 of  4  halo  0.0%  +   0.00 km2 on shelf
+  20DPL  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+  20DPM  2018-02-25 of  1  halo  0.0%  +   0.00 km2 on shelf
+
+[2017-18] shelf-wide seasonal-max meltwater: 0.0 km2 (0.00% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2018-19
+================================================================
+[2018-19] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 16/16
+  19DFD  2019-01-18 of 11  halo  4.6%  +   0.00 km2 on shelf
+  19DFE  2019-01-18 of 11  halo  0.6%  +   0.00 km2 on shelf
+  19DFF  2019-02-03 of  5  halo 16.4%  +   1.71 km2 on shelf
+  19DFG  2019-02-23 of  7  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2019-02-24 of 12  halo  0.4%  +   0.00 km2 on shelf
+  20DMK  2019-02-17 of 12  halo  0.0%  +   0.00 km2 on shelf
+  20DML  2019-01-08 of  8  halo  1.4%  +   0.00 km2 on shelf
+  20DMM  2019-02-03 of  5  halo 15.5%  +   0.56 km2 on shelf
+  20DNJ  2019-02-24 of 17  halo  0.0%  +   0.00 km2 on shelf
+  20DNK  2019-01-05 of 16  halo  5.1%  +   0.77 km2 on shelf
+  20DNL  2019-01-08 of  9  halo  7.4%  +   0.64 km2 on shelf
+  20DNM  2019-02-23 of 10  halo  0.0%  +   0.00 km2 on shelf
+  20DPJ  2019-01-05 of  5  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2019-01-05 of  7  halo  2.5%  +   0.00 km2 on shelf
+  20DPL  2019-01-08 of  7  halo  0.0%  +   0.00 km2 on shelf
+  20DPM  2019-02-27 of 14  halo  0.0%  +   0.00 km2 on shelf
+
+[2018-19] shelf-wide seasonal-max meltwater: 3.6 km2 (0.01% of shelf); dominant-tile halo 16.4%
+
+================================================================
+2019-20
+================================================================
+[2019-20] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 16/16
+  19DFD  2020-01-19 of 18  halo 16.7%  +   0.10 km2 on shelf
+  19DFE  2020-01-13 of 15  halo  0.4%  +   0.06 km2 on shelf
+  19DFF  2020-01-19 of  8  halo 19.8%  +   0.96 km2 on shelf
+  19DFG  2020-01-18 of  9  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2020-01-20 of 22  halo  0.7%  +   0.00 km2 on shelf
+  20DMK  2020-02-02 of 12  halo 24.5%  +   0.00 km2 on shelf
+  20DML  2020-02-22 of 13  halo  3.0%  +   0.02 km2 on shelf
+  20DMM  2020-01-19 of  9  halo 21.8% POORLY  +   0.76 km2 on shelf
+  20DNJ  2020-01-19 of 19  halo  1.7%  +   0.06 km2 on shelf
+  20DNK  2020-01-10 of 21  halo 22.6%  +  22.75 km2 on shelf
+  20DNL  2020-01-19 of 12  halo 14.2%  +   0.88 km2 on shelf
+  20DNM  2020-02-02 of 14  halo  6.6%  +   0.00 km2 on shelf
+  20DPJ  2020-02-09 of  9  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2020-02-09 of 13  halo  4.0%  +  84.95 km2 on shelf
+  20DPL  2020-02-09 of  9  halo  0.0%  +   0.00 km2 on shelf
+  20DPM  2020-02-09 of 16  halo  0.0%  +   0.00 km2 on shelf
+
+[2019-20] shelf-wide seasonal-max meltwater: 110.3 km2 (0.28% of shelf); dominant-tile halo 4.0%
+
+================================================================
+2020-21
+================================================================
+[2020-21] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 16/16
+  19DFD  2021-01-09 of 25  halo  0.0%  +   0.00 km2 on shelf
+  19DFE  2021-01-07 of 19  halo  0.3%  +   0.00 km2 on shelf
+  19DFF  2021-02-25 of 21  halo 15.5% POORLY  +   0.40 km2 on shelf
+  19DFG  2021-01-12 of 22  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2021-02-03 of 25  halo  0.0%  +   0.00 km2 on shelf
+  20DMK  2021-02-25 of 18  halo  7.6%  +   0.00 km2 on shelf
+  20DML  2021-01-07 of 23  halo  2.4%  +   4.96 km2 on shelf
+  20DMM  2021-02-25 of 20  halo 25.5% POORLY  +   0.03 km2 on shelf
+  20DNJ  2021-02-22 of 17  halo  6.1%  +   0.00 km2 on shelf
+  20DNK  2021-02-12 of 16  halo  7.5%  +  19.25 km2 on shelf
+  20DNL  2021-02-15 of 19  halo  0.9%  +  18.26 km2 on shelf
+  20DNM  2021-02-16 of 18  halo  0.0%  +  77.61 km2 on shelf
+  20DPJ  2021-01-07 of  4  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2021-02-12 of  8  halo  0.0%  +   0.00 km2 on shelf
+  20DPL  2021-02-03 of  9  halo  0.2%  +   0.00 km2 on shelf
+  20DPM  2021-01-17 of 17  halo  4.8%  +   0.10 km2 on shelf
+
+[2020-21] shelf-wide seasonal-max meltwater: 120.6 km2 (0.30% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2021-22
+================================================================
+[2021-22] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 16/16
+  19DFD  2022-02-13 of 12  halo  0.0%  +   0.00 km2 on shelf
+  19DFE  2022-01-12 of  8  halo  0.7%  +   0.00 km2 on shelf
+  19DFF  2022-01-28 of  6  halo 16.3% POORLY  +   7.28 km2 on shelf
+  19DFG  2022-01-11 of  8  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2022-01-09 of 13  halo  0.9%  +   0.00 km2 on shelf
+  20DMK  2022-02-10 of  7  halo  3.4%  +   1.90 km2 on shelf
+  20DML  2022-01-12 of  7  halo  0.3%  +   0.00 km2 on shelf
+  20DMM  2022-01-24 of  9  halo  0.0%  +   0.00 km2 on shelf
+  20DNJ  2022-01-08 of  9  halo 15.1% POORLY  +   0.00 km2 on shelf
+  20DNK  2022-01-21 of  9  halo  0.0%  +   0.00 km2 on shelf
+  20DNL  2022-01-21 of  7  halo  2.1%  +   6.19 km2 on shelf
+  20DNM  2022-02-10 of  8  halo  4.0%  +  22.45 km2 on shelf
+  20DPJ  2022-02-11 of  3  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2022-01-18 of  3  halo  2.3%  +   0.00 km2 on shelf
+  20DPL  2022-01-18 of  3  halo  0.0%  +   0.00 km2 on shelf
+  20DPM  2022-01-19 of  3  halo 11.2% POORLY  +   0.00 km2 on shelf
+
+[2021-22] shelf-wide seasonal-max meltwater: 37.8 km2 (0.09% of shelf); dominant-tile halo 4.0%
+
+================================================================
+2022-23
+================================================================
+[2022-23] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 16/16
+  19DFD  2023-02-18 of 10  halo  0.0%  +   0.00 km2 on shelf
+  19DFE  2023-02-16 of  7  halo  0.0%  +   0.00 km2 on shelf
+  19DFF  2023-01-10 of  7  halo  7.7%  +  43.95 km2 on shelf
+  19DFG  2023-01-02 of  6  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2023-02-16 of  9  halo  1.9%  +   0.00 km2 on shelf
+  20DMK  2023-02-16 of  6  halo  0.0%  +   0.04 km2 on shelf
+  20DML  2023-01-10 of  9  halo  7.3%  +  50.48 km2 on shelf
+  20DMM  2023-01-30 of  7  halo  2.1%  +   0.00 km2 on shelf
+  20DNJ  2023-01-01 of  6  halo  2.0%  +   0.00 km2 on shelf
+  20DNK  2023-02-15 of  9  halo  0.8%  +   0.00 km2 on shelf
+  20DNL  2023-01-20 of  5  halo  2.1%  +   3.84 km2 on shelf
+  20DNM  2023-01-10 of 10  halo  7.6%  +  91.67 km2 on shelf
+  20DPJ  2023-02-16 of  7  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2023-01-23 of 11  halo  0.0%  +   0.00 km2 on shelf
+  20DPL  2023-02-26 of 10  halo  0.0%  +   0.00 km2 on shelf
+  20DPM  2023-01-20 of  8  halo  0.6%  +   3.81 km2 on shelf
+
+[2022-23] shelf-wide seasonal-max meltwater: 153.4 km2 (0.38% of shelf); dominant-tile halo 7.6%
+
+================================================================
+2023-24
+================================================================
+[2023-24] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 16/16
+  19DFD  2024-01-02 of 16  halo  0.0%  +   0.00 km2 on shelf
+  19DFE  2024-01-02 of  7  halo  0.6%  +   0.00 km2 on shelf
+  19DFF  2024-02-23 of  7  halo  8.8% POORLY  +   4.07 km2 on shelf
+  19DFG  2024-01-14 of  5  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2024-01-02 of 11  halo  0.0%  +   0.00 km2 on shelf
+  20DMK  2024-02-21 of  8  halo  2.9%  +   6.09 km2 on shelf
+  20DML  2024-02-23 of  8  halo  2.4%  +   1.01 km2 on shelf
+  20DMM  2024-02-23 of  9  halo  2.2%  +   0.00 km2 on shelf
+  20DNJ  2024-02-07 of  6  halo  0.0%  +   0.00 km2 on shelf
+  20DNK  2024-01-01 of 10  halo  0.0%  +   0.00 km2 on shelf
+  20DNL  2024-02-11 of  7  halo  0.0%  +   0.00 km2 on shelf
+  20DNM  2024-01-01 of  7  halo  4.1%  +   9.59 km2 on shelf
+  20DPJ  2024-02-04 of  5  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2024-01-02 of 11  halo  0.0%  +   0.00 km2 on shelf
+  20DPL  2024-02-07 of  5  halo  2.1%  +   0.00 km2 on shelf
+  20DPM  2024-01-29 of  7  halo  0.0%  +   0.00 km2 on shelf
+
+[2023-24] shelf-wide seasonal-max meltwater: 20.2 km2 (0.05% of shelf); dominant-tile halo 4.1%
+
+================================================================
+2024-25
+================================================================
+[2024-25] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 16/16
+  19DFD  2025-02-28 of 12  halo  2.5%  +   0.43 km2 on shelf
+  19DFE  2025-02-28 of  6  halo  1.9%  +   0.06 km2 on shelf
+  19DFF  2025-02-27 of  6  halo  0.0%  +   0.00 km2 on shelf
+  19DFG  2025-01-21 of  8  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2025-02-28 of  9  halo  2.0%  +   0.43 km2 on shelf
+  20DMK  2025-02-28 of  6  halo  0.6%  +   0.47 km2 on shelf
+  20DML  2025-01-25 of  5  halo  7.0%  +  11.18 km2 on shelf
+  20DMM  2025-02-28 of  7  halo  5.2%  +   4.47 km2 on shelf
+  20DNJ  2025-02-28 of  4  halo  0.0%  +   0.00 km2 on shelf
+  20DNK  2025-02-28 of  7  halo  0.0%  +   4.44 km2 on shelf
+  20DNL  2025-01-25 of  8  halo  0.1%  +   0.35 km2 on shelf
+  20DNM  2025-01-02 of  6  halo  4.6%  + 198.65 km2 on shelf
+  20DPJ  2025-02-28 of  4  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2025-01-03 of  3  halo  0.0%  +   0.00 km2 on shelf
+  20DPL  2025-01-02 of  6  halo  4.0%  +   5.17 km2 on shelf
+  20DPM  2025-01-02 of  7  halo  0.8%  +  38.56 km2 on shelf
+
+[2024-25] shelf-wide seasonal-max meltwater: 263.0 km2 (0.66% of shelf); dominant-tile halo 4.6%
+
+================================================================
+2025-26
+================================================================
+[2025-26] fixed grid 18316x16683, shelf 39,916 km2, tiles imaged 16/16
+  19DFD  2026-02-02 of 17  halo  0.0%  +   0.00 km2 on shelf
+  19DFE  2026-01-07 of  6  halo  7.8%  +   0.10 km2 on shelf
+  19DFF  2026-02-03 of  7  halo  4.3%  +  23.68 km2 on shelf
+  19DFG  2026-01-17 of  6  halo  0.0%  +   0.00 km2 on shelf
+  20DMJ  2026-01-28 of 11  halo  4.9%  +   0.00 km2 on shelf
+  20DMK  2026-01-10 of 11  halo  2.6%  +   0.91 km2 on shelf
+  20DML  2026-02-03 of 11  halo  6.9%  +  25.08 km2 on shelf
+  20DMM  2026-01-07 of 11  halo  5.9%  +   3.77 km2 on shelf
+  20DNJ  2026-01-18 of  7  halo  0.3%  +   0.00 km2 on shelf
+  20DNK  2026-01-18 of 14  halo  0.0%  +   2.04 km2 on shelf
+  20DNL  2026-01-07 of 12  halo  0.1%  +   0.45 km2 on shelf
+  20DNM  2026-01-30 of 10  halo  4.6%  + 106.88 km2 on shelf
+  20DPJ  2026-02-13 of  6  halo  0.0%  +   0.00 km2 on shelf
+  20DPK  2026-02-13 of 10  halo  0.0%  +   0.00 km2 on shelf
+  20DPL  2026-02-13 of 11  halo  0.0%  +   0.00 km2 on shelf
+  20DPM  2026-02-03 of  8  halo  2.2%  +  13.05 km2 on shelf
+
+[2025-26] shelf-wide seasonal-max meltwater: 153.4 km2 (0.38% of shelf); dominant-tile halo 4.6%
+
+================================================================
+SHELF-WIDE SEASONAL-MAX MELTWATER (George VI)
+================================================================
+  season     meltwater km2  % of shelf   tiles  shelf halo  quality
+  2017-18              0.0       0.00%   15/16        0.0%  ok
+  2018-19              3.6       0.01%   16/16       16.4%  ok
+  2019-20            110.3       0.28%   16/16        4.0%  ok
+  2020-21            120.6       0.30%   16/16        0.0%  ok
+  2021-22             37.8       0.09%   16/16        4.0%  ok
+  2022-23            153.4       0.38%   16/16        7.6%  ok
+  2023-24             20.2       0.05%   16/16        4.1%  ok
+  2024-25            263.0       0.66%   16/16        4.6%  ok
+  2025-26            153.4       0.38%   16/16        4.6%  ok
+
+  saved -> output\shelf\history_LarsenC.json
+
+####################################################################
+#### SHELF: Amery
+####################################################################
+[Amery] boundary Amery.geojson, bbox [66.8, -73.3, 74.4, -68.5], 33 tiles: ['41CPV', '41DPA', '41DPB', '41DPC', '41DPD', '41DPE', '42CVD', '42CVE', '42CWD', '42CWE', '42CXE', '42DVF', '42DVG', '42DVH', '42DVJ', '42DVK', '42DWF', '42DWG', '42DWH', '42DWJ', '42DWK', '42DXF', '42DXG', '42DXH', '42DXJ', '42DXK', '43CDU', '43CDV', '43DDA', '43DDB', '43DDC', '43DDD', '43DDE']
+[grid] fixed 25949x19548 @ 30 m, shelf mask 45,512 km2 (cached)
+
+================================================================
+2017-18
+================================================================
+[2017-18] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2018-01-22 of  4  halo  4.8%  +   0.00 km2 on shelf
+  41DPA  2018-01-23 of  2  halo  0.0%  +   6.58 km2 on shelf
+  41DPB  2018-02-01 of  1  halo 51.4% POORLY  +   0.51 km2 on shelf
+  41DPC  2018-02-01 of  1  halo  0.0%  +   0.00 km2 on shelf
+  41DPD  2018-02-01 of  1  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2018-02-01 of  1  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2018-02-01 of  5  halo  6.6%  +  80.91 km2 on shelf
+  42CVE  2018-01-23 of  4  halo 11.0%  + 235.79 km2 on shelf
+  42CWD  2018-02-28 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2018-01-13 of  3  halo  0.1%  + 130.60 km2 on shelf
+  42CXE  2018-01-23 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2018-01-23 of  2  halo  1.0%  +  56.46 km2 on shelf
+  42DVG  2018-02-01 of  1  halo 69.0% POORLY  +   0.51 km2 on shelf
+  42DVH  2018-02-01 of  1  halo  0.0%  +   0.00 km2 on shelf
+  42DVJ  2018-02-01 of  2  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2018-02-01 of  1  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2018-01-13 of  2  halo  0.2%  + 230.03 km2 on shelf
+  42DWG  2018-01-13 of  2  halo  1.0%  +   5.41 km2 on shelf
+  42DWH  2018-01-13 of  3  halo  0.0%  +   0.00 km2 on shelf
+  42DWJ  2018-02-01 of  1  halo  0.0%  +   0.00 km2 on shelf
+  42DWK  2018-02-01 of  1  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2018-01-13 of  2  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2018-01-13 of  2  halo  1.6%  +   5.26 km2 on shelf
+  42DXH  2018-01-13 of  2  halo  1.6%  +  18.90 km2 on shelf
+  42DXJ  2018-01-13 of  2  halo  0.0%  +   0.00 km2 on shelf
+  42DXK  2018-02-01 of  1  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2018-01-13 of  6  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2018-01-23 of  6  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2018-01-13 of  2  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2018-01-13 of  3  halo  0.7%  +   1.66 km2 on shelf
+  43DDC  2018-01-13 of  2  halo  1.7%  +  18.70 km2 on shelf
+  43DDD  2018-01-13 of  1  halo  0.0%  +   0.00 km2 on shelf
+  43DDE  2018-01-13 of  2  halo  0.0%  +   0.00 km2 on shelf
+
+[2017-18] shelf-wide seasonal-max meltwater: 682.7 km2 (1.50% of shelf); dominant-tile halo 11.0%
+
+================================================================
+2018-19
+================================================================
+[2018-19] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2019-02-12 of 12  halo  9.0%  + 925.28 km2 on shelf
+  41DPA  2019-02-12 of 11  halo  0.0%  + 625.90 km2 on shelf
+  41DPB  2019-02-11 of  6  halo 23.8%  +  12.71 km2 on shelf
+  41DPC  2019-01-02 of  8  halo  0.1%  +   1.20 km2 on shelf
+  41DPD  2019-02-20 of 11  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2019-02-21 of 11  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2019-02-21 of 12  halo  6.9%  + 227.68 km2 on shelf
+  42CVE  2019-02-12 of 12  halo 11.6%  + 912.76 km2 on shelf
+  42CWD  2019-01-03 of  7  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2019-02-01 of 13  halo  0.1%  + 457.21 km2 on shelf
+  42CXE  2019-02-22 of  9  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2019-02-22 of  7  halo  0.3%  +  43.33 km2 on shelf
+  42DVG  2019-02-11 of  6  halo 22.7%  + 153.10 km2 on shelf
+  42DVH  2019-01-02 of  6  halo  0.9%  +   1.58 km2 on shelf
+  42DVJ  2019-02-21 of 11  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2019-02-20 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2019-02-12 of 12  halo  0.2%  + 452.76 km2 on shelf
+  42DWG  2019-02-11 of  9  halo  0.4%  +  52.80 km2 on shelf
+  42DWH  2019-02-21 of 11  halo  0.0%  +   0.00 km2 on shelf
+  42DWJ  2019-01-12 of  6  halo  3.6%  +   0.90 km2 on shelf
+  42DWK  2019-02-21 of  7  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2019-02-22 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2019-01-13 of  9  halo  1.6%  +  47.49 km2 on shelf
+  42DXH  2019-01-22 of 12  halo  8.0%  +  90.80 km2 on shelf
+  42DXJ  2019-01-12 of  6  halo  4.2%  +   0.30 km2 on shelf
+  42DXK  2019-02-21 of  3  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2019-01-14 of 14  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2019-02-22 of 13  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2019-02-22 of  5  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2019-01-13 of 13  halo  0.7%  +  43.77 km2 on shelf
+  43DDC  2019-01-13 of 13  halo  1.9%  +  55.18 km2 on shelf
+  43DDD  2019-01-12 of  8  halo  5.9%  +   0.21 km2 on shelf
+  43DDE  2019-02-22 of  5  halo  0.0%  +   0.00 km2 on shelf
+
+[2018-19] shelf-wide seasonal-max meltwater: 2957.3 km2 (6.50% of shelf); dominant-tile halo 9.0%
+
+================================================================
+2019-20
+================================================================
+[2019-20] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2020-02-26 of 23  halo 15.8%  + 757.76 km2 on shelf
+  41DPA  2020-02-27 of 21  halo  0.0%  + 101.89 km2 on shelf
+  41DPB  2020-01-07 of 11  halo 16.4% POORLY  +   0.00 km2 on shelf
+  41DPC  2020-01-26 of 14  halo  0.0%  +   0.00 km2 on shelf
+  41DPD  2020-01-16 of 15  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2020-01-26 of 17  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2020-01-07 of 23  halo  7.0%  + 135.43 km2 on shelf
+  42CVE  2020-02-26 of 23  halo 18.0%  + 767.26 km2 on shelf
+  42CWD  2020-02-18 of 19  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2020-02-17 of 21  halo  1.0%  + 172.89 km2 on shelf
+  42CXE  2020-01-29 of 24  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2020-02-26 of 23  halo  7.9%  + 353.02 km2 on shelf
+  42DVG  2020-01-07 of 12  halo 15.3% POORLY  +   0.02 km2 on shelf
+  42DVH  2020-02-26 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42DVJ  2020-02-05 of 16  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2020-01-16 of 16  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2020-02-17 of 21  halo  0.5%  + 180.20 km2 on shelf
+  42DWG  2020-02-27 of 18  halo  1.0%  +   0.49 km2 on shelf
+  42DWH  2020-02-27 of 14  halo  1.6%  +   7.87 km2 on shelf
+  42DWJ  2020-02-26 of  6  halo  0.0%  +   0.43 km2 on shelf
+  42DWK  2020-02-26 of  5  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2020-01-18 of 10  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2020-01-18 of 13  halo  2.9%  +   1.62 km2 on shelf
+  42DXH  2020-02-26 of 12  halo  0.9%  +   8.87 km2 on shelf
+  42DXJ  2020-02-17 of 10  halo  5.8%  +   1.44 km2 on shelf
+  42DXK  2020-02-26 of  3  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2020-01-19 of 23  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2020-01-29 of 24  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2020-02-17 of 10  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2020-01-18 of 13  halo  5.3%  +   0.60 km2 on shelf
+  43DDC  2020-01-27 of 13  halo  7.7%  +  22.27 km2 on shelf
+  43DDD  2020-02-26 of  9  halo  3.8%  +   0.00 km2 on shelf
+  43DDE  2020-02-27 of  8  halo  0.0%  +   0.00 km2 on shelf
+
+[2019-20] shelf-wide seasonal-max meltwater: 1498.0 km2 (3.29% of shelf); dominant-tile halo 18.0%
+
+================================================================
+2020-21
+================================================================
+[2020-21] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2021-01-22 of 17  halo  8.5%  +  91.46 km2 on shelf
+  41DPA  2021-02-21 of 15  halo  0.0%  +   0.11 km2 on shelf
+  41DPB  2021-01-11 of  8  halo 23.2%  +   0.07 km2 on shelf
+  41DPC  2021-01-11 of 13  halo  0.8%  +   0.57 km2 on shelf
+  41DPD  2021-01-30 of 17  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2021-01-10 of 15  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2021-01-31 of 25  halo  6.6%  + 357.38 km2 on shelf
+  42CVE  2021-01-31 of 17  halo 10.8%  + 234.58 km2 on shelf
+  42CWD  2021-01-23 of 22  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2021-01-31 of 19  halo  0.1%  +  22.86 km2 on shelf
+  42CXE  2021-01-03 of 24  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2021-01-11 of 15  halo  7.8%  +  13.22 km2 on shelf
+  42DVG  2021-01-21 of  8  halo 29.8%  +   0.25 km2 on shelf
+  42DVH  2021-01-11 of  8  halo  1.5%  +   0.65 km2 on shelf
+  42DVJ  2021-01-11 of 15  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2021-01-10 of 16  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2021-01-22 of 14  halo  0.2%  +  14.19 km2 on shelf
+  42DWG  2021-01-31 of 17  halo  3.2%  +   0.80 km2 on shelf
+  42DWH  2021-01-21 of 15  halo  0.0%  +   0.00 km2 on shelf
+  42DWJ  2021-01-11 of  8  halo  4.2%  +   0.17 km2 on shelf
+  42DWK  2021-01-01 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2021-01-16 of 14  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2021-01-12 of 17  halo  1.5%  +   0.31 km2 on shelf
+  42DXH  2021-01-31 of 16  halo  7.9%  +  32.96 km2 on shelf
+  42DXJ  2021-02-21 of 14  halo  2.4%  +   1.31 km2 on shelf
+  42DXK  2021-01-11 of  9  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2021-01-26 of 23  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2021-01-03 of 24  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2021-01-16 of 13  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2021-01-12 of 23  halo  0.7%  +   0.06 km2 on shelf
+  43DDC  2021-01-31 of 14  halo  3.4%  +  33.83 km2 on shelf
+  43DDD  2021-01-21 of 12  halo  4.7%  +   0.71 km2 on shelf
+  43DDE  2021-01-21 of  7  halo  0.0%  +   0.00 km2 on shelf
+
+[2020-21] shelf-wide seasonal-max meltwater: 665.2 km2 (1.46% of shelf); dominant-tile halo 6.6%
+
+================================================================
+2021-22
+================================================================
+[2021-22] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2022-02-26 of 10  halo  7.8%  +  45.03 km2 on shelf
+  41DPA  2022-02-16 of 10  halo  0.0%  +   8.55 km2 on shelf
+  41DPB  2022-01-16 of  4  halo 22.5%  +   0.56 km2 on shelf
+  41DPC  2022-01-16 of  5  halo  0.0%  +   1.90 km2 on shelf
+  41DPD  2022-01-16 of  6  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2022-01-16 of  7  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2022-02-15 of 16  halo  6.7%  + 411.56 km2 on shelf
+  42CVE  2022-02-15 of 10  halo 13.1%  + 567.28 km2 on shelf
+  42CWD  2022-01-21 of 16  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2022-02-15 of 17  halo  0.1%  + 152.36 km2 on shelf
+  42CXE  2022-01-27 of 16  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2022-01-26 of 11  halo  7.5%  +  66.27 km2 on shelf
+  42DVG  2022-01-16 of  4  halo 21.1%  +   0.83 km2 on shelf
+  42DVH  2022-01-16 of  4  halo  0.4%  +   2.29 km2 on shelf
+  42DVJ  2022-01-06 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2022-02-14 of  7  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2022-02-16 of 12  halo  0.2%  + 231.77 km2 on shelf
+  42DWG  2022-01-27 of 10  halo  1.0%  +  11.34 km2 on shelf
+  42DWH  2022-01-06 of  9  halo  0.0%  +   0.00 km2 on shelf
+  42DWJ  2022-02-15 of  4  halo  5.0%  +   0.41 km2 on shelf
+  42DWK  2022-01-06 of  4  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2022-01-21 of 10  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2022-01-27 of 10  halo  1.6%  +   9.47 km2 on shelf
+  42DXH  2022-02-15 of  9  halo  0.9%  +  79.06 km2 on shelf
+  42DXJ  2022-01-27 of  7  halo  1.6%  +   1.52 km2 on shelf
+  42DXK  2022-01-06 of  3  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2022-01-21 of 17  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2022-01-27 of 17  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2022-01-21 of 10  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2022-01-27 of 15  halo  0.7%  +   5.81 km2 on shelf
+  43DDC  2022-01-27 of  8  halo  4.8%  +  26.61 km2 on shelf
+  43DDD  2022-01-06 of  8  halo  1.8%  +   1.19 km2 on shelf
+  43DDE  2022-02-26 of  6  halo  0.0%  +   0.00 km2 on shelf
+
+[2021-22] shelf-wide seasonal-max meltwater: 1358.0 km2 (2.98% of shelf); dominant-tile halo 13.1%
+
+================================================================
+2022-23
+================================================================
+[2022-23] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2023-02-20 of 15  halo  7.6%  +  34.36 km2 on shelf
+  41DPA  2023-02-21 of 15  halo  0.0%  +   5.35 km2 on shelf
+  41DPB  2023-02-04 of 14  halo  7.9%  +   0.00 km2 on shelf
+  41DPC  2023-02-26 of  7  halo  0.0%  +   0.00 km2 on shelf
+  41DPD  2023-02-26 of  5  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2023-02-02 of  9  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2023-01-21 of 16  halo  7.4%  +  16.00 km2 on shelf
+  42CVE  2023-02-03 of 13  halo  0.6%  +  11.40 km2 on shelf
+  42CWD  2023-01-23 of 16  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2023-02-04 of 11  halo  0.1%  +  32.41 km2 on shelf
+  42CXE  2023-02-07 of 20  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2023-02-20 of 15  halo  7.6%  +  25.15 km2 on shelf
+  42DVG  2023-01-05 of 15  halo  1.0%  +   0.00 km2 on shelf
+  42DVH  2023-01-25 of 10  halo  0.3%  +   0.00 km2 on shelf
+  42DVJ  2023-02-26 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2023-01-11 of  8  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2023-02-04 of 15  halo  0.0%  +  35.41 km2 on shelf
+  42DWG  2023-02-20 of 10  halo  0.6%  +   1.20 km2 on shelf
+  42DWH  2023-01-25 of  9  halo  0.3%  +   0.01 km2 on shelf
+  42DWJ  2023-02-14 of  9  halo  2.0%  +   0.00 km2 on shelf
+  42DWK  2023-02-26 of  5  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2023-02-18 of 15  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2023-02-07 of 10  halo  1.4%  +   0.83 km2 on shelf
+  42DXH  2023-01-25 of  8  halo  4.9%  +   2.26 km2 on shelf
+  42DXJ  2023-01-25 of  5  halo  4.5%  +   1.03 km2 on shelf
+  42DXK  2023-01-25 of  5  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2023-02-18 of 20  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2023-02-07 of 18  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2023-02-18 of 15  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2023-02-07 of 12  halo  0.7%  +   0.34 km2 on shelf
+  43DDC  2023-02-21 of  9  halo  1.5%  +   6.28 km2 on shelf
+  43DDD  2023-01-21 of  8  halo  5.6%  +   0.24 km2 on shelf
+  43DDE  2023-01-25 of  4  halo  0.0%  +   0.00 km2 on shelf
+
+[2022-23] shelf-wide seasonal-max meltwater: 128.5 km2 (0.28% of shelf); dominant-tile halo 0.0%
+
+================================================================
+2023-24
+================================================================
+[2023-24] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2024-02-23 of 12  halo  1.9%  +   0.00 km2 on shelf
+  41DPA  2024-02-11 of 10  halo  0.2%  +   0.00 km2 on shelf
+  41DPB  2024-01-10 of 11  halo  6.6%  +   0.00 km2 on shelf
+  41DPC  2024-01-02 of  4  halo  0.0%  +   0.00 km2 on shelf
+  41DPD  2024-02-11 of  3  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2024-01-28 of  7  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2024-02-25 of 11  halo  6.2%  +  84.44 km2 on shelf
+  42CVE  2024-01-04 of 12  halo  4.5%  +   1.72 km2 on shelf
+  42CWD  2024-01-28 of 11  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2024-02-25 of 10  halo  0.1%  +  94.24 km2 on shelf
+  42CXE  2024-01-30 of 12  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2024-02-25 of 13  halo  7.4%  + 161.84 km2 on shelf
+  42DVG  2024-01-02 of 11  halo  3.5%  +   0.00 km2 on shelf
+  42DVH  2024-01-30 of  9  halo  0.0%  +   0.00 km2 on shelf
+  42DVJ  2024-01-02 of  4  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2024-02-11 of  5  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2024-02-25 of 12  halo  0.1%  +  55.34 km2 on shelf
+  42DWG  2024-02-25 of  8  halo  1.0%  +   1.73 km2 on shelf
+  42DWH  2024-01-10 of  7  halo  2.4%  +   0.01 km2 on shelf
+  42DWJ  2024-01-10 of  8  halo  0.0%  +   1.15 km2 on shelf
+  42DWK  2024-01-16 of  7  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2024-01-30 of  6  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2024-01-10 of  7  halo  1.4%  +   0.29 km2 on shelf
+  42DXH  2024-02-25 of  6  halo  0.7%  +  10.16 km2 on shelf
+  42DXJ  2024-01-30 of  9  halo  0.0%  +   3.11 km2 on shelf
+  42DXK  2024-01-30 of  7  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2024-01-30 of 13  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2024-01-30 of 12  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2024-01-30 of  6  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2024-01-10 of  8  halo  0.7%  +   0.12 km2 on shelf
+  43DDC  2024-01-10 of  6  halo  1.6%  +   4.28 km2 on shelf
+  43DDD  2024-01-10 of  8  halo  4.1%  +   1.70 km2 on shelf
+  43DDE  2024-01-30 of  6  halo  0.0%  +   0.00 km2 on shelf
+
+[2023-24] shelf-wide seasonal-max meltwater: 341.5 km2 (0.75% of shelf); dominant-tile halo 7.4%
+
+================================================================
+2024-25
+================================================================
+[2024-25] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2025-01-12 of 17  halo  1.7%  +   0.98 km2 on shelf
+  41DPA  2025-01-16 of 10  halo  0.3%  +   0.00 km2 on shelf
+  41DPB  2025-01-16 of 12  halo  5.8%  +   0.00 km2 on shelf
+  41DPC  2025-01-16 of  5  halo  0.0%  +   1.31 km2 on shelf
+  41DPD  2025-01-06 of  3  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2025-01-26 of 11  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2025-01-10 of 22  halo  6.6%  +  94.36 km2 on shelf
+  42CVE  2025-01-12 of 18  halo  4.9%  +  40.02 km2 on shelf
+  42CWD  2025-01-22 of 18  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2025-01-24 of 13  halo  0.1%  +  89.55 km2 on shelf
+  42CXE  2025-01-28 of 17  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2025-01-24 of  9  halo  7.5%  + 224.79 km2 on shelf
+  42DVG  2025-01-16 of 11  halo  3.6%  +   0.00 km2 on shelf
+  42DVH  2025-01-24 of 10  halo  0.3%  +   0.00 km2 on shelf
+  42DVJ  2025-01-16 of  3  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2025-01-16 of  7  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2025-01-24 of 16  halo  0.2%  + 284.73 km2 on shelf
+  42DWG  2025-01-24 of  5  halo  1.0%  +   6.61 km2 on shelf
+  42DWH  2025-01-24 of  6  halo  0.2%  +   0.09 km2 on shelf
+  42DWJ  2025-01-24 of  6  halo  2.1%  +   0.60 km2 on shelf
+  42DWK  2025-01-16 of  5  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2025-02-27 of 10  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2025-01-24 of  8  halo  1.6%  +  21.20 km2 on shelf
+  42DXH  2025-01-24 of  9  halo  1.6%  +  26.86 km2 on shelf
+  42DXJ  2025-01-04 of  7  halo  0.0%  +   3.62 km2 on shelf
+  42DXK  2025-01-24 of  6  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2025-01-04 of 21  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2025-01-22 of 18  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2025-02-27 of 10  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2025-01-24 of  8  halo  0.7%  +  13.93 km2 on shelf
+  43DDC  2025-01-24 of 11  halo  1.7%  +  29.67 km2 on shelf
+  43DDD  2025-01-04 of  7  halo  0.0%  +   3.96 km2 on shelf
+  43DDE  2025-01-24 of  6  halo  0.0%  +   0.00 km2 on shelf
+
+[2024-25] shelf-wide seasonal-max meltwater: 701.0 km2 (1.54% of shelf); dominant-tile halo 0.2%
+
+================================================================
+2025-26
+================================================================
+[2025-26] fixed grid 25949x19548, shelf 45,512 km2, tiles imaged 33/33
+  41CPV  2026-01-01 of 14  halo  6.7%  +  75.49 km2 on shelf
+  41DPA  2026-01-15 of 11  halo  7.8%  +   4.26 km2 on shelf
+  41DPB  2026-01-15 of 11  halo  0.7%  +   0.08 km2 on shelf
+  41DPC  2026-02-24 of  9  halo  0.0%  +   0.36 km2 on shelf
+  41DPD  2026-01-01 of  4  halo  0.0%  +   0.00 km2 on shelf
+  41DPE  2026-02-16 of  9  halo  0.0%  +   0.00 km2 on shelf
+  42CVD  2026-02-14 of 20  halo  6.2%  + 110.94 km2 on shelf
+  42CVE  2026-01-07 of 15  halo  6.6%  +  26.98 km2 on shelf
+  42CWD  2026-01-07 of 15  halo  0.0%  +   0.00 km2 on shelf
+  42CWE  2026-01-25 of 12  halo  0.1%  +  75.35 km2 on shelf
+  42CXE  2026-01-07 of 15  halo  0.0%  +   0.00 km2 on shelf
+  42DVF  2026-02-24 of 13  halo  7.2%  + 525.97 km2 on shelf
+  42DVG  2026-01-15 of 12  halo  2.3%  +   0.08 km2 on shelf
+  42DVH  2026-01-01 of 11  halo  7.0%  +   0.67 km2 on shelf
+  42DVJ  2026-01-01 of  5  halo  0.0%  +   0.00 km2 on shelf
+  42DVK  2026-01-01 of  5  halo  0.0%  +   0.00 km2 on shelf
+  42DWF  2026-01-23 of 14  halo  7.3%  + 161.16 km2 on shelf
+  42DWG  2026-01-25 of  9  halo  0.7%  +   3.02 km2 on shelf
+  42DWH  2026-02-24 of  8  halo  0.7%  +   0.02 km2 on shelf
+  42DWJ  2026-01-19 of  8  halo  0.0%  +   0.03 km2 on shelf
+  42DWK  2026-01-31 of  5  halo  0.0%  +   0.00 km2 on shelf
+  42DXF  2026-02-12 of 10  halo  0.0%  +   0.00 km2 on shelf
+  42DXG  2026-01-25 of 13  halo  1.8%  +  13.91 km2 on shelf
+  42DXH  2026-01-19 of  8  halo  1.6%  +  12.11 km2 on shelf
+  42DXJ  2026-01-19 of  6  halo  0.2%  +   0.58 km2 on shelf
+  42DXK  2026-02-14 of  4  halo  0.0%  +   0.00 km2 on shelf
+  43CDU  2026-01-13 of 17  halo  0.0%  +   0.00 km2 on shelf
+  43CDV  2026-01-07 of 15  halo  0.0%  +   0.00 km2 on shelf
+  43DDA  2026-02-12 of  9  halo  0.0%  +   0.00 km2 on shelf
+  43DDB  2026-01-19 of 13  halo  0.7%  +   8.06 km2 on shelf
+  43DDC  2026-01-19 of 10  halo  1.8%  +  13.44 km2 on shelf
+  43DDD  2026-02-14 of  5  halo  0.0%  +   0.00 km2 on shelf
+  43DDE  2026-01-19 of  3  halo  0.0%  +   0.00 km2 on shelf
+
+[2025-26] shelf-wide seasonal-max meltwater: 998.0 km2 (2.19% of shelf); dominant-tile halo 7.2%
+
+================================================================
+SHELF-WIDE SEASONAL-MAX MELTWATER (George VI)
+================================================================
+  season     meltwater km2  % of shelf   tiles  shelf halo  quality
+  2017-18            682.7       1.50%   33/33       11.0%  ok
+  2018-19           2957.3       6.50%   33/33        9.0%  ok
+  2019-20           1498.0       3.29%   33/33       18.0%  ok
+  2020-21            665.2       1.46%   33/33        6.6%  ok
+  2021-22           1358.0       2.98%   33/33       13.1%  ok
+  2022-23            128.5       0.28%   33/33        0.0%  ok
+  2023-24            341.6       0.75%   33/33        7.4%  ok
+  2024-25            701.0       1.54%   33/33        0.2%  ok
+  2025-26            998.0       2.19%   33/33        7.2%  ok
+
+  saved -> output\shelf\history_Amery.json

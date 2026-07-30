@@ -1,0 +1,3 @@
+[LarsenC] boundary LarsenC.geojson, bbox [-65.8, -68.8, -60.1, -66.0], 16 tiles: ['19DFD', '19DFE', '19DFF', '19DFG', '20DMJ', '20DMK', '20DML', '20DMM', '20DNJ', '20DNK', '20DNL', '20DNM', '20DPJ', '20DPK', '20DPL', '20DPM']
+[20DNM] shelf 4817 km2, detected 191.5 km2 (3.98% of shelf-in-tile)
+[20DNM] wrote 80 chips to output\shelf_val\LarsenC_20DNM

@@ -25,10 +25,16 @@ SEASONS = ["2017-18", "2018-19", "2019-20", "2020-21", "2021-22",
 SHELVES = [
     ("George VI", "history.json", "validated"),
     ("Wilkins", "history_Wilkins.json", "first pass"),
-    ("Larsen C", "history_LarsenC.json", "first pass"),
     ("Bach", "history_Bach.json", "first pass"),
     ("Stange", "history_Stange.json", "first pass"),
-    ("Amery", "history_Amery.json", "first pass - in progress"),
+    ("Larsen B", "history_LarsenB.json", "first pass"),
+    ("Larsen C", "history_LarsenC.json", "validated (slush corr.)"),
+    ("Amery", "history_Amery.json", "validated (lid corr.)"),
+    ("Shackleton", "history_Shackleton.json", "first pass"),
+    ("Fimbul", "history_Fimbul.json", "first pass"),
+    ("Baudouin", "history_Baudouin.json", "first pass"),
+    ("Riiser-Larsen", "history_Riiser-Larsen.json", "first pass"),
+    ("Nivl", "history_Nivl.json", "first pass"),
 ]
 
 INK, DIM, FAINT = "#122031", "#4c5f74", "#8fa3b8"
@@ -37,8 +43,8 @@ GROUND, PANEL = "#f4f8fb", "#ffffff"
 
 
 def main():
-    fig, axes = plt.subplots(2, 3, figsize=(15.5, 8.2), facecolor=GROUND)
-    fig.suptitle("Antarctic ice-shelf meltwater, season by season",
+    fig, axes = plt.subplots(3, 4, figsize=(19, 11.5), facecolor=GROUND)
+    fig.suptitle("Antarctic ice-shelf meltwater: 12 shelves, 9 seasons",
                  fontsize=17, fontweight="bold", color=INK, y=0.985)
     fig.text(0.5, 0.938, "seasonal-maximum meltwater area (km²) · same validated "
              "detector on every shelf · note the different y-scales",
