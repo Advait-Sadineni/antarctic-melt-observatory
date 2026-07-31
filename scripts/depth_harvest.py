@@ -20,8 +20,8 @@ import melt
 import shelf
 
 MIN_POND_KM2 = 0.5
-MAX_PONDS = 8
-MAX_GRANULES_PER_POND = 2
+MAX_PONDS = 20
+MAX_GRANULES_PER_POND = 3
 WATER_TILES = ("19DEA", "19CEV")
 
 
@@ -76,7 +76,7 @@ def main(season):
         w, s, e, n = feat["bbox"]
         day = date.fromisoformat(feat["properties"]["scene_date"])
         try:
-            grans = icesat2.search_atl03([w, s, e, n], day)[:MAX_GRANULES_PER_POND]
+            grans = icesat2.search_atl03([w, s, e, n], day, pad_days=7)[:MAX_GRANULES_PER_POND]
             if not grans:
                 continue
             files = earthaccess.download(grans, str(icesat2.OUT / "atl03"))
