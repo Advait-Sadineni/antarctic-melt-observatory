@@ -51,3 +51,22 @@ def test_mc_volume_symmetric_perturbation():
     v_true = 100 * 100 * 1.0 / 1e9
     assert abs(out["volume_km3_median"] - v_true) / v_true < 0.05
     assert out["p16"] < out["volume_km3_median"] < out["p84"]
+
+
+def test_icesat2_peak_split():
+    import icesat2
+    rng = np.random.default_rng(3)
+    surface = rng.normal(20.0, 0.05, 3000)     # air-water interface photons
+    bottom = rng.normal(18.5, 0.08, 400)       # pond-bottom returns
+    noise = rng.uniform(15, 25, 150)
+    elev = np.concatenate([surface, bottom, noise])
+    d = icesat2.photon_peak_depth(elev)
+    # separation 1.5 m x 0.752 refraction = 1.128 m
+    assert d is not None and abs(d - 1.128) < 0.08
+
+
+def test_icesat2_peak_split_no_bottom():
+    import icesat2
+    rng = np.random.default_rng(4)
+    elev = rng.normal(20.0, 0.05, 3000)         # surface only - dry/no bottom
+    assert icesat2.photon_peak_depth(elev) is None
