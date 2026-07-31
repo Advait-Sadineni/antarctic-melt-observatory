@@ -70,3 +70,28 @@ def test_icesat2_peak_split_no_bottom():
     rng = np.random.default_rng(4)
     elev = rng.normal(20.0, 0.05, 3000)         # surface only - dry/no bottom
     assert icesat2.photon_peak_depth(elev) is None
+
+
+def test_photons_in_mask_selects_only_pond_cells():
+    import icesat2
+    from rasterio.transform import from_origin
+    # 4x4 grid of 10 m cells in a metric CRS; pond = center 2x2 block
+    tr = from_origin(1000.0, 2000.0, 10.0, 10.0)
+    mask = np.zeros((4, 4), bool)
+    mask[1:3, 1:3] = True
+    # photon A inside pond cell (row1,col1); photon B outside (row0,col0);
+    # photon C off-grid entirely
+    xs = np.array([1015.0, 1005.0, 5000.0])
+    ys = np.array([1985.0, 1995.0, 5000.0])
+    sel = icesat2.photons_in_mask(xs, ys, mask, tr, "EPSG:3031",
+                                  src_crs="EPSG:3031")
+    assert sel.tolist() == [True, False, False]
+
+
+def test_depth_qc_bounds():
+    import icesat2
+    lo, hi = icesat2.DEPTH_QC_M
+    assert lo >= 0.25         # min-separation artifacts (0.226 m) excluded
+    assert hi <= 10.0         # supraglacial ponds are shallow; junk excluded
+    assert icesat2.qc_pass(0.5) and icesat2.qc_pass(4.4)
+    assert not icesat2.qc_pass(0.226) and not icesat2.qc_pass(667.2)

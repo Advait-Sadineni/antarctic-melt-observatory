@@ -20,6 +20,7 @@ REFRACTION = 0.752
 MIN_BOTTOM_PHOTONS = 50
 MIN_SEPARATION_M = 0.3
 BIN_M = 0.10
+DEPTH_QC_M = (0.25, 8.0)   # below = min-separation artifact; above = not a pond
 OUT = melt.ROOT / "output" / "depth"
 STRONG_SUFFIX = {"forward": ("gt1l", "gt2l", "gt3l"),
                  "backward": ("gt1r", "gt2r", "gt3r")}
@@ -54,6 +55,34 @@ def photon_peak_depth(elevations):
     return float((surf - bottom) * REFRACTION)
 
 
+def qc_pass(depth_m):
+    """Physical plausibility gate applied at calibration time (raw harvest
+    rows are kept unfiltered so the QC itself stays auditable)."""
+    return DEPTH_QC_M[0] < depth_m < DEPTH_QC_M[1]
+
+
+def photons_in_mask(lon, lat, mask, transform, crs, src_crs="EPSG:4326"):
+    """Boolean selector: photons whose coordinates land on True mask cells.
+    Bounding boxes lie for sprawling ponds (a 40 km drainage-network bbox is
+    mostly crevassed ice, and every non-pond photon is a junk depth waiting
+    to happen); the mask is the pond."""
+    from rasterio.transform import rowcol
+    from rasterio.warp import transform as warp_transform
+    lon = np.asarray(lon, "f8")
+    lat = np.asarray(lat, "f8")
+    if src_crs == crs:
+        xs, ys = lon, lat
+    else:
+        xs, ys = warp_transform(src_crs, crs, lon.tolist(), lat.tolist())
+    rows, cols = rowcol(transform, xs, ys)
+    rows, cols = np.asarray(rows), np.asarray(cols)
+    ok = ((rows >= 0) & (rows < mask.shape[0])
+          & (cols >= 0) & (cols < mask.shape[1]))
+    sel = np.zeros(lon.shape, bool)
+    sel[ok] = mask[rows[ok], cols[ok]]
+    return sel
+
+
 # --- networked ---------------------------------------------------------------
 
 def search_atl03(bbox, day, pad_days=3):
@@ -67,10 +96,14 @@ def search_atl03(bbox, day, pad_days=3):
                                    temporal=(t0, t1))
 
 
-def granule_pond_depths(h5_path, pond_bboxes):
+def granule_pond_depths(h5_path, pond_bboxes, masks=None):
     """Depths from one downloaded ATL03 granule: for each strong beam, photons
     falling inside each pond lon/lat bbox -> peak-split depth. Returns
-    [(pond_idx, lat, lon, depth_m), ...]."""
+    [(pond_idx, lat, lon, depth_m), ...].
+
+    masks (optional): per-pond (mask, transform, crs) so photons are tested
+    against the actual pond footprint, not just the bbox — mandatory hygiene
+    for large ponds whose bbox spans non-pond terrain."""
     import h5py
     results = []
     with h5py.File(h5_path, "r") as f:
@@ -85,6 +118,11 @@ def granule_pond_depths(h5_path, pond_bboxes):
                 continue
             for i, (w, s, e, n) in enumerate(pond_bboxes):
                 sel = (lon >= w) & (lon <= e) & (lat >= s) & (lat <= n)
+                if masks is not None and masks[i] is not None and sel.any():
+                    m, tr, crs = masks[i]
+                    sub = photons_in_mask(lon[sel], lat[sel], m, tr, crs)
+                    idx = np.where(sel)[0][~sub]
+                    sel[idx] = False
                 if sel.sum() < MIN_BOTTOM_PHOTONS * 2:
                     continue
                 d = photon_peak_depth(h[sel])

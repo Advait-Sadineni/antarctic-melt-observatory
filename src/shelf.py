@@ -476,6 +476,29 @@ def production_scene(tile, start, end):
     return chosen
 
 
+def production_pool(tile, start, end, max_scenes=3):
+    """Top qualifying clean scenes for a tile/window, peak-melt first — the
+    same pool select_scene draws from. Depth-calibration harvesting uses this:
+    every extra clean scene is an independent ICESat-2 crossover window, and
+    crossovers are the scarce commodity."""
+    items = _season_scenes(tile, start, end)
+    if not items:
+        return []
+    row, col, size = _tile_window(items[0])
+    if size < 256:
+        return []
+    melt.set_aoi(melt._tile_of(items[0]), row, col, size)
+    sc = _coarse_shelf_mask(items[0])
+    scored = [(melt.cloud_mask(it)["halo_frac"],
+               it.properties.get("eo:cloud_cover", 100.0), it) for it in items]
+    pool, poorly = select_pool(scored)
+    if poorly:
+        return []
+    ranked = sorted(pool, key=lambda x: _onshelf_coarse_water(x[2], sc),
+                    reverse=True)
+    return [x[2] for x in ranked[:max_scenes]]
+
+
 def _peak_scene(tile, start, end, cc=70):
     """Single clearest-by-metadata scene (legacy; kept for comparisons)."""
     src = melt.get_source()
