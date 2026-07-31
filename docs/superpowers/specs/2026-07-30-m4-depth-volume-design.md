@@ -30,33 +30,55 @@ pond pixel, depth `z = [ln(A_d − R_inf) − ln(R_w − R_inf)] / g` (Pope et a
 - `g` = red attenuation coefficient (literature starting value, then
   **calibrated against ICESat-2**)
 
-**Why red:** green penetrates deeper but is more scattering-sensitive; red is
-the published compromise for shallow (<3 m) Antarctic ponds. Both bands already
-stream through our pipeline at 10 m.
+**Dual-band retrieval:** depth is computed independently from red AND green
+(red = primary: robust for shallow <3 m ponds; green = deeper penetration but
+scattering-sensitive). Agreement within 30% -> high-confidence depth (mean);
+disagreement -> pixel flagged `depth_uncertain` (turbidity/shadow indicator).
+Two estimates beat one, and their disagreement maps where the physics breaks.
 
-**Calibration/validation — ICESat-2:** ATL03 photon returns over GVI ponds give
-direct depths (surface + bottom returns, refraction-corrected ×0.75). We
-already hold NASA Earthdata credentials (MEaSUReS download). v1 uses **sparse
-crossovers** (tracks × validated pond polygons, big 2019-20/2020-21 ponds), not
-bulk photon processing — the published at-scale pain we explicitly avoid.
+**Validity mask — the M3 synergy:** depth is retrieved ONLY where the fused
+melt-state record classifies PONDED (radar-wet + optical pond). This
+automatically excludes frozen lake lids (Amery) and slush (Larsen regimes),
+where attenuation-model depths are meaningless — the corrections table told us
+this qualitatively; the melt-state map enforces it per pixel.
+
+**Calibration/validation — ICESat-2, concrete recipe:** ATL03 geolocated
+photons, STRONG beams only (gt1l/gt2l/gt3l or their r-counterparts by
+orientation). Per crossover segment over a pond polygon: histogram photon
+elevations -> surface peak (air-water) and bottom peak; raw depth = peak
+separation; true depth = raw x 0.752 (refraction + speed-of-light correction,
+Parrish et al. 2019). Crossover = ICESat-2 track intersecting a validated pond
+polygon within +/-3 days of a clear Sentinel-2 scene. We already hold NASA
+Earthdata credentials (from the MEaSUReS download). v1 uses **sparse
+crossovers** on the big 2019-20/2020-21 ponds - not bulk photon processing,
+the published at-scale pain we explicitly avoid.
 
 ## 4. Volume & uncertainty
 
 - `V = Σ depth × (10 m)²` over pond pixels, per shelf-season.
-- Uncertainty stack: depth RMSE from the ICESat-2 comparison ⊕ area band from
-  the per-region blind corrections (already published in
-  `reference/regional_corrections.json`) ⊕ `A_d` rim-estimate sensitivity
-  (report the depth spread from rim ±1σ).
+- Uncertainty via **Monte Carlo** (1,000 draws, seconds): jointly perturb
+  g (calibration posterior), A_d (rim-pixel spread), and R_inf (literature
+  range) -> per-season volume distribution; report median and 16-84th
+  percentile band. Combined with the per-region area corrections
+  (`reference/regional_corrections.json`) already in the data model.
 - Products: `depth_mean_m`, `volume_km3`, `uncertainty` fill the fields M1
   **reserved on day one** — zero schema migration, as designed.
 
 ## 5. Drainage events (the vulnerability signal)
 
 Between consecutive genuinely-clear scenes (same clean-scene gates as always):
-any pond polygon losing **>80% of its area in ≤14 days** flags a candidate
-drainage event, with pre/post chips saved for visual confirmation. Rapid
-drainage = water forced into the shelf = the hydrofracture precursor. Output:
-per-shelf event catalogue (date, location, lost area, est. lost volume).
+any pond polygon losing **>80% of its area in <=14 days** flags a CANDIDATE.
+Candidates are then classified:
+  - **DRAINAGE** (the hydrofracture precursor): fast loss AND the emptied basin
+    stays dark/deep-floored AND - radar corroboration - the cell flips wet->dry
+    in the S1 record within the same window.
+  - **REFREEZE** (benign): gradual area fade across multiple scenes and/or the
+    surface brightens toward the pale-cyan lid signature while radar stays wet
+    (liquid under lid).
+Pre/post chips saved for visual confirmation either way. Output: per-shelf
+event catalogue (date, location, class, lost area, est. lost volume). The
+discrimination kills the refreeze false-alarm class that would otherwise
+dominate any Antarctic drainage catalogue.
 
 ## 6. Scope guard (v1)
 
@@ -67,15 +89,16 @@ per-shelf event catalogue (date, location, lost area, est. lost volume).
      student-honest margin), N ≥ 30 crossover points.
   2. Depth map sanity: deepest at pond centres, ~0 at rims (spatial-gradient
      check, automated).
-  3. GVI 2019-20 volume lands within the literature's reported range for that
-     season (order-of-magnitude sanity vs Banwell/Corr).
+  3. GVI volume within **x2 of Corr et al. (2022)** for the overlapping
+     season - a quantitative bar against the published GVI depth/volume work,
+     not order-of-magnitude hand-waving.
   4. Drainage detector finds the documented 2019-20 GVI drainage events (the
      literature records several) without flagging stable ponds.
 
 ## 7. Non-goals (YAGNI)
 
 - No bulk ICESat-2 photon-cloud processing (sparse crossovers only).
-- No green-band dual-model fusion in v1; no turbidity modelling.
+- No turbidity modelling (dual-band disagreement flags it instead).
 - No SAR in the depth path (fusion meets depth in the data model, not here).
 - No pan-Antarctic depth in v1 — method must survive GVI gates first.
 
