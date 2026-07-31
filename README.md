@@ -64,6 +64,18 @@ characterized **three distinct melt regimes**:
   lakes); we report per-region corrections rather than pretending one number.
 - Cloudy seasons are flagged `poorly_observed`, never silently filled.
 
+### How this was built
+
+This project was built in about a week by a computer science student, using
+AI-assisted development (Anthropic's Claude) as the primary engineering tool —
+visible throughout the commit history. The science is not AI-invented:
+detection follows published, peer-reviewed methods (Moussavi et al. 2020),
+every headline number is validated against blind human-labeled reference
+points with hidden answer keys, and all validation materials are in this
+repository for independent checking. The role of AI here was speed; the role
+of the validation discipline was trust. Question everything — that's what the
+audit trail is for.
+
 The sections below document the original single-shelf core pipeline in depth —
 its methods, tuning history, and validation protocol all still apply; the
 observatory scales exactly that validated detector.
