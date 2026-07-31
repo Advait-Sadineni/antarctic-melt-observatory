@@ -3,7 +3,7 @@
 Six personalized cold emails. Rules applied: ≤ 6 sentences, one hook specific
 to THEIR work, links (repo + DOI + one artifact), exactly one concrete
 question, honest about student status and limitations. Placeholders:
-`{REPO}` `{DOI}` — filled at send time.
+`https://github.com/Advait-Sadineni/antarctic-melt-observatory` `https://doi.org/10.5281/zenodo.21711608` — filled at send time.
 
 ---
 
@@ -24,7 +24,7 @@ third-highest year in my series, with neighbouring Bach and Stange at their
 all-time highs.
 
 Code, per-season data, and the full validation trail (including what I got
-wrong along the way): {REPO} · {DOI}
+wrong along the way): https://github.com/Advait-Sadineni/antarctic-melt-observatory · https://doi.org/10.5281/zenodo.21711608
 
 One question, if you have 60 seconds: on Larsen C my blind validation shows
 detections are ~40% slush rather than open water — does a ×0.6 open-water
@@ -46,11 +46,13 @@ Your Sentinel-1 supraglacial lake work convinced me the cloud problem in
 optical melt mapping is solvable, so I built a per-pixel winter-baseline
 (−3 dB, per relative orbit) wet-snow detector on Planetary Computer's S1-RTC
 and gated it against my blind-validated Sentinel-2 pond record on George VI:
-on first contact, radar confirmed 100% of the human-validated pond pixels as
-wet. I'm now working toward a fused DRY/WET/PONDED melt-state product, with
-season-ranking and winter-sanity gates before any fusion is trusted.
+on first contact, radar confirmed 99.4-100% of the human-validated pond
+pixels as wet across a 2-4 dB threshold sweep, and the retrieved melt season
+(onset ~Nov 2, end ~Feb 24) matches the documented GVI calendar. Season-ranking
+and winter-specificity gates are running now; no fusion is trusted until all
+four pass.
 
-Everything is open — code, gates, validation keys: {REPO} · {DOI}
+Everything is open — code, gates, validation keys: https://github.com/Advait-Sadineni/antarctic-melt-observatory · https://doi.org/10.5281/zenodo.21711608
 
 My one question: for HH-only IW scenes at ~71°S, is a fixed 3 dB threshold
 below a per-orbit winter median defensible across melt regimes, or did your
@@ -77,7 +79,7 @@ dominant tile shows the classic detection there is ~50% frozen lake lids and
 slush by strict open-water standards, which I report as an explicit correction
 rather than a single number.
 
-Code, data, validation trail: {REPO} · {DOI}
+Code, data, validation trail: https://github.com/Advait-Sadineni/antarctic-melt-observatory · https://doi.org/10.5281/zenodo.21711608
 
 Question: is there a community convention you'd recommend for reporting
 lidded-lake area vs open water — or is publishing both, with the blind
@@ -102,7 +104,7 @@ signal is striking: Amery's second-largest year in my record (~1,000 km²),
 with Bach and Stange (west Peninsula) at their all-time highs simultaneously.
 
 Everything open, including the failure log and per-region blind validation:
-{REPO} · {DOI}
+https://github.com/Advait-Sadineni/antarctic-melt-observatory · https://doi.org/10.5281/zenodo.21711608
 
 One question: for a student record like this to be genuinely useful to your
 group, what's the one addition you'd prioritize — sub-seasonal time series,
@@ -128,7 +130,7 @@ validation is the part I'm proudest of: stratified blind points with hidden
 answer keys per region, which exposed three distinct melt regimes (channels /
 slush / lidded lakes) needing different corrections.
 
-Code and data: {REPO} · {DOI}
+Code and data: https://github.com/Advait-Sadineni/antarctic-melt-observatory · https://doi.org/10.5281/zenodo.21711608
 
 Question: if you were pointing this at a scientific gap tomorrow, which
 shelves or regions are most under-observed right now?
@@ -154,7 +156,7 @@ rejected two "improvements" that looked good and weren't. The result: 10+
 shelves × 9 seasons of comparable melt records through 2025-26, with per-region
 precision (0.63 / 0.60 / 0.35) reported rather than hidden.
 
-Code, data, and the full audit trail: {REPO} · {DOI}
+Code, data, and the full audit trail: https://github.com/Advait-Sadineni/antarctic-melt-observatory · https://doi.org/10.5281/zenodo.21711608
 
 Question: my biggest known weakness is that the blind labeller and the author
 are the same person — for a student project heading toward a preprint, what's
