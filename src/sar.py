@@ -84,6 +84,36 @@ class CompositeAccumulator:
         self.last_wet[wet] = day
 
 
+def save_checkpoint(path, acc, done_ids, used, skipped, wet_max):
+    """Composite progress -> disk, atomically (write tmp, replace). A composite
+    is hours of streamed scenes; interruptions (reboots, gaming pauses) must
+    cost minutes, not the whole run."""
+    tmp = path.with_suffix(".tmp.npz")
+    np.savez_compressed(tmp, wet_days=acc.wet_days, n_obs=acc.n_obs,
+                        first_wet=acc.first_wet, last_wet=acc.last_wet,
+                        done_ids=np.array(sorted(done_ids)),
+                        counters=np.array([used, skipped], "i8"),
+                        wet_max=np.array([wet_max], "f8"))
+    tmp.replace(path)
+
+
+def load_checkpoint(path, shape):
+    """Resume state from save_checkpoint, or fresh state if absent/corrupt.
+    Returns (acc, done_ids, used, skipped, wet_max)."""
+    if path.exists():
+        try:
+            z = np.load(path, allow_pickle=False)
+            acc = CompositeAccumulator(shape)
+            acc.wet_days, acc.n_obs = z["wet_days"], z["n_obs"]
+            acc.first_wet, acc.last_wet = z["first_wet"], z["last_wet"]
+            return (acc, set(z["done_ids"].tolist()),
+                    int(z["counters"][0]), int(z["counters"][1]),
+                    float(z["wet_max"][0]))
+        except Exception as e:
+            print(f"  [ckpt unreadable, starting fresh] {type(e).__name__}")
+    return CompositeAccumulator(shape), set(), 0, 0, 0.0
+
+
 # --- scene access (networked) -------------------------------------------------
 
 def s1_source():
@@ -166,12 +196,18 @@ def season_composite(season, grid, source, bbox, thresh=THRESH_DB,
     start, end = f"{y0}-11-01", f"{y0+1}-03-31"
     season_zero = date(y0, 11, 1).toordinal()
     grid_tr, gw, gh, shelfmask = grid
-    acc = CompositeAccumulator((gh, gw))
-    wet_max_km2, cell_km2 = 0.0, (shelf.GRID_RES ** 2) / 1e6
+    cell_km2 = (shelf.GRID_RES ** 2) / 1e6
+    ckpt = OUT / f"ckpt_{tag}.npz"
+    acc, done, used, skipped, wet_max_km2 = load_checkpoint(ckpt, (gh, gw))
+    if done:
+        print(f"  [resume] {tag}: {len(done)} scenes already composited")
 
     by_orbit = list_scenes(source, bbox, start, end)
-    used = skipped = 0
+    since_save = 0
     for orbit, items in sorted(by_orbit.items()):
+        items = [it for it in items if it.id not in done]
+        if not items:
+            continue
         try:
             base = winter_baseline(y0, orbit, grid, source, bbox)
         except ValueError as e:
@@ -189,8 +225,13 @@ def season_composite(season, grid, source, bbox, thresh=THRESH_DB,
             day = it.datetime.date().toordinal() - season_zero
             acc.add(wet, obs, day)
             used += 1
+            done.add(it.id)
             wet_max_km2 = max(wet_max_km2,
                               float((wet & shelfmask).sum()) * cell_km2)
+            since_save += 1
+            if since_save >= 15:
+                save_checkpoint(ckpt, acc, done, used, skipped, wet_max_km2)
+                since_save = 0
 
     on = shelfmask & (acc.n_obs > 0)
     summary = {
@@ -206,5 +247,6 @@ def season_composite(season, grid, source, bbox, thresh=THRESH_DB,
     np.savez_compressed(npz, wet_days=acc.wet_days, n_obs=acc.n_obs,
                         first_wet=acc.first_wet, last_wet=acc.last_wet)
     js.write_text(json.dumps(summary, indent=1))
+    ckpt.unlink(missing_ok=True)
     print(f"  [composite] {season} t={thresh}: {summary}")
     return summary

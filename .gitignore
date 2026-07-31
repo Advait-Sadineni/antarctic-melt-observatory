@@ -30,3 +30,4 @@ output/products/
 output/sar/
 # grid caches - regenerable, huge
 output/shelf/*.npz
+output/sar/ckpt_*.npz

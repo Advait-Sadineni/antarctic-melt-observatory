@@ -1,0 +1,50 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "bbox": [
+    -68.58258844452878,
+    -71.23044262512265,
+    -68.54170481353673,
+    -71.21644972243963
+   ],
+   "properties": {
+    "pond_id": "19DEA-97",
+    "area_km2": 0.52,
+    "scene_date": "2022-01-11"
+   },
+   "geometry": null
+  },
+  {
+   "type": "Feature",
+   "bbox": [
+    -68.89714210417488,
+    -71.30341269951754,
+    -68.85446068154465,
+    -71.29235646805977
+   ],
+   "properties": {
+    "pond_id": "19DEA-351",
+    "area_km2": 0.51,
+    "scene_date": "2022-01-11"
+   },
+   "geometry": null
+  },
+  {
+   "type": "Feature",
+   "bbox": [
+    -68.89423858586537,
+    -71.27203026997194,
+    -68.86417541446582,
+    -71.26134147077894
+   ],
+   "properties": {
+    "pond_id": "19DEA-230",
+    "area_km2": 0.51,
+    "scene_date": "2022-01-11"
+   },
+   "geometry": null
+  }
+ ]
+}

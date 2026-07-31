@@ -65,3 +65,27 @@ def test_composite_accumulator_first_last_wet():
     assert acc.n_obs[0, 0] == 3
     assert acc.first_wet[0, 0] == 10 and acc.first_wet[0, 1] == 22
     assert acc.last_wet[0, 0] == 22 and acc.last_wet[0, 1] == 40
+
+
+def test_checkpoint_roundtrip(tmp_path):
+    import sar
+    acc = sar.CompositeAccumulator((4, 5))
+    wet = np.zeros((4, 5), bool); wet[1, 2] = True
+    obs = np.ones((4, 5), bool)
+    acc.add(wet, obs, day=10)
+    p = tmp_path / "ckpt.npz"
+    sar.save_checkpoint(p, acc, {"a", "b"}, used=2, skipped=1, wet_max=3.5)
+    acc2, done, used, skipped, wet_max = sar.load_checkpoint(p, (4, 5))
+    assert done == {"a", "b"} and used == 2 and skipped == 1
+    assert abs(wet_max - 3.5) < 1e-9
+    assert np.array_equal(acc2.wet_days, acc.wet_days)
+    assert np.array_equal(acc2.first_wet, acc.first_wet)
+    assert np.array_equal(acc2.n_obs, acc.n_obs)
+
+
+def test_checkpoint_missing_returns_fresh(tmp_path):
+    import sar
+    acc, done, used, skipped, wet_max = sar.load_checkpoint(
+        tmp_path / "nope.npz", (3, 3))
+    assert done == set() and used == 0 and skipped == 0 and wet_max == 0.0
+    assert acc.wet_days.shape == (3, 3) and not acc.wet_days.any()
