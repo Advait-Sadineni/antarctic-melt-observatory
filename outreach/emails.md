@@ -182,3 +182,16 @@ Advait Sadineni
 - [ ] Advait reads each draft aloud once and edits anything that doesn't sound
       like him
 - [ ] Send Tue-Thu, morning in recipient's timezone; no attachments, links only
+
+---
+
+## REPLIES LOG
+
+- **2026-07-31 Amber Leeson (day 1!):** positive - endorsed uncertainty-first
+  philosophy over new-method development. Her lab's protocol for our exact
+  weakness: THREE labelers per point, weighted results, characterize labeler
+  subjectivity and PROPAGATE it through the workflow. -> Backlog item promoted:
+  multi-labeler validation (labels.csv already per-labeler-able; extend scorer
+  with per-labeler weighting + agreement stats; add labeler-disagreement term
+  to the uncertainty stack). Candidate labelers: classmates/friends labeling
+  the existing blind chips - the chips + hidden keys already exist.
