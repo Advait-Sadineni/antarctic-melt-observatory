@@ -174,7 +174,11 @@ Advait Sadineni
 - [ ] SAR gates 2-4 resolved (email #2 claims depend on them; soften if pending)
 - [ ] Verify emails on staff pages: Banwell (CIRES), Leeson (Lancaster),
       Stokes/Jamieson (Durham)
-- [ ] Confirmed: Arthur jennifer.arthur@npolar.no · Dirscherl Mariel.Dirscherl@dlr.de
+- [x] Arthur jennifer.arthur@npolar.no confirmed
+- [!] Dirscherl Mariel.Dirscherl@dlr.de BOUNCED 2026-07-30 (left DLR; ResearchGate
+      stale). REPLACED with Katherine Deakin (Durham, katherine.a.deakin@durham.ac.uk),
+      first author of the Frontiers 2025 GVI winter-SAR paper - our Gate-3 anchor;
+      stronger hook. Backup co-author: Rebecca Dell (Cambridge SPRI).
 - [ ] Advait reads each draft aloud once and edits anything that doesn't sound
       like him
 - [ ] Send Tue-Thu, morning in recipient's timezone; no attachments, links only
