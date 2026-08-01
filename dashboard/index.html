@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Antarctic Meltwater Observatory</title>
+<style>
+:root {
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e;
+  --muted:#898781; --grid:#e1e0d9; --axis:#c3c2b7;
+  --border:rgba(11,11,11,.10);
+  --accent:#2a78d6; --accent-soft:rgba(42,120,214,.12);
+  --context:#c9c8c1;
+  --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7;
+    --muted:#898781; --grid:#2c2c2a; --axis:#383835;
+    --border:rgba(255,255,255,.10);
+    --accent:#3987e5; --accent-soft:rgba(57,135,229,.16);
+    --context:#3a3a37;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7;
+  --muted:#898781; --grid:#2c2c2a; --axis:#383835;
+  --border:rgba(255,255,255,.10);
+  --accent:#3987e5; --accent-soft:rgba(57,135,229,.16);
+  --context:#3a3a37;
+}
+* { box-sizing:border-box; margin:0; }
+body {
+  background:var(--page); color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+  padding:28px clamp(16px,4vw,48px) 64px;
+}
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+header { max-width:1200px; margin:0 auto 24px; }
+h1 { font-size:26px; letter-spacing:-.01em; }
+.sub { color:var(--ink2); margin-top:4px; max-width:70ch; }
+.links { margin-top:8px; font-size:13px; color:var(--muted); }
+.links a { margin-right:16px; }
+main { max-width:1200px; margin:0 auto; display:grid; gap:20px; }
+
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+.tile {
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:14px 16px;
+}
+.tile .label { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.tile .value { font-size:34px; font-weight:650; margin-top:2px; }
+.tile .note { font-size:12.5px; color:var(--ink2); margin-top:2px; }
+.chip { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; }
+.chip .dot { width:9px; height:9px; border-radius:50%; background:var(--good); }
+.chip.good { color:var(--good); }
+
+.filters { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.filters label { font-size:13px; color:var(--ink2); }
+select {
+  background:var(--surface); color:var(--ink); border:1px solid var(--axis);
+  border-radius:8px; padding:7px 10px; font:inherit; font-size:14px;
+}
+
+.card {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:18px 20px 14px;
+}
+.card h2 { font-size:16px; }
+.card .h-note { font-size:12.5px; color:var(--muted); margin-top:2px; }
+.chart-wrap { position:relative; margin-top:10px; overflow-x:auto; }
+svg text { font:11.5px system-ui,-apple-system,"Segoe UI",sans-serif; fill:var(--muted); }
+svg .axisline { stroke:var(--axis); stroke-width:1; }
+svg .gridline { stroke:var(--grid); stroke-width:1; }
+svg .series { stroke:var(--accent); stroke-width:2; fill:none; }
+svg .fill { fill:var(--accent-soft); }
+svg .pt { fill:var(--accent); }
+svg .pt.hollow { fill:var(--surface); stroke:var(--accent); stroke-width:2; }
+svg .crosshair { stroke:var(--axis); stroke-width:1; }
+.tooltip {
+  position:fixed; pointer-events:none; z-index:10; display:none;
+  background:var(--surface); border:1px solid var(--border); border-radius:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,.18); padding:8px 11px; font-size:12.5px;
+  color:var(--ink2); max-width:260px;
+}
+.tooltip b { color:var(--ink); font-variant-numeric:tabular-nums; }
+
+.multiples { display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:10px; }
+.mini {
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:10px 12px 6px; cursor:pointer; text-align:left; font:inherit; color:inherit;
+}
+.mini:hover { border-color:var(--accent); }
+.mini.active { outline:2px solid var(--accent); outline-offset:-1px; }
+.mini .name { font-size:13px; font-weight:600; }
+.mini .latest { font-size:12px; color:var(--ink2); font-variant-numeric:tabular-nums; }
+.mini svg .series { stroke-width:1.5; }
+
+.heat { border-collapse:separate; border-spacing:2px; font-variant-numeric:tabular-nums; }
+.heat th { font-size:12px; color:var(--muted); font-weight:500; padding:2px 6px; text-align:right; }
+.heat th.rowh { text-align:left; padding-right:10px; }
+.heat td { width:52px; height:26px; border-radius:4px; text-align:center; font-size:11px; }
+.heat td.flag { outline:1.5px dashed var(--muted); outline-offset:-2px; }
+
+table.data { border-collapse:collapse; width:100%; font-size:13px; font-variant-numeric:tabular-nums; }
+table.data th, table.data td { padding:6px 10px; text-align:right; border-bottom:1px solid var(--grid); }
+table.data th:first-child, table.data td:first-child { text-align:left; }
+table.data thead th { color:var(--muted); font-weight:600; }
+.regimes td, .regimes th { font-variant-numeric:tabular-nums; }
+.small { font-size:12.5px; color:var(--muted); }
+details summary { cursor:pointer; font-weight:600; font-size:14px; color:var(--ink2); }
+footer { max-width:1200px; margin:36px auto 0; font-size:12.5px; color:var(--muted); }
+footer p { max-width:90ch; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Antarctic Meltwater Observatory</h1>
+  <p class="sub">Surface meltwater on 12 Antarctic ice shelves, measured every melt
+  season from free Sentinel-2 imagery, blind-validated, and cross-checked against
+  Sentinel-1 radar. Meltwater ponding drives ice-shelf hydrofracture — the
+  mechanism that destroyed Larsen B in 2002.</p>
+  <p class="links">
+    <a id="repolink" href="#">GitHub repository</a>
+    <a id="doilink" href="#">Dataset DOI</a>
+    <span>Data: Copernicus Sentinel-2 · Microsoft Planetary Computer · AWS Earth Search</span>
+  </p>
+</header>
+
+<main>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="filters">
+    <label for="shelfsel">Ice shelf</label>
+    <select id="shelfsel" aria-label="Select ice shelf"></select>
+    <span class="small" id="shelfmeta"></span>
+  </div>
+
+  <section class="card">
+    <h2 id="charttitle"></h2>
+    <div class="h-note">Peak-season meltwater-affected area, km² · hollow markers =
+    poorly-observed season (no genuinely clear scene over the dominant water tile)</div>
+    <div class="chart-wrap"><svg id="mainchart" role="img" aria-label="Seasonal meltwater time series"></svg></div>
+  </section>
+
+  <section>
+    <div class="multiples" id="multiples"></div>
+  </section>
+
+  <section class="card">
+    <h2>All shelves at a glance</h2>
+    <div class="h-note">Cell shading is scaled per shelf row (shelves differ 100-fold
+    in size); dashed cells are poorly-observed seasons. Hover for values.</div>
+    <div class="chart-wrap"><table class="heat" id="heat"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>Validation</h2>
+    <div class="h-note">Blind stratified point checks (80 points/tile, hidden answer
+    keys, Horvitz-Thompson bias correction) and Sentinel-1 radar gates.</div>
+    <div id="gates" style="margin:12px 0 14px; display:flex; gap:18px; flex-wrap:wrap;"></div>
+    <div class="chart-wrap">
+    <table class="data regimes" id="regimes">
+      <thead><tr><th>Regime</th><th>Shelf</th><th>Precision</th><th>Recall (area-wt)</th><th>Open-water factor</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+    <p class="small" style="margin-top:8px">Raw values are meltwater-affected area
+    (open water + slush + lidded lakes). The open-water factor converts to strict
+    same-day open water where a regime has been blind-validated.</p>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary>Data table — every shelf-season measurement</summary>
+      <div class="chart-wrap" style="margin-top:10px">
+      <table class="data" id="datatable"></table>
+      </div>
+    </details>
+  </section>
+</main>
+
+<div class="tooltip" id="tip"></div>
+
+<footer>
+  <p>Built by <a href="https://github.com/Advait-Sadineni">Advait Sadineni</a> with
+  AI-assisted engineering (methodology, validation design, and all scientific
+  decisions reviewed by hand; see the repository's "How this was built" note).
+  Detection follows Moussavi et&nbsp;al. 2020 with hysteresis growth; radar wet-snow
+  detection follows the Nagler baseline-deviation family. All inputs are free and
+  open: Copernicus Sentinel-2/-1 via Microsoft Planetary Computer and AWS.</p>
+</footer>
+
+<script src="data.js"></script>
+<script>
+const D = window.OBS;
+const shelves = Object.keys(D.shelves);
+const seasons = D.shelves["George VI"].seasons.map(s => s.season);
+const fmt = v => v >= 100 ? Math.round(v).toLocaleString() : (v >= 10 ? v.toFixed(1) : v.toFixed(2));
+const tip = document.getElementById("tip");
+let current = "George VI";
+
+document.getElementById("repolink").href = D.repo;
+document.getElementById("doilink").href = "https://doi.org/" + D.doi;
+document.getElementById("doilink").textContent = "DOI " + D.doi;
+
+/* ---------- KPI tiles ---------- */
+(function kpis() {
+  const latest = seasons[seasons.length - 1];
+  let total = 0, n = 0;
+  for (const s of shelves) {
+    const row = D.shelves[s].seasons.find(x => x.season === latest);
+    if (row && !row.poorly) { total += row.km2; n++; }
+  }
+  const gatesPassed = ["gate1_pass"].filter(k => D.gates[k]).length +
+    ["gate2b_ranking_unsaturated","gate3_winter","gate4_timing"]
+      .filter(k => D.gates[k] && D.gates[k].pass).length;
+  const regimes = Object.keys(D.corrections).filter(k => !k.startsWith("_")).length;
+  const items = [
+    { label: "Ice shelves monitored", value: shelves.length, note: "region-agnostic pipeline" },
+    { label: "Shelf-seasons measured", value: shelves.reduce((a,s)=>a+D.shelves[s].seasons.length,0), note: "2017–18 through " + latest },
+    { label: latest + " meltwater", value: fmt(total), note: "km² across " + n + " well-observed shelves" },
+    { label: "Radar gates", value: gatesPassed + "/4", note: "", chip: gatesPassed === 4 },
+    { label: "Validated regimes", value: regimes, note: "blind point checks" },
+  ];
+  document.getElementById("kpis").innerHTML = items.map(t => `
+    <div class="tile"><div class="label">${t.label}</div>
+    <div class="value">${t.value}</div>
+    ${t.chip ? '<div class="chip good"><span class="dot"></span>all passing</div>'
+             : `<div class="note">${t.note}</div>`}</div>`).join("");
+})();
+
+/* ---------- shelf selector ---------- */
+const sel = document.getElementById("shelfsel");
+sel.innerHTML = shelves.map(s => `<option${s===current?" selected":""}>${s}</option>`).join("");
+sel.addEventListener("change", () => { current = sel.value; render(); });
+
+/* ---------- main chart ---------- */
+function mainChart() {
+  const svg = document.getElementById("mainchart");
+  const rows = D.shelves[current].seasons;
+  const W = Math.max(640, Math.min(1140, svg.parentNode.clientWidth || 900));
+  const H = 300, mL = 56, mR = 18, mT = 14, mB = 34;
+  const iw = W - mL - mR, ih = H - mT - mB;
+  const vmax = Math.max(...rows.map(r => r.km2)) * 1.12 || 1;
+  const x = i => mL + iw * (rows.length === 1 ? .5 : i / (rows.length - 1));
+  const y = v => mT + ih * (1 - v / vmax);
+  const ticks = 4;
+  let g = "";
+  for (let t = 0; t <= ticks; t++) {
+    const v = vmax * t / ticks, yy = y(v);
+    g += `<line class="${t===0?'axisline':'gridline'}" x1="${mL}" x2="${W-mR}" y1="${yy}" y2="${yy}"/>` +
+         `<text x="${mL-8}" y="${yy+4}" text-anchor="end">${fmt(v)}</text>`;
+  }
+  rows.forEach((r, i) => {
+    g += `<text x="${x(i)}" y="${H-10}" text-anchor="middle">${r.season.replace("20","'").replace("-20","–'")}</text>`;
+  });
+  const path = rows.map((r, i) => `${i ? "L" : "M"}${x(i)},${y(r.km2)}`).join("");
+  const area = path + `L${x(rows.length-1)},${y(0)}L${x(0)},${y(0)}Z`;
+  g += `<path class="fill" d="${area}"/><path class="series" d="${path}"/>`;
+  g += `<line id="cross" class="crosshair" y1="${mT}" y2="${mT+ih}" x1="-9" x2="-9"/>`;
+  rows.forEach((r, i) => {
+    g += `<circle class="pt${r.poorly ? " hollow" : ""}" cx="${x(i)}" cy="${y(r.km2)}" r="4.5"/>`;
+  });
+  rows.forEach((r, i) => {   // generous hit bands, one per season
+    const x0 = i ? (x(i-1)+x(i))/2 : mL - 10;
+    const x1 = i < rows.length-1 ? (x(i)+x(i+1))/2 : W - mR + 10;
+    g += `<rect data-i="${i}" x="${x0}" y="${mT}" width="${x1-x0}" height="${ih}" fill="transparent"/>`;
+  });
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.innerHTML = g;
+  const cross = svg.querySelector("#cross");
+  svg.querySelectorAll("rect[data-i]").forEach(rc => {
+    rc.addEventListener("mousemove", ev => {
+      const i = +rc.dataset.i, r = rows[i];
+      cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i));
+      tip.style.display = "block";
+      tip.style.left = Math.min(ev.clientX + 14, innerWidth - 240) + "px";
+      tip.style.top = (ev.clientY + 14) + "px";
+      tip.innerHTML = `${current} · ${r.season}<br><b>${fmt(r.km2)} km²</b> · ${r.pct}% of shelf` +
+        (r.poorly ? "<br>poorly observed — lower bound" : "") +
+        (r.obs_cloud != null ? `<br><span class="small">obs. cloud ${r.obs_cloud}%</span>` : "");
+    });
+    rc.addEventListener("mouseleave", () => { tip.style.display = "none"; cross.setAttribute("x1", -9); cross.setAttribute("x2", -9); });
+  });
+  document.getElementById("charttitle").textContent = current + " — seasonal meltwater";
+  const a = D.shelves[current].area_km2;
+  document.getElementById("shelfmeta").textContent = a ? `shelf area ${Math.round(a).toLocaleString()} km²` : "";
+}
+
+/* ---------- small multiples ---------- */
+function multiples() {
+  const wrap = document.getElementById("multiples");
+  wrap.innerHTML = shelves.map(s => {
+    const rows = D.shelves[s].seasons, vmax = Math.max(...rows.map(r => r.km2)) || 1;
+    const W = 150, H = 36;
+    const pts = rows.map((r, i) =>
+      `${(i/(rows.length-1))*W},${H - 2 - (H-6)*(r.km2/vmax)}`).join(" ");
+    const last = rows[rows.length-1];
+    return `<button class="mini${s===current?" active":""}" data-s="${s}" aria-pressed="${s===current}">
+      <div class="name">${s}</div>
+      <div class="latest">${fmt(last.km2)} km² · ${last.season}${last.poorly ? " °" : ""}</div>
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+        <polyline class="series" points="${pts}"/></svg></button>`;
+  }).join("");
+  wrap.querySelectorAll(".mini").forEach(b => b.addEventListener("click", () => {
+    current = b.dataset.s; sel.value = current; render();
+  }));
+}
+
+/* ---------- heatmap ---------- */
+const RAMP_LIGHT = ["#cde2fb","#9ec5f4","#6da7ec","#3987e5","#256abf","#184f95","#0d366b"];
+const RAMP_DARK  = ["#0d366b","#184f95","#1c5cab","#256abf","#2a78d6","#5598e7","#86b6ef"];
+const darkMq = matchMedia("(prefers-color-scheme: dark)");
+function isDark() {
+  const t = document.documentElement.dataset.theme;
+  return t ? t === "dark" : darkMq.matches;
+}
+function heat() {
+  const ramp = isDark() ? RAMP_DARK : RAMP_LIGHT;
+  const t = document.getElementById("heat");
+  let html = "<tr><th class='rowh'>Shelf</th>" +
+    seasons.map(s => `<th>${s.slice(2,4)}–${s.slice(7)}</th>`).join("") + "</tr>";
+  for (const s of shelves) {
+    const rows = D.shelves[s].seasons;
+    const vmax = Math.max(...rows.map(r => r.km2)) || 1;
+    html += `<tr><th class="rowh">${s}</th>` + seasons.map(season => {
+      const r = rows.find(x => x.season === season);
+      if (!r) return "<td></td>";
+      const k = Math.min(ramp.length-1, Math.floor((r.km2/vmax) * ramp.length));
+      const ink = (isDark() ? k >= 5 : k <= 2) ? "var(--ink)" : "#fff";
+      return `<td class="${r.poorly ? "flag" : ""}" style="background:${ramp[k]};color:${ink}"
+        data-tip="${s} · ${season}|${fmt(r.km2)} km² · ${r.pct}% of shelf${r.poorly ? "|poorly observed" : ""}"></td>`;
+    }).join("") + "</tr>";
+  }
+  t.innerHTML = html;
+  t.querySelectorAll("td[data-tip]").forEach(td => {
+    td.addEventListener("mousemove", ev => {
+      const [a, b, c] = td.dataset.tip.split("|");
+      tip.style.display = "block";
+      tip.style.left = Math.min(ev.clientX + 14, innerWidth - 240) + "px";
+      tip.style.top = (ev.clientY + 14) + "px";
+      tip.innerHTML = `${a}<br><b>${b}</b>${c ? "<br>" + c : ""}`;
+    });
+    td.addEventListener("mouseleave", () => tip.style.display = "none");
+  });
+}
+darkMq.addEventListener("change", heat);
+
+/* ---------- validation ---------- */
+(function validation() {
+  const g = D.gates, chips = [];
+  const chip = (ok, label) =>
+    `<span class="chip" style="color:${ok ? "var(--good)" : "var(--critical)"}">
+     <span class="dot" style="background:${ok ? "var(--good)" : "var(--critical)"}"></span>
+     ${ok ? "✓" : "✗"} ${label}</span>`;
+  if (g.gate1_pass !== undefined)
+    chips.push(chip(g.gate1_pass, "Radar containment 100% of validated ponds"));
+  if (g.gate2b_ranking_unsaturated)
+    chips.push(chip(g.gate2b_ranking_unsaturated.pass, "Season ranking matches optical"));
+  if (g.gate3_winter)
+    chips.push(chip(g.gate3_winter.pass, "Mid-winter false-wet 0.08% (<2%)"));
+  if (g.gate4_timing)
+    chips.push(chip(g.gate4_timing.pass, "Melt timing Nov→Feb"));
+  document.getElementById("gates").innerHTML = chips.join("");
+  const tb = document.querySelector("#regimes tbody");
+  tb.innerHTML = Object.entries(D.corrections)
+    .filter(([k]) => !k.startsWith("_"))
+    .map(([k, v]) => `<tr><td>${v.regime}</td><td>${k.replace("_", " ")}</td>
+      <td>${v.precision} [${v.precision_ci95[0]}–${v.precision_ci95[1]}]</td>
+      <td>${v.recall_area_weighted}</td><td>×${v.open_water_factor}</td></tr>`).join("");
+})();
+
+/* ---------- data table ---------- */
+(function table() {
+  const t = document.getElementById("datatable");
+  t.innerHTML = "<thead><tr><th>Shelf</th>" +
+    seasons.map(s => `<th>${s}</th>`).join("") + "</tr></thead><tbody>" +
+    shelves.map(s => `<tr><td>${s}</td>` + seasons.map(season => {
+      const r = D.shelves[s].seasons.find(x => x.season === season);
+      return `<td>${r ? fmt(r.km2) + (r.poorly ? " °" : "") : "—"}</td>`;
+    }).join("") + "</tr>").join("") + "</tbody>";
+})();
+
+function render() { mainChart(); multiples(); heat(); }
+render();
+addEventListener("resize", () => mainChart());
+</script>
+</body>
+</html>
