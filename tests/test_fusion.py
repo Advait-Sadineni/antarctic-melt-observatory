@@ -40,3 +40,49 @@ def test_nearest_pond_evidence_window():
     assert ev.tolist() == [[False, True]]          # nearest = Jan 24 (2 days)
     ev2 = fusion.nearest_pond_evidence(dates, [m1, m2], date(2021, 2, 15), window_days=6)
     assert not ev2.any()                            # nothing within window
+
+
+def test_nearest_pond_with_gap():
+    from datetime import date
+    import fusion
+    m1 = np.zeros((2, 2), bool); m1[0, 0] = True
+    m2 = np.zeros((2, 2), bool); m2[1, 1] = True
+    dates = [date(2021, 1, 10), date(2021, 1, 20)]
+    m, gap = fusion.nearest_pond_with_gap(dates, [m1, m2], date(2021, 1, 12))
+    assert m[0, 0] and not m[1, 1] and gap == 2
+    m, gap = fusion.nearest_pond_with_gap(dates, [m1, m2], date(2021, 3, 1))
+    assert not m.any() and gap is None
+
+
+def test_state_accumulator_two_scene_walk():
+    import fusion
+    acc = fusion.StateAccumulator((2, 2))
+    wet = np.array([[1, 0], [1, 0]], bool)
+    obs = np.array([[1, 1], [1, 0]], bool)
+    pond = np.array([[1, 0], [0, 0]], bool)
+    st = fusion.classify_state(wet, obs, pond)
+    conf = np.full((2, 2), 0.5, "f4")
+    acc.add(st, fusion.conflict_mask(wet, obs, pond), conf, day=10)
+    # scene 2: pond cell goes radar-dry -> conflict, not PONDED
+    wet2 = np.array([[0, 0], [1, 0]], bool)
+    st2 = fusion.classify_state(wet2, obs, pond)
+    acc.add(st2, fusion.conflict_mask(wet2, obs, pond), conf, day=20)
+    assert acc.days_ponded[0, 0] == 1 and acc.days_wet[0, 0] == 1
+    assert acc.days_wet[1, 0] == 2 and acc.days_ponded[1, 0] == 0
+    assert acc.conflict_days[0, 0] == 1          # scene-2 pond-but-dry
+    assert acc.n_obs[0, 1] == 2 and acc.n_obs[1, 1] == 0
+    assert acc.first_ponded[0, 0] == 10 and acc.last_ponded[0, 0] == 10
+
+
+def test_state_checkpoint_roundtrip(tmp_path):
+    import fusion
+    acc = fusion.StateAccumulator((2, 3))
+    st = np.array([[3, 2, 1], [0, 1, 2]], "u1")
+    acc.add(st, np.zeros((2, 3), bool), np.full((2, 3), 0.25, "f4"), day=5)
+    p = tmp_path / "st.npz"
+    fusion.save_state_checkpoint(p, acc, {"x"}, 1, 0, wet_max=9.5, pond_max=2.5)
+    acc2, done, used, skipped, wm, pm = fusion.load_state_checkpoint(p, (2, 3))
+    assert done == {"x"} and used == 1
+    assert wm == 9.5 and pm == 2.5
+    assert np.array_equal(acc2.days_ponded, acc.days_ponded)
+    assert np.array_equal(acc2.conf_sum, acc.conf_sum)
