@@ -124,3 +124,18 @@ def test_calib_X_matches_forward_model():
     X = depth.calib_X(Rw, A_d=0.6, R_inf=0.05)
     z = depth.depth_single(Rw, 0.6, 0.05, g=0.8)
     assert abs(X[0] / 0.8 - z[0]) < 1e-5
+
+
+def test_rim_albedo_many_ponds_fast():
+    import time
+    rng = np.random.default_rng(5)
+    img = rng.uniform(0.4, 0.6, (2000, 2000)).astype("f4")
+    mask = np.zeros((2000, 2000), bool)
+    for i in range(400):                     # 400 scattered small ponds
+        r, c = rng.integers(5, 1990, 2)
+        mask[r:r+4, c:c+4] = True
+    t0 = time.time()
+    labels, ad = depth.rim_albedo(img, mask)
+    dt = time.time() - t0
+    assert dt < 5.0, f"rim_albedo too slow for many ponds: {dt:.1f}s"
+    assert np.isfinite(ad[mask]).all()

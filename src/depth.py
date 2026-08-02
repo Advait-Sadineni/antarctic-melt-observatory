@@ -79,15 +79,25 @@ def dual_band_merge(z_red, z_green, tol=DUAL_TOL):
 def rim_albedo(band_img, pond_mask, rim_px=2):
     """Per-pond bottom-albedo estimate from the ice ring just outside each
     pond (never a global constant - dirty/dark floors are the known weak
-    link). Returns (labels, A_d image aligned to ponds)."""
+    link). Returns (labels, A_d image aligned to ponds).
+
+    Work happens inside each pond's padded bounding box (find_objects), never
+    the full image - an Amery tile holds thousands of lakes and whole-image
+    dilation per pond turns seconds into hours."""
     labels, n = ndimage.label(pond_mask)
     ad = np.full(band_img.shape, np.nan, "f4")
     struct = ndimage.generate_binary_structure(2, 2)
-    for i in range(1, n + 1):
-        pond = labels == i
-        rim = ndimage.binary_dilation(pond, struct, iterations=rim_px) & ~pond_mask
+    pad = rim_px + 1
+    for i, sl in enumerate(ndimage.find_objects(labels), start=1):
+        if sl is None:
+            continue
+        r = slice(max(0, sl[0].start - pad), min(labels.shape[0], sl[0].stop + pad))
+        c = slice(max(0, sl[1].start - pad), min(labels.shape[1], sl[1].stop + pad))
+        pond = labels[r, c] == i
+        rim = (ndimage.binary_dilation(pond, struct, iterations=rim_px)
+               & ~pond_mask[r, c])
         if rim.any():
-            ad[pond] = float(np.nanmean(band_img[rim]))
+            ad[r, c][pond] = float(np.nanmean(band_img[r, c][rim]))
     return labels, ad
 
 
