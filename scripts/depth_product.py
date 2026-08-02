@@ -71,8 +71,9 @@ def centre_rim_gate(zmap, ponds, min_pond_px=100):
 
 def run(season):
     calib = json.loads((icesat2.OUT / "calibration.json").read_text())
-    g_red = calib["bands"]["red"]["g"]
-    g_green = calib["bands"]["green"]["g"]
+    bands_fit = calib.get("bands_tight") or calib["bands"]  # decision 0003:
+    g_red = bands_fit["red"]["g"]                           # tight-window fit
+    g_green = bands_fit["green"]["g"]
 
     y1 = int(season.split("-")[0]) + 1
     out_rows = []
@@ -106,7 +107,8 @@ def run(season):
             return np.where(_v, zz, np.nan)
 
         mc = depth.mc_volume(z_fn, px_area, n=500,
-                             g_sigma=0.2,   # calibration posterior spread (decision 0003) ad_sigma=0.02, rinf_range=(0.03, 0.07))
+                             g_sigma=0.2,   # calibration posterior (decision 0003)
+                             ad_sigma=0.02, rinf_range=(0.03, 0.07))
         crs, _ = melt.tile_georeference(it)
         prof = dict(driver="GTiff", height=z_final.shape[0], width=z_final.shape[1],
                     count=1, dtype="float32", crs=crs,
