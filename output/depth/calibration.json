@@ -1,0 +1,36 @@
+{
+ "r_inf": 0.05,
+ "pairs_total": 63,
+ "bands": {
+  "red": {
+   "g": 1.1649,
+   "rmse_m": 1.342,
+   "n": 49,
+   "n_trimmed": 1,
+   "gate_rmse_lt_0.5": false,
+   "gate_n_ge_30": true
+  },
+  "green": {
+   "g": 0.4137,
+   "rmse_m": 1.438,
+   "n": 43,
+   "n_trimmed": 1,
+   "gate_rmse_lt_0.5": false,
+   "gate_n_ge_30": true
+  }
+ },
+ "sites": {
+  "george_vi": {
+   "g": 1.1922,
+   "rmse_m": 1.701,
+   "n": 10,
+   "n_trimmed": 0
+  },
+  "amery": {
+   "g": 1.1543,
+   "rmse_m": 1.233,
+   "n": 39,
+   "n_trimmed": 1
+  }
+ }
+}

@@ -110,6 +110,9 @@ def main():
         print(f"  {tile} {day}: +{len(pairs)-n0} pairs (total {len(pairs)})",
               flush=True)
 
+    (icesat2.OUT / "calibration_pairs.json").write_text(json.dumps(
+        [{"site": s, "X_red": xr, "X_green": xg, "z": z_} for s, xr, xg, z_ in pairs],
+        indent=1))
     out = {"r_inf": R_INF, "pairs_total": len(pairs), "bands": {}, "sites": {}}
     Xr = np.array([p[1] for p in pairs])
     Xg = np.array([p[2] for p in pairs])

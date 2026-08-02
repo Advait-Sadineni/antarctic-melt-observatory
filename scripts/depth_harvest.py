@@ -133,10 +133,17 @@ def main(season):
         for fp in files:
             fp = Path(fp)
             try:
+                # ATL03_YYYYMMDDHHMMSS_... -> laser acquisition date, so the
+                # calibration can restrict to tight temporal crossovers
+                gdate = date(int(fp.name[6:10]), int(fp.name[10:12]),
+                             int(fp.name[12:14]))
+                gap = abs((gdate - day).days)
                 for _, la, lo, d in icesat2.granule_pond_depths(
                         fp, [(w, s, e, n)], masks=[maskinfo]):
                     rows.append({"pond": feat["properties"]["pond_id"],
                                  "scene_date": feat["properties"]["scene_date"],
+                                 "laser_date": gdate.isoformat(),
+                                 "gap_days": gap,
                                  "lat": la, "lon": lo, "depth_m": round(d, 3),
                                  "qc_pass": icesat2.qc_pass(d)})
             except Exception as ex:
