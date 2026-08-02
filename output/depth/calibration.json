@@ -1,36 +1,54 @@
 {
  "r_inf": 0.05,
- "pairs_total": 63,
+ "pairs_total": 111,
  "bands": {
   "red": {
-   "g": 1.1649,
-   "rmse_m": 1.342,
-   "n": 49,
-   "n_trimmed": 1,
+   "g": 1.8332,
+   "rmse_m": 0.772,
+   "n": 69,
+   "n_trimmed": 3,
    "gate_rmse_lt_0.5": false,
    "gate_n_ge_30": true
   },
   "green": {
-   "g": 0.4137,
-   "rmse_m": 1.438,
-   "n": 43,
-   "n_trimmed": 1,
+   "g": 0.4333,
+   "rmse_m": 1.519,
+   "n": 71,
+   "n_trimmed": 3,
    "gate_rmse_lt_0.5": false,
    "gate_n_ge_30": true
   }
  },
+ "bands_tight": {
+  "red": {
+   "g": 1.6353,
+   "rmse_m": 0.558,
+   "n": 25,
+   "n_trimmed": 2,
+   "gate_rmse_lt_0.5": false,
+   "gate_n_ge_30": false
+  },
+  "green": {
+   "g": 0.3432,
+   "rmse_m": 1.088,
+   "n": 27,
+   "n_trimmed": 3,
+   "gate_rmse_lt_0.5": false,
+   "gate_n_ge_30": false
+  }
+ },
  "sites": {
   "george_vi": {
-   "g": 1.1922,
-   "rmse_m": 1.701,
-   "n": 10,
+   "g": 2.8004,
+   "rmse_m": 0.884,
+   "n": 7,
    "n_trimmed": 0
   },
   "amery": {
-   "g": 1.1543,
-   "rmse_m": 1.233,
-   "n": 39,
-   "n_trimmed": 1
+   "g": 1.7369,
+   "rmse_m": 0.754,
+   "n": 62,
+   "n_trimmed": 3
   }
  }
 }

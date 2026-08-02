@@ -106,7 +106,7 @@ def run(season):
             return np.where(_v, zz, np.nan)
 
         mc = depth.mc_volume(z_fn, px_area, n=500,
-                             g_sigma=0.15, ad_sigma=0.02, rinf_range=(0.03, 0.07))
+                             g_sigma=0.2,   # calibration posterior spread (decision 0003) ad_sigma=0.02, rinf_range=(0.03, 0.07))
         crs, _ = melt.tile_georeference(it)
         prof = dict(driver="GTiff", height=z_final.shape[0], width=z_final.shape[1],
                     count=1, dtype="float32", crs=crs,

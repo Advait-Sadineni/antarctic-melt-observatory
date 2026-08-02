@@ -1,0 +1,75 @@
+[calib] 135 QC depths in 20 scene groups
+  19CEV 2023-02-22: +1 pairs (total 1)
+  19CEV 2025-01-19: +2 pairs (total 3)
+  19DEA 2020-01-29: +2 pairs (total 5)
+  19DEA 2021-01-24: +1 pairs (total 6)
+  19DEA 2023-02-23: +4 pairs (total 10)
+  19DEA 2025-01-05: +0 pairs (total 10)
+  41CPV 2019-01-02: +13 pairs (total 23)
+  41CPV 2019-01-03: +10 pairs (total 33)
+  41CPV 2019-01-13: +4 pairs (total 37)
+  41CPV 2020-01-07: +29 pairs (total 66)
+  41CPV 2020-01-18: +4 pairs (total 70)
+  41CPV 2020-12-12: +4 pairs (total 74)
+  41CPV 2021-12-18: +0 pairs (total 74)
+  41CPV 2022-12-16: +1 pairs (total 75)
+  41CPV 2023-12-07: +1 pairs (total 76)
+  41CPV 2024-12-05: +7 pairs (total 83)
+  41CPV 2024-12-27: +8 pairs (total 91)
+  41CPV 2024-12-30: +4 pairs (total 95)
+  41CPV 2025-12-22: +12 pairs (total 107)
+  41CPV 2026-01-01: +4 pairs (total 111)
+{
+ "r_inf": 0.05,
+ "pairs_total": 111,
+ "bands": {
+  "red": {
+   "g": 1.8332,
+   "rmse_m": 0.772,
+   "n": 69,
+   "n_trimmed": 3,
+   "gate_rmse_lt_0.5": false,
+   "gate_n_ge_30": true
+  },
+  "green": {
+   "g": 0.4333,
+   "rmse_m": 1.519,
+   "n": 71,
+   "n_trimmed": 3,
+   "gate_rmse_lt_0.5": false,
+   "gate_n_ge_30": true
+  }
+ },
+ "bands_tight": {
+  "red": {
+   "g": 1.6353,
+   "rmse_m": 0.558,
+   "n": 25,
+   "n_trimmed": 2,
+   "gate_rmse_lt_0.5": false,
+   "gate_n_ge_30": false
+  },
+  "green": {
+   "g": 0.3432,
+   "rmse_m": 1.088,
+   "n": 27,
+   "n_trimmed": 3,
+   "gate_rmse_lt_0.5": false,
+   "gate_n_ge_30": false
+  }
+ },
+ "sites": {
+  "george_vi": {
+   "g": 2.8004,
+   "rmse_m": 0.884,
+   "n": 7,
+   "n_trimmed": 0
+  },
+  "amery": {
+   "g": 1.7369,
+   "rmse_m": 0.754,
+   "n": 62,
+   "n_trimmed": 3
+  }
+ }
+}

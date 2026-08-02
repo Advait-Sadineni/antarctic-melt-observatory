@@ -51,8 +51,22 @@ def main():
     fusion_p = ROOT / "output" / "sar" / "fusion_report.json"
     fusion = json.loads(fusion_p.read_text()) if fusion_p.exists() else None
 
+    # per-season fused state summaries (wet vs ponded - the M3 science number)
+    states = {}
+    for p in sorted((ROOT / "output" / "sar").glob("state_*_t2.json")):
+        s = json.loads(p.read_text())
+        states[s["season"]] = s
+
+    calib_p = ROOT / "output" / "depth" / "calibration.json"
+    calib = json.loads(calib_p.read_text()) if calib_p.exists() else None
+    depth_products = {}
+    for p in sorted((ROOT / "output" / "depth").glob("product_*.json")):
+        d = json.loads(p.read_text())
+        depth_products[d["season"]] = d
+
     data = {"shelves": shelves, "corrections": corr, "gates": gates,
-            "fusion": fusion,
+            "fusion": fusion, "states": states,
+            "calibration": calib, "depth_products": depth_products,
             "doi": "10.5281/zenodo.21711608",
             "repo": "https://github.com/Advait-Sadineni/antarctic-melt-observatory"}
     OUT.mkdir(exist_ok=True)

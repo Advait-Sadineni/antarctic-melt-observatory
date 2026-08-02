@@ -174,6 +174,37 @@ footer p { max-width:90ch; }
     same-day open water where a regime has been blind-validated.</p>
   </section>
 
+  <section class="card" id="fusioncard" hidden>
+    <h2>Radar × optical fusion — George VI melt states</h2>
+    <div class="h-note">Every 120 m cell classified per radar pass as DRY / WET /
+    PONDED (ponded requires <em>both</em> sensors to agree; disagreements are counted
+    as conflicts, never classified). The wet-to-ponded gap is the key number: only a
+    small fraction of melt ever ponds — and ponding is what drives hydrofracture.</div>
+    <div class="kpis" id="fusiontiles" style="margin-top:12px"></div>
+    <div class="chart-wrap">
+    <table class="data" id="fusiontable">
+      <thead><tr><th>Season</th><th>Peak wet (km²)</th><th>Ever ponded (km²)</th>
+      <th>Wet : ponded</th><th>Conflict rate</th><th>Radar confidence</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="card" id="depthcard" hidden>
+    <h2>Pond depth &amp; meltwater volume</h2>
+    <div class="h-note">Dual-band attenuation depths, valid only where the fused
+    record says PONDED; the attenuation constant is calibrated against ICESat-2
+    laser photon depths (never hand-picked).</div>
+    <div class="kpis" id="depthtiles" style="margin-top:12px"></div>
+    <div class="chart-wrap">
+    <table class="data" id="depthtable">
+      <thead><tr><th>Season</th><th>Tile</th><th>Valid ponded (km²)</th>
+      <th>Mean depth (m)</th><th>Volume (km³, median [16–84%])</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+  </section>
+
   <section class="card">
     <details>
       <summary>Data table — every shelf-season measurement</summary>
@@ -374,6 +405,64 @@ darkMq.addEventListener("change", heat);
     .map(([k, v]) => `<tr><td>${v.regime}</td><td>${k.replace("_", " ")}</td>
       <td>${v.precision} [${v.precision_ci95[0]}–${v.precision_ci95[1]}]</td>
       <td>${v.recall_area_weighted}</td><td>×${v.open_water_factor}</td></tr>`).join("");
+})();
+
+/* ---------- fusion panel ---------- */
+(function fusionPanel() {
+  const st = D.states || {};
+  const keys = Object.keys(st);
+  if (!keys.length) return;
+  document.getElementById("fusioncard").hidden = false;
+  const rows = keys.map(k => st[k]);
+  const ratios = rows.filter(r => r.ponded_ever_km2 > 0)
+    .map(r => r.ponded_ever_km2 / r.wet_extent_max_km2 * 100);
+  const meanPct = ratios.length ? (ratios.reduce((a,b)=>a+b,0)/ratios.length) : null;
+  const tiles = [];
+  if (meanPct != null) tiles.push({ label: "Share of wetted area that ponds",
+    value: meanPct.toFixed(1) + "%", note: "the hydrofracture-relevant fraction" });
+  const worstConflict = Math.max(...rows.map(r => r.conflict_rate ?? 0));
+  tiles.push({ label: "Worst sensor conflict", value: (worstConflict*100).toFixed(1) + "%",
+    note: "optical-pond vs radar-dry disagreements (bar: <5%)" });
+  document.getElementById("fusiontiles").innerHTML = tiles.map(t => `
+    <div class="tile"><div class="label">${t.label}</div>
+    <div class="value">${t.value}</div><div class="note">${t.note}</div></div>`).join("");
+  document.querySelector("#fusiontable tbody").innerHTML = keys.sort().map(k => {
+    const r = st[k];
+    const ratio = r.ponded_ever_km2 > 0
+      ? Math.round(r.wet_extent_max_km2 / r.ponded_ever_km2) + " : 1" : "—";
+    return `<tr><td>${r.season}</td><td>${Math.round(r.wet_extent_max_km2).toLocaleString()}</td>
+      <td>${r.ponded_ever_km2}</td><td>${ratio}</td>
+      <td>${r.conflict_rate != null ? (r.conflict_rate*100).toFixed(1) + "%" : "—"}</td>
+      <td>${r.mean_confidence_wet ?? "—"}</td></tr>`;
+  }).join("");
+})();
+
+/* ---------- depth & volume panel ---------- */
+(function depthPanel() {
+  const dp = D.depth_products || {}, cal = D.calibration;
+  const seasonsD = Object.keys(dp);
+  if (!seasonsD.length && !cal) return;
+  document.getElementById("depthcard").hidden = false;
+  const tiles = [];
+  if (cal) {
+    const fit = (cal.bands_tight && cal.bands_tight.red) || cal.bands.red;
+    tiles.push({ label: "Attenuation g (red)", value: fit.g,
+      note: `ICESat-2 fit, n=${fit.n}, RMSE ${fit.rmse_m} m` });
+    if (cal.sites && cal.sites.george_vi && cal.sites.amery)
+      tiles.push({ label: "Cross-site agreement", value:
+        (100*Math.abs(cal.sites.george_vi.g-cal.sites.amery.g)/cal.sites.george_vi.g).toFixed(0)+"%",
+        note: "George VI vs Amery, 4,000 km apart" });
+  }
+  document.getElementById("depthtiles").innerHTML = tiles.map(t => `
+    <div class="tile"><div class="label">${t.label}</div>
+    <div class="value">${t.value}</div><div class="note">${t.note}</div></div>`).join("");
+  document.querySelector("#depthtable tbody").innerHTML = seasonsD.sort().flatMap(s =>
+    dp[s].tiles.map(t => {
+      const v = t.volume_km3;
+      return `<tr><td>${s}</td><td>${t.tile}</td><td>${t.ponded_valid_km2}</td>
+        <td>${t.depth_mean_m ?? "—"}</td>
+        <td>${v ? `${v.volume_km3_median} [${v.p16}–${v.p84}]` : "—"}</td></tr>`;
+    })).join("");
 })();
 
 /* ---------- data table ---------- */
