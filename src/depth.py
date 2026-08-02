@@ -25,6 +25,42 @@ def depth_single(R_w, A_d, R_inf, g):
     return z.astype("f4")
 
 
+def calib_X(R_w, A_d, R_inf):
+    """The optical term X = ln(A_d - R_inf) - ln(R_w - R_inf), so that
+    z = X / g. Invalid reflectances -> NaN (same validity as depth_single)."""
+    R_w = np.asarray(R_w, "f4")
+    with np.errstate(invalid="ignore", divide="ignore"):
+        X = np.log(A_d - R_inf) - np.log(R_w - R_inf)
+    bad = ~np.isfinite(X) | (R_w <= R_inf) | (R_w >= A_d)
+    return np.where(bad, np.nan, X).astype("f4")
+
+
+def fit_g(X, z, trim_sigma=3.0):
+    """Calibrate g against ICESat-2 depths. z = X/g is linear in a = 1/g, so
+    least squares is closed-form: a = X.z / X.X. One trim-and-refit pass drops
+    pairs beyond trim_sigma residual standard deviations (a photon histogram
+    that locked onto the wrong feature must not drag the physics)."""
+    X = np.asarray(X, "f8")
+    z = np.asarray(z, "f8")
+    ok = np.isfinite(X) & np.isfinite(z) & (X > 0) & (z > 0)
+    X, z = X[ok], z[ok]
+
+    def solve(Xs, zs):
+        a = float(np.dot(Xs, zs) / np.dot(Xs, Xs))
+        resid = a * Xs - zs
+        return a, resid
+
+    a, resid = solve(X, z)
+    keep = np.abs(resid) <= trim_sigma * max(float(resid.std()), 1e-9)
+    n_trimmed = int((~keep).sum())
+    if n_trimmed:
+        a, resid = solve(X[keep], z[keep])
+    return {"g": round(1.0 / a, 4),
+            "rmse_m": round(float(np.sqrt((resid ** 2).mean())), 3),
+            "n": int(keep.sum()) if n_trimmed else len(z),
+            "n_trimmed": n_trimmed}
+
+
 def dual_band_merge(z_red, z_green, tol=DUAL_TOL):
     """Mean of the two estimates where they agree within tol of the larger;
     disagreement or a missing band -> NaN + uncertain flag. Two estimates beat

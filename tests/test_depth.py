@@ -95,3 +95,32 @@ def test_depth_qc_bounds():
     assert hi <= 10.0         # supraglacial ponds are shallow; junk excluded
     assert icesat2.qc_pass(0.5) and icesat2.qc_pass(4.4)
     assert not icesat2.qc_pass(0.226) and not icesat2.qc_pass(667.2)
+
+
+def test_fit_g_recovers_truth():
+    rng = np.random.default_rng(11)
+    g_true = 0.75
+    z = rng.uniform(0.4, 4.0, 60)
+    X = z * g_true + rng.normal(0, 0.02, 60)   # small noise in optical term
+    out = depth.fit_g(X, z)
+    assert abs(out["g"] - g_true) < 0.03
+    assert out["n"] == 60 and out["rmse_m"] < 0.1
+
+
+def test_fit_g_trims_outliers():
+    g_true = 0.75
+    z = np.linspace(0.5, 4.0, 40)
+    X = z * g_true
+    z_bad = np.concatenate([z, [1.0, 1.2]])
+    X_bad = np.concatenate([X, [4.0, 5.0]])    # wildly wrong pairs
+    out = depth.fit_g(X_bad, z_bad)
+    assert abs(out["g"] - g_true) < 0.02       # outliers must not drag the fit
+    assert out["n_trimmed"] == 2
+
+
+def test_calib_X_matches_forward_model():
+    # X = ln(Ad-Rinf) - ln(Rw-Rinf); forward depth_single inverts with g
+    Rw = np.array([0.25], "f4")
+    X = depth.calib_X(Rw, A_d=0.6, R_inf=0.05)
+    z = depth.depth_single(Rw, 0.6, 0.05, g=0.8)
+    assert abs(X[0] / 0.8 - z[0]) < 1e-5
