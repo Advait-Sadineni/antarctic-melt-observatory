@@ -106,26 +106,37 @@ def main():
                 continue
             Xr = depth.calib_X(np.array([rw_r]), adr, R_INF)[0]
             Xg = depth.calib_X(np.array([rw_g]), adg, R_INF)[0]
-            pairs.append((site, float(Xr), float(Xg), r["depth_m"]))
+            pairs.append((site, float(Xr), float(Xg), r["depth_m"],
+                          r.get("gap_days")))
         print(f"  {tile} {day}: +{len(pairs)-n0} pairs (total {len(pairs)})",
               flush=True)
 
     (icesat2.OUT / "calibration_pairs.json").write_text(json.dumps(
-        [{"site": s, "X_red": xr, "X_green": xg, "z": z_} for s, xr, xg, z_ in pairs],
-        indent=1))
-    out = {"r_inf": R_INF, "pairs_total": len(pairs), "bands": {}, "sites": {}}
+        [{"site": s, "X_red": xr, "X_green": xg, "z": z_, "gap_days": gp}
+         for s, xr, xg, z_, gp in pairs], indent=1))
+    out = {"r_inf": R_INF, "pairs_total": len(pairs), "bands": {},
+           "bands_tight": {}, "sites": {}}
     Xr = np.array([p[1] for p in pairs])
     Xg = np.array([p[2] for p in pairs])
     z = np.array([p[3] for p in pairs])
+    gap = np.array([p[4] if p[4] is not None else 99 for p in pairs])
+    tight = gap <= 3          # the spec's original crossover window
     for band, X in (("red", Xr), ("green", Xg)):
-        fit = depth.fit_g(X, z)
+        # red is fit inside its physical validity (<= 3 m; Pope-lineage)
+        dom = (z <= 3.0) if band == "red" else np.ones(len(z), bool)
+        fit = depth.fit_g(X[dom], z[dom])
         fit["gate_rmse_lt_0.5"] = bool(fit["rmse_m"] < RMSE_GATE_M)
         fit["gate_n_ge_30"] = bool(fit["n"] >= N_GATE)
         out["bands"][band] = fit
+        if tight.any():
+            ft = depth.fit_g(X[dom & tight], z[dom & tight])
+            ft["gate_rmse_lt_0.5"] = bool(ft["rmse_m"] < RMSE_GATE_M)
+            ft["gate_n_ge_30"] = bool(ft["n"] >= N_GATE)
+            out["bands_tight"][band] = ft
     for site in ("george_vi", "amery"):
-        sel = [i for i, p in enumerate(pairs) if p[0] == site]
-        if len(sel) >= 5:
-            out["sites"][site] = depth.fit_g(Xr[sel], z[sel])
+        sel = np.array([p[0] == site for p in pairs])
+        if sel.sum() >= 5:
+            out["sites"][site] = depth.fit_g(Xr[sel & (z <= 3.0)], z[sel & (z <= 3.0)])
     (icesat2.OUT / "calibration.json").write_text(json.dumps(out, indent=1))
     print(json.dumps(out, indent=1), flush=True)
 
