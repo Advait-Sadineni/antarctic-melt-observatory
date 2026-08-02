@@ -182,8 +182,8 @@ def melt_state_season(season, grid, source, bbox, thresh, series=None):
     tag = f"{season}_t{thresh:g}"
     npz = sar.OUT / f"state_{tag}.npz"
     js = sar.OUT / f"state_{tag}.json"
-    if npz.exists():
-        return json.loads(js.read_text())
+    if npz.exists() and js.exists():   # both, or rebuild: a kill can land
+        return json.loads(js.read_text())   # between the two writes
 
     sgrid = sar.sar_grid(grid)
     tr, gw4, gh4, sm = sgrid
