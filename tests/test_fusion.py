@@ -80,9 +80,23 @@ def test_state_checkpoint_roundtrip(tmp_path):
     st = np.array([[3, 2, 1], [0, 1, 2]], "u1")
     acc.add(st, np.zeros((2, 3), bool), np.full((2, 3), 0.25, "f4"), day=5)
     p = tmp_path / "st.npz"
-    fusion.save_state_checkpoint(p, acc, {"x"}, 1, 0, wet_max=9.5, pond_max=2.5)
-    acc2, done, used, skipped, wm, pm = fusion.load_state_checkpoint(p, (2, 3))
+    fusion.save_state_checkpoint(p, acc, {"x"}, 1, 0, wet_max=9.5, pond_max=2.5,
+                                 conf_wet=7, conf_off=3)
+    (acc2, done, used, skipped, wm, pm, cw, co) = fusion.load_state_checkpoint(p, (2, 3))
     assert done == {"x"} and used == 1
-    assert wm == 9.5 and pm == 2.5
+    assert wm == 9.5 and pm == 2.5 and cw == 7 and co == 3
     assert np.array_equal(acc2.days_ponded, acc.days_ponded)
     assert np.array_equal(acc2.conf_sum, acc.conf_sum)
+
+
+def test_split_conflict_by_phase():
+    import fusion
+    conflict = np.array([[1, 1, 1, 1]], bool)
+    first_wet = np.array([[10, 10, -1, 40]], "i2")
+    last_wet = np.array([[100, 20, -1, 90]], "i2")
+    # scene day 30: cell0 in [10,100]±6 -> wet; cell1 out ([10,20]+6 <30) -> off;
+    # cell2 never wet -> off; cell3 not yet wet ([40-6=34]>30) -> off
+    w, o = fusion.split_conflict(conflict, 30, first_wet, last_wet)
+    assert w.tolist() == [[True, False, False, False]]
+    assert o.tolist() == [[False, True, True, True]]
+    assert not (w & o).any()

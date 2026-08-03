@@ -51,6 +51,19 @@ def nearest_pond_with_gap(dates, masks, scene_date, window_days=6):
     return best, best_gap
 
 
+def split_conflict(conflict, day, first_wet, last_wet, margin=6):
+    """Partition conflicts by the cell's own radar wet season: inside
+    [first_wet - margin, last_wet + margin] they are true sensor
+    disagreements (the error-like class the pilot gates); outside they are
+    the lid / diurnal-refreeze signal (optics sees stored water, radar sees
+    frozen surface - real physics, reported separately, never classified).
+    Cells never radar-wet (first_wet < 0) count as off-season entirely."""
+    ever = first_wet >= 0
+    in_window = ever & (first_wet - margin <= day) & (day <= last_wet + margin)
+    wet_part = conflict & in_window
+    return wet_part, conflict & ~wet_part
+
+
 class StateAccumulator:
     """Per-cell season bookkeeping over classified scenes: state-day counts,
     conflict days, confidence sums, ponded phenology (-1 = never)."""
@@ -84,12 +97,12 @@ _CKPT_FIELDS = ("days_wet", "days_ponded", "n_obs", "conflict_days",
 
 
 def save_state_checkpoint(path, acc, done_ids, used, skipped,
-                          wet_max=0.0, pond_max=0.0):
+                          wet_max=0.0, pond_max=0.0, conf_wet=0, conf_off=0):
     """Same interruption insurance the SAR composites carry (atomic replace)."""
     tmp = path.with_suffix(".tmp.npz")
     np.savez_compressed(tmp,
                         done_ids=np.array(sorted(done_ids)),
-                        counters=np.array([used, skipped], "i8"),
+                        counters=np.array([used, skipped, conf_wet, conf_off], "i8"),
                         extents=np.array([wet_max, pond_max], "f8"),
                         **{f: getattr(acc, f) for f in _CKPT_FIELDS})
     tmp.replace(path)
@@ -97,19 +110,22 @@ def save_state_checkpoint(path, acc, done_ids, used, skipped,
 
 def load_state_checkpoint(path, shape):
     """Resume state, or fresh if absent/corrupt:
-    (acc, done, used, skipped, wet_max, pond_max)."""
+    (acc, done, used, skipped, wet_max, pond_max, conf_wet, conf_off)."""
     if path.exists():
         try:
             z = np.load(path, allow_pickle=False)
             acc = StateAccumulator(shape)
             for f in _CKPT_FIELDS:
                 setattr(acc, f, z[f])
+            c = z["counters"]
             return (acc, set(z["done_ids"].tolist()),
-                    int(z["counters"][0]), int(z["counters"][1]),
-                    float(z["extents"][0]), float(z["extents"][1]))
+                    int(c[0]), int(c[1]),
+                    float(z["extents"][0]), float(z["extents"][1]),
+                    int(c[2]) if len(c) > 2 else 0,
+                    int(c[3]) if len(c) > 3 else 0)
         except Exception as e:
             print(f"  [state ckpt unreadable, fresh start] {type(e).__name__}")
-    return StateAccumulator(shape), set(), 0, 0, 0.0, 0.0
+    return StateAccumulator(shape), set(), 0, 0, 0.0, 0.0, 0, 0
 
 
 # --- networked (driven by scripts/fusion_pilot.py) -----------------------------
@@ -130,7 +146,7 @@ def pond_series(season, sgrid, cache_root=None):
     import shelf
     root = Path(cache_root) if cache_root else sar.OUT
     root.mkdir(parents=True, exist_ok=True)
-    cache = root / f"ponds_{season}.npz"
+    cache = root / f"ponds_{season}_core.npz"
     if cache.exists():
         z = np.load(cache, allow_pickle=False)
         from datetime import date as _date
@@ -140,7 +156,10 @@ def pond_series(season, sgrid, cache_root=None):
     from rasterio.enums import Resampling
     from rasterio.warp import reproject
     y0 = int(season.split("-")[0])
-    start, end = f"{y0}-11-01", f"{y0+1}-03-31"
+    # melt-core window only: outside it optical "ponds" are dominated by
+    # frozen lids (stored water under ice - real, but not PONDING evidence;
+    # decision 0004). The March-lid class produced 24.7% false conflict.
+    start, end = f"{y0}-12-01", f"{y0+1}-02-28"
     tr, gw4, gh4, sm = sgrid
     by_date = {}
     for tile in shelf.SHELF_TILES:
@@ -198,10 +217,14 @@ def melt_state_season(season, grid, source, bbox, thresh, series=None):
     cell_km2 = (shelf.GRID_RES * sar.SAR_SCALE) ** 2 / 1e6
 
     ckpt = sar.OUT / f"ckpt_state_{tag}.npz"
-    acc, done, used, skipped, wet_max, pond_max = load_state_checkpoint(
-        ckpt, (gh4, gw4))
+    (acc, done, used, skipped, wet_max, pond_max,
+     conf_wet, conf_off) = load_state_checkpoint(ckpt, (gh4, gw4))
     if done:
         print(f"  [resume] state {tag}: {len(done)} scenes done", flush=True)
+
+    # composite phenology for conflict phase-splitting (decision 0004)
+    comp = np.load(sar.OUT / f"season_{tag}.npz")
+    fw_c, lw_c = comp["first_wet"], comp["last_wet"]
 
     by_orbit = sar.list_scenes(source, bbox, start, end)
     since = 0
@@ -234,8 +257,12 @@ def melt_state_season(season, grid, source, bbox, thresh, series=None):
             if gap is not None:
                 pondcells = st == PONDED
                 conf[pondcells] *= np.float32(np.exp(-gap / 6.0))
-            acc.add(st, conflict_mask(wet, obs, ev), conf,
-                    day=d.toordinal() - season_zero)
+            cf = conflict_mask(wet, obs, ev)
+            day_n = d.toordinal() - season_zero
+            cw, co = split_conflict(cf, day_n, fw_c, lw_c)
+            conf_wet += int(cw.sum())
+            conf_off += int(co.sum())
+            acc.add(st, cf, conf, day=day_n)
             used += 1
             done.add(it.id)
             wet_max = max(wet_max, float((st >= WET)[sm].sum()) * cell_km2)
@@ -243,13 +270,13 @@ def melt_state_season(season, grid, source, bbox, thresh, series=None):
             since += 1
             if since >= 15:
                 save_state_checkpoint(ckpt, acc, done, used, skipped,
-                                      wet_max, pond_max)
+                                      wet_max, pond_max, conf_wet, conf_off)
                 since = 0
 
     on = sm & (acc.n_obs > 0)
     ponded_ever = on & (acc.days_ponded > 0)
-    conflict_total = int(acc.conflict_days[on].sum())
-    pond_instances = conflict_total + int(acc.days_ponded[on].sum())
+    ponded_days_total = int(acc.days_ponded[on].sum())
+    wet_instances = conf_wet + ponded_days_total
     summary = {
         "season": season, "thresh_db": thresh,
         "scenes_used": used, "scenes_skipped": skipped,
@@ -257,8 +284,12 @@ def melt_state_season(season, grid, source, bbox, thresh, series=None):
         "wet_extent_max_km2": round(wet_max, 1),
         "ponded_extent_max_km2": round(pond_max, 1),
         "ponded_ever_km2": round(float(ponded_ever.sum()) * cell_km2, 1),
-        "conflict_rate": round(conflict_total / pond_instances, 4)
-            if pond_instances else None,
+        # gate class: disagreement while the cell was radar-wet-capable
+        "conflict_rate": round(conf_wet / wet_instances, 4)
+            if wet_instances else None,
+        "conflict_days_wetseason": conf_wet,
+        # lids / diurnal refreeze: optics sees stored water, radar frozen
+        "conflict_days_offseason": conf_off,
         "mean_confidence_wet": round(float(
             (acc.conf_sum[on] / np.maximum(acc.conf_n[on], 1)).mean()), 3),
         "median_first_ponded_day": int(np.median(

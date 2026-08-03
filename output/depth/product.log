@@ -1,0 +1,3 @@
+  [2019-20 19DEA] {'tile': '19DEA', 'scene': '2020-01-29', 'ponded_valid_km2': 2.59, 'depth_mean_m': 0.6, 'depth_p90_m': 1.4, 'volume_km3': {'volume_km3_median': 0.0015166435041464865, 'p16': 0.0012724275933578611, 'p84': 0.0018971618125215172, 'n_draws': 500}, 'uncertain_frac': 0.805, 'gate_centre_deeper': {'deeper': 9, 'ponds': 10}}
+  [2019-20 19CEV] {'tile': '19CEV', 'scene': '2020-01-29', 'ponded_valid_km2': 15.36, 'depth_mean_m': 0.25, 'depth_p90_m': 0.45, 'volume_km3': {'volume_km3_median': 0.003756897640414536, 'p16': 0.003137798998504877, 'p84': 0.004822398517280817, 'n_draws': 500}, 'uncertain_frac': 0.845, 'gate_centre_deeper': {'deeper': 75, 'ponds': 75}}
+[2019-20] product written
