@@ -48,7 +48,7 @@ def report():
 
         # (b) PONDED <= optical evidence, cell-level, from the stored stacks
         z = np.load(sar.OUT / f"state_{season}_t{t:g}.npz", allow_pickle=False)
-        pz = np.load(sar.OUT / f"ponds_{season}.npz", allow_pickle=False)
+        pz = np.load(sar.OUT / f"ponds_{season}_corem.npz", allow_pickle=False)
         ever_pond_optical = pz["masks"].any(axis=0)
         ponded_radar = z["days_ponded"] > 0
         outside = int((ponded_radar & ~ever_pond_optical).sum())

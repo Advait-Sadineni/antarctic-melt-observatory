@@ -146,7 +146,7 @@ def pond_series(season, sgrid, cache_root=None):
     import shelf
     root = Path(cache_root) if cache_root else sar.OUT
     root.mkdir(parents=True, exist_ok=True)
-    cache = root / f"ponds_{season}_core.npz"
+    cache = root / f"ponds_{season}_corem.npz"
     if cache.exists():
         z = np.load(cache, allow_pickle=False)
         from datetime import date as _date
@@ -156,15 +156,25 @@ def pond_series(season, sgrid, cache_root=None):
     from rasterio.enums import Resampling
     from rasterio.warp import reproject
     y0 = int(season.split("-")[0])
-    # melt-core window only: outside it optical "ponds" are dominated by
-    # frozen lids (stored water under ice - real, but not PONDING evidence;
-    # decision 0004). The March-lid class produced 24.7% false conflict.
-    start, end = f"{y0}-12-01", f"{y0+1}-02-28"
+    # Melt-core window only (decision 0004): outside Dec-Feb, optical "ponds"
+    # are dominated by frozen lids. Pooled PER MONTH (decision 0005): the
+    # extreme-melt fallback branch is evaluated within each month, so a clean
+    # pre-melt December cannot veto hazy record-melt January scenes (in
+    # 2019-20 a season-wide pool selected two dry December scenes and missed
+    # 97% of the record ponding).
+    months = [(f"{y0}-12-01", f"{y0}-12-31"),
+              (f"{y0+1}-01-01", f"{y0+1}-01-31"),
+              (f"{y0+1}-02-01", f"{y0+1}-02-28")]
     tr, gw4, gh4, sm = sgrid
     by_date = {}
     for tile in shelf.SHELF_TILES:
-        pool = shelf.production_pool(tile, start, end,
-                                     max_scenes=MAX_OPTICAL_PER_TILE)
+        pool, seen = [], set()
+        for m_start, m_end in months:
+            for it in shelf.production_pool(tile, m_start, m_end,
+                                            max_scenes=2):
+                if it.id not in seen:
+                    seen.add(it.id)
+                    pool.append(it)
         for it in pool:
             bands = melt.load_scene(it, bands=("green", "nir", "red"))
             reject = melt.reject_mask(it) | melt.cloud_mask(it)["mask"]

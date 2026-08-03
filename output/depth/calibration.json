@@ -21,20 +21,20 @@
  },
  "bands_tight": {
   "red": {
-   "g": 1.6353,
-   "rmse_m": 0.558,
-   "n": 25,
-   "n_trimmed": 2,
+   "g": 1.6183,
+   "rmse_m": 0.557,
+   "n": 29,
+   "n_trimmed": 3,
    "gate_rmse_lt_0.5": false,
    "gate_n_ge_30": false
   },
   "green": {
-   "g": 0.3432,
-   "rmse_m": 1.088,
-   "n": 27,
+   "g": 0.2955,
+   "rmse_m": 1.289,
+   "n": 33,
    "n_trimmed": 3,
    "gate_rmse_lt_0.5": false,
-   "gate_n_ge_30": false
+   "gate_n_ge_30": true
   }
  },
  "sites": {

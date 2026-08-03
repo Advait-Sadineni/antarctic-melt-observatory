@@ -4,7 +4,7 @@
   "X_red": 0.20215989649295807,
   "X_green": 0.13271379470825195,
   "z": 3.459,
-  "gap_days": null
+  "gap_days": 1
  },
  {
   "site": "george_vi",
@@ -39,35 +39,35 @@
   "X_red": 1.2072954177856445,
   "X_green": 0.43845364451408386,
   "z": 0.376,
-  "gap_days": null
+  "gap_days": 0
  },
  {
   "site": "george_vi",
   "X_red": 0.1401381939649582,
   "X_green": 0.03732191026210785,
   "z": 0.301,
-  "gap_days": null
+  "gap_days": 0
  },
  {
   "site": "george_vi",
   "X_red": 0.5866889357566833,
   "X_green": 0.4295416474342346,
   "z": 1.278,
-  "gap_days": null
+  "gap_days": 0
  },
  {
   "site": "george_vi",
   "X_red": 0.08993437886238098,
   "X_green": 0.039296090602874756,
   "z": 1.88,
-  "gap_days": null
+  "gap_days": 0
  },
  {
   "site": "george_vi",
   "X_red": NaN,
   "X_green": NaN,
   "z": 4.512,
-  "gap_days": null
+  "gap_days": 0
  },
  {
   "site": "amery",
@@ -494,42 +494,42 @@
   "X_red": 0.08149361610412598,
   "X_green": NaN,
   "z": 0.526,
-  "gap_days": null
+  "gap_days": 8
  },
  {
   "site": "amery",
   "X_red": 0.267181932926178,
   "X_green": 0.1367780566215515,
   "z": 0.301,
-  "gap_days": null
+  "gap_days": 4
  },
  {
   "site": "amery",
   "X_red": 0.07253631949424744,
   "X_green": 0.02529391087591648,
   "z": 0.526,
-  "gap_days": null
+  "gap_days": 8
  },
  {
   "site": "amery",
   "X_red": 0.267181932926178,
   "X_green": 0.1367780566215515,
   "z": 0.376,
-  "gap_days": null
+  "gap_days": 4
  },
  {
   "site": "amery",
   "X_red": 0.05902035906910896,
   "X_green": 0.017528362572193146,
   "z": 1.203,
-  "gap_days": null
+  "gap_days": 10
  },
  {
   "site": "amery",
   "X_red": 0.09707026928663254,
   "X_green": 0.027289025485515594,
   "z": 0.451,
-  "gap_days": null
+  "gap_days": 9
  },
  {
   "site": "amery",
@@ -669,111 +669,111 @@
   "X_red": NaN,
   "X_green": NaN,
   "z": 5.49,
-  "gap_days": null
+  "gap_days": 7
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 0.376,
-  "gap_days": null
+  "gap_days": 7
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 0.301,
-  "gap_days": null
+  "gap_days": 2
  },
  {
   "site": "amery",
   "X_red": 0.670124888420105,
   "X_green": 0.40580108761787415,
   "z": 4.362,
-  "gap_days": null
+  "gap_days": 2
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 5.189,
-  "gap_days": null
+  "gap_days": 10
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 0.526,
-  "gap_days": null
+  "gap_days": 10
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 0.451,
-  "gap_days": null
+  "gap_days": 7
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 2.256,
-  "gap_days": null
+  "gap_days": 2
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 0.301,
-  "gap_days": null
+  "gap_days": 10
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 0.301,
-  "gap_days": null
+  "gap_days": 2
  },
  {
   "site": "amery",
   "X_red": 0.04886102303862572,
   "X_green": NaN,
   "z": 0.451,
-  "gap_days": null
+  "gap_days": 2
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 0.451,
-  "gap_days": null
+  "gap_days": 2
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 2.858,
-  "gap_days": null
+  "gap_days": 8
  },
  {
   "site": "amery",
   "X_red": NaN,
   "X_green": NaN,
   "z": 5.189,
-  "gap_days": null
+  "gap_days": 0
  },
  {
   "site": "amery",
   "X_red": 0.002979410346597433,
   "X_green": NaN,
   "z": 0.301,
-  "gap_days": null
+  "gap_days": 8
  },
  {
   "site": "amery",
   "X_red": 0.0522693395614624,
   "X_green": NaN,
   "z": 0.451,
-  "gap_days": null
+  "gap_days": 8
  }
 ]

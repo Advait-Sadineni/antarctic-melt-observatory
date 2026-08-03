@@ -1,0 +1,43 @@
+{
+ "season": "2019-20",
+ "g_red": 1.6183,
+ "g_green": 0.2955,
+ "tiles": [
+  {
+   "tile": "19DEA",
+   "scene": "2020-01-29",
+   "ponded_valid_km2": 2.12,
+   "depth_mean_m": 0.69,
+   "depth_p90_m": 1.42,
+   "volume_km3": {
+    "volume_km3_median": 0.001395285944454372,
+    "p16": 0.0011720862565562128,
+    "p84": 0.0017386943474411963,
+    "n_draws": 500
+   },
+   "uncertain_frac": 0.831,
+   "gate_centre_deeper": {
+    "deeper": 9,
+    "ponds": 10
+   }
+  },
+  {
+   "tile": "19CEV",
+   "scene": "2020-01-29",
+   "ponded_valid_km2": 11.4,
+   "depth_mean_m": 0.28,
+   "depth_p90_m": 0.55,
+   "volume_km3": {
+    "volume_km3_median": 0.0031783687882125378,
+    "p16": 0.002654597880318761,
+    "p84": 0.004079791009426116,
+    "n_draws": 500
+   },
+   "uncertain_frac": 0.864,
+   "gate_centre_deeper": {
+    "deeper": 70,
+    "ponds": 71
+   }
+  }
+ ]
+}
