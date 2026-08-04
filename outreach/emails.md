@@ -195,3 +195,14 @@ Advait Sadineni
   with per-labeler weighting + agreement stats; add labeler-disagreement term
   to the uncertainty stack). Candidate labelers: classmates/friends labeling
   the existing blind chips - the chips + hidden keys already exist.
+
+- **2026-08-04 Chris Stokes (Durham):** "This is impressive work... a few
+  groups are working on this at the moment, but perhaps not quite so
+  efficiently as your method" - cited Tuckett et al. 2025 (Nat. Clim. Chang.,
+  continent-wide monthly 2006-21) as the field benchmark. His research
+  interest: warm atmospheric rivers -> rapid sub-seasonal lake development.
+  Asked "for how long are you working on this and in what context?"
+  (engagement probe). -> Backlog promoted: sub-seasonal ponding-onset time
+  series + ERA5/AR-catalog pairing (the fused record already carries per-cell
+  first/last-wet and ~6-day radar cadence - this is a product, not new
+  science plumbing).
