@@ -206,3 +206,8 @@ Advait Sadineni
   series + ERA5/AR-catalog pairing (the fused record already carries per-cell
   first/last-wet and ~6-day radar cadence - this is a product, not new
   science plumbing).
+
+- **2026-08-04 WAVE 2 SENT** (all four): Stokes threaded reply (context +
+  AR-pairing offer), Leeson results follow-up, Banwell (GVI field-data ask),
+  Datta (segment-scale RMSE methodology question). All carry final numbers +
+  live dashboard URL. Reply-watch: Stokes AR interest is the hottest thread.
