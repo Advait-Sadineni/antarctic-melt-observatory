@@ -211,3 +211,7 @@ Advait Sadineni
   AR-pairing offer), Leeson results follow-up, Banwell (GVI field-data ask),
   Datta (segment-scale RMSE methodology question). All carry final numbers +
   live dashboard URL. Reply-watch: Stokes AR interest is the hottest thread.
+
+- **2026-08-04 Trusel (PSU, wave 3) SENT**: on-campus meeting request, led
+  with nonlinearity finding vs his Nature 2015 melt thresholds. 11 sent
+  total; 6 armed behind preprint (emails_wave3.md).
