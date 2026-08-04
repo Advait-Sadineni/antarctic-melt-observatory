@@ -100,3 +100,35 @@ def test_split_conflict_by_phase():
     assert w.tolist() == [[True, False, False, False]]
     assert o.tolist() == [[False, True, True, True]]
     assert not (w & o).any()
+
+
+def test_drainage_candidates_detects_fast_loss():
+    from datetime import date
+    import fusion
+    m0 = np.zeros((20, 20), bool); m0[5:10, 5:10] = True   # 25-cell pond
+    m1 = np.zeros((20, 20), bool); m1[5:7, 5:7] = True     # 4 cells left (84% loss)
+    ev = fusion.drainage_candidates(
+        [date(2020, 1, 10), date(2020, 1, 20)], [m0, m1], min_cells=8)
+    assert len(ev) == 1
+    e = ev[0]
+    assert e["cells_before"] == 25 and e["cells_after"] == 4
+    assert e["gap_days"] == 10 and e["loss_frac"] > 0.8
+
+
+def test_drainage_candidates_ignores_stable_and_slow():
+    from datetime import date
+    import fusion
+    m0 = np.zeros((20, 20), bool); m0[5:10, 5:10] = True
+    stable = m0.copy()
+    ev = fusion.drainage_candidates(
+        [date(2020, 1, 10), date(2020, 1, 20)], [m0, stable], min_cells=8)
+    assert ev == []
+    half = np.zeros((20, 20), bool); half[5:10, 5:8] = True   # 40% loss only
+    ev = fusion.drainage_candidates(
+        [date(2020, 1, 10), date(2020, 1, 20)], [m0, half], min_cells=8)
+    assert ev == []
+    # gap too long -> not comparable
+    ev = fusion.drainage_candidates(
+        [date(2020, 1, 1), date(2020, 2, 1)], [m0, np.zeros((20, 20), bool)],
+        min_cells=8)
+    assert ev == []

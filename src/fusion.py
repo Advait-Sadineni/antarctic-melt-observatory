@@ -128,6 +128,40 @@ def load_state_checkpoint(path, shape):
     return StateAccumulator(shape), set(), 0, 0, 0.0, 0.0, 0, 0
 
 
+def drainage_candidates(dates, masks, max_gap_days=14, loss_frac=0.8,
+                        min_cells=8):
+    """Fast pond-loss candidates between consecutive evidence dates (spec
+    section 5): a component losing >= loss_frac of its cells within
+    max_gap_days flags a CANDIDATE drainage/refreeze event. Classification
+    (drainage vs refreeze) happens downstream against the radar record; this
+    detects only. min_cells suppresses speckle ponds."""
+    from scipy import ndimage
+    events = []
+    for (d0, m0), (d1, m1) in zip(zip(dates, masks), zip(dates[1:], masks[1:])):
+        gap = (d1 - d0).days
+        if gap > max_gap_days or not m0.any():
+            continue
+        labels, n = ndimage.label(m0)
+        for i, sl in enumerate(ndimage.find_objects(labels), start=1):
+            if sl is None:
+                continue
+            comp = labels[sl] == i
+            before = int(comp.sum())
+            if before < min_cells:
+                continue
+            after = int((m1[sl] & comp).sum())
+            if after <= (1.0 - loss_frac) * before:
+                rows, cols = np.nonzero(comp)
+                events.append({
+                    "date_before": d0.isoformat(), "date_after": d1.isoformat(),
+                    "gap_days": gap, "cells_before": before,
+                    "cells_after": after,
+                    "loss_frac": round(1.0 - after / before, 3),
+                    "row": int(rows.mean()) + sl[0].start,
+                    "col": int(cols.mean()) + sl[1].start})
+    return events
+
+
 # --- networked (driven by scripts/fusion_pilot.py) -----------------------------
 
 MAX_OPTICAL_PER_TILE = 6
