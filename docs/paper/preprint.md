@@ -21,7 +21,9 @@ blind-validated ponds and mid-winter false-wet below 0.1%. A fused per-pixel
 melt-state product (dry / wet / ponded, with sensor conflicts counted rather
 than classified) separates melt that merely wets firn from melt that ponds:
 in the record 2019-20 season on George VI Ice Shelf, radar-wetted area
-exceeded concentrated ponding by a factor of [F]. Pond depths from a
+exceeded concentrated ponding tenfold (peak 8,111 vs 797 km2) - and in the
+quiet 2021-22 season, 8,100 km2 wetted while essentially nothing ponded:
+ponding is strongly nonlinear in melt. Pond depths from a
 dual-band attenuation model are calibrated against 111 ICESat-2 photon-split
 crossover depths spanning George VI and Amery ice shelves; independently
 fitted attenuation coefficients at the two sites agree to 3% (g = 1.19 vs
@@ -144,14 +146,26 @@ constraint is part of the method) - flag candidates, classified drainage
 window).
 
 ## 4. Results
-[F] - filled from the frozen run:
-- 12-shelf x 9-season record (108 shelf-seasons, 3 flagged poorly observed)
-- George VI fused states: wet vs ponded extents, [F] ratio; conflict rates
-  by season; lid-signal maps
-- Volumes: George VI 2019-20 [F] km3, 2020-21 [F] km3 (16-84% bands)
-- Centre-deeper-than-rim physics gate: [F]/[F] ponds
-- Mean-depth statistic vs Corr et al. (2022) assumed 0.716 m scaling: [F]
-- Drainage catalogue: [F] events ([F] drainage / [F] refreeze)
+- 12-shelf x 9-season record: 108 shelf-seasons, 3 flagged poorly observed.
+- George VI fused states (all pilot checks pass): peak ponded 796.6 /
+  186.2 / 0.5 km2 for 2019-20 / 2020-21 / 2021-22, reproducing the optical
+  ranking (838 / 159 / 12 km2); wet-season conflict 1.09% / 1.25% (quiet
+  season below the 500-instance floor); PONDED-outside-optical cells: zero
+  in all seasons. Wet-to-ponded peak ratios 10.2 / 43.3 / ~16,000: the
+  ponded (hydrofracture-relevant) fraction collapses far faster than wetted
+  area as seasons cool - vulnerability is nonlinear in melt.
+- Volumes (g = 1.62, PONDED-restricted): 2019-20 0.129 km3 [0.108-0.166];
+  2020-21 0.050 km3 [0.042-0.064]. Centre-deeper-than-rim: 97% and 99% of
+  ponds (n = 1,200 and 733).
+- Volume-per-area vs Corr et al. (2022) assumed 0.716 m scaling: 2020-21
+  0.42 m (1.7x, within the x2 gate); record 2019-20 0.24 m (3.0x outside) -
+  a laser-calibrated measurement of the record season's shallow marginal
+  ponding vs an assumed constant; we report the disagreement rather than
+  tune to it.
+- Drainage catalogue: zero events survive coverage screening at v1's
+  clear-scene cadence (a coverage-blind detector produced 784 phantoms; the
+  documented 2019-20 events fall between evidence dates >14 d apart) -
+  detection at this cadence is a stated limitation, not a claim.
 
 ## 5. Limitations
 Single-labeler validation (a three-labeler weighted protocol per Leeson,

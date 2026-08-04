@@ -30,9 +30,11 @@ containment of blind-validated ponds within Sentinel-1 wet masks and
 mid-winter false-wet rates below 0.1%. A fused per-pixel melt-state product
 (dry / wet / ponded, with sensor-conflict accounting) distinguishes melt that
 merely wets firn from melt that ponds — the hydrofracture-relevant fraction.
-Pond depths from a dual-band attenuation model are calibrated against 82
+Pond depths from a dual-band attenuation model are calibrated against 111
 ICESat-2 photon-split crossover depths spanning George VI and Amery ice
-shelves, enabling meltwater volume time series with Monte Carlo uncertainty.
+shelves, yielding 0.129 [0.108-0.166] km3 of ponded meltwater on George VI in the
+record 2019-20 season, with the ponded fraction collapsing tenfold faster
+than wetted area in cooler seasons.
 
 All code, products, and validation artifacts are public (DOI:
 10.5281/zenodo.21711608), and the record updates each austral summer,

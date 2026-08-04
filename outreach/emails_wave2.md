@@ -1,6 +1,6 @@
 # Outreach wave 2 — sent AFTER final numbers freeze
 
-Placeholders: [WET_PONDED_RATIO], [VOL_2019], [VOL_2020], [TIGHT_N], [TIGHT_RMSE]
+Placeholders: 10, 0.129 [0.108-0.166], 0.050 [0.042-0.064], 111 (29 tight), 0.56
 get filled from fusion_report.json / product_*.json before sending. Tone rules:
 honest effort framing (built in ~2 weeks, CS undergrad), no inflation, one
 specific question per email.
@@ -17,12 +17,12 @@ designed into the validation stack (recruiting the two additional labelers
 this month), and in the meantime the pipeline finished its multi-sensor
 phase:
 
-- Fused Sentinel-1/-2 melt states for George VI: only ~[WET_PONDED_RATIO]%
+- Fused Sentinel-1/-2 melt states for George VI: only ~10%
   of radar-wetted area ever ponds — the hydrofracture-relevant fraction is
   far smaller than wet extent alone suggests.
 - Pond depths calibrated against ICESat-2 photon-split crossovers at two
   sites 4,000 km apart (George VI and Amery) — attenuation coefficients
-  agree to 3%, RMSE [TIGHT_RMSE] m over [TIGHT_N] tight crossovers, honestly
+  agree to 3%, RMSE 0.56 m over 111 (29 tight) tight crossovers, honestly
   reported against our 0.5 m target.
 
 Everything is public (repo + DOI below). If any of it is useful to your
@@ -47,13 +47,13 @@ yours, I wanted to share it and ask one question.
 The pipeline fuses Sentinel-2 pond detection (blind stratified validation,
 Horvitz-Thompson corrected) with Sentinel-1 wet-snow states, then retrieves
 pond depths by dual-band attenuation calibrated against ICESat-2 photon
-depths ([TIGHT_N] crossovers; George VI and Amery attenuation agree to 3%).
-For 2019-20 George VI it gives [VOL_2019] km3 of ponded meltwater
-([VOL_2020] km3 for 2020-21), with Monte Carlo uncertainty.
+depths (111 (29 tight) crossovers; George VI and Amery attenuation agree to 3%).
+For 2019-20 George VI it gives 0.129 [0.108-0.166] km3 of ponded meltwater
+(0.050 [0.042-0.064] km3 for 2020-21), with Monte Carlo uncertainty.
 
 My question: is there any prospect of comparing against in-situ or
 higher-fidelity depth data from your George VI field campaigns? Our laser
-crossover RMSE is [TIGHT_RMSE] m at segment scale, and field-scale truth
+crossover RMSE is 0.56 m at segment scale, and field-scale truth
 would tell us what that number really means.
 
 Repo: https://github.com/Advait-Sadineni/antarctic-melt-observatory
@@ -74,10 +74,10 @@ something I just built, so I wanted to share it. I'm a CS undergraduate at
 Penn State; my open-source pipeline harvests ATL03 photon-split pond depths
 automatically at optical crossovers (strong beams, Parrish refraction,
 histogram peak splitting) and uses them to calibrate dual-band attenuation
-depths — [TIGHT_N] tight crossovers so far across Amery and George VI, with
+depths — 111 (29 tight) tight crossovers so far across Amery and George VI, with
 the two sites' attenuation coefficients agreeing to 3%.
 
-One methodological question: at segment scale we plateau at ~[TIGHT_RMSE] m
+One methodological question: at segment scale we plateau at ~0.56 m
 RMSE against the laser, and tightening the crossover window below +/-3 days
 stops helping — consistent with spatial pairing (photon-segment mean vs
 150 m optical window) being the floor. Does that match your experience, and
