@@ -129,18 +129,25 @@ def load_state_checkpoint(path, shape):
 
 
 def drainage_candidates(dates, masks, max_gap_days=14, loss_frac=0.8,
-                        min_cells=8):
+                        min_cells=8, coverage=None, min_observed=0.7):
     """Fast pond-loss candidates between consecutive evidence dates (spec
     section 5): a component losing >= loss_frac of its cells within
     max_gap_days flags a CANDIDATE drainage/refreeze event. Classification
     (drainage vs refreeze) happens downstream against the radar record; this
-    detects only. min_cells suppresses speckle ponds."""
+    detects only. min_cells suppresses speckle ponds.
+
+    coverage (optional but strongly advised): per-date OBSERVED masks aligned
+    with `masks`. A component must be >= min_observed covered on the AFTER
+    date to count - without this, tile footprints and clouds masquerade as
+    drainage (a coverage-blind first run produced 784 phantom events)."""
     from scipy import ndimage
     events = []
-    for (d0, m0), (d1, m1) in zip(zip(dates, masks), zip(dates[1:], masks[1:])):
+    for k, ((d0, m0), (d1, m1)) in enumerate(
+            zip(zip(dates, masks), zip(dates[1:], masks[1:]))):
         gap = (d1 - d0).days
         if gap > max_gap_days or not m0.any():
             continue
+        cov1 = coverage[k + 1] if coverage is not None else None
         labels, n = ndimage.label(m0)
         for i, sl in enumerate(ndimage.find_objects(labels), start=1):
             if sl is None:
@@ -149,6 +156,10 @@ def drainage_candidates(dates, masks, max_gap_days=14, loss_frac=0.8,
             before = int(comp.sum())
             if before < min_cells:
                 continue
+            if cov1 is not None:
+                observed = int((cov1[sl] & comp).sum()) / before
+                if observed < min_observed:
+                    continue
             after = int((m1[sl] & comp).sum())
             if after <= (1.0 - loss_frac) * before:
                 rows, cols = np.nonzero(comp)
@@ -167,6 +178,69 @@ def drainage_candidates(dates, masks, max_gap_days=14, loss_frac=0.8,
 MAX_OPTICAL_PER_TILE = 6
 POND_FRACTION = 0.25          # optical water fraction that makes a 120 m cell a pond
 EVIDENCE_WINDOW_DAYS = 6
+
+
+def evidence_pool(tile, y0):
+    """The melt-core evidence scenes for one tile: select_pool evaluated PER
+    MONTH (Dec/Jan/Feb, 2 scenes each; decision 0005) so a clean pre-melt
+    December cannot veto hazy record-melt January scenes. Shared by
+    pond_series and evidence_coverage so their date lists always agree."""
+    import shelf
+    months = [(f"{y0}-12-01", f"{y0}-12-31"),
+              (f"{y0+1}-01-01", f"{y0+1}-01-31"),
+              (f"{y0+1}-02-01", f"{y0+1}-02-28")]
+    pool, seen = [], set()
+    for m_start, m_end in months:
+        for it in shelf.production_pool(tile, m_start, m_end, max_scenes=2):
+            if it.id not in seen:
+                seen.add(it.id)
+                pool.append(it)
+    return pool
+
+
+def evidence_coverage(season, sgrid, cache_root=None):
+    """Per-evidence-date OBSERVED masks on the SAR grid: where that date's
+    scenes actually made a valid optical observation (not cloud/reject, in
+    swath). The drainage catalogue needs this - a pond that fell outside the
+    next date's coverage did not drain, it just wasn't looked at. Cached."""
+    from pathlib import Path
+
+    import melt
+    import sar
+    import shelf
+    root = Path(cache_root) if cache_root else sar.OUT
+    cache = root / f"coverage_{season}_corem.npz"
+    if cache.exists():
+        z = np.load(cache, allow_pickle=False)
+        from datetime import date as _date
+        return [(_date.fromordinal(int(o)), m)
+                for o, m in zip(z["ordinals"], z["masks"])]
+
+    from rasterio.enums import Resampling
+    from rasterio.warp import reproject
+    y0 = int(season.split("-")[0])
+    tr, gw4, gh4, sm = sgrid
+    by_date = {}
+    for tile in shelf.SHELF_TILES:
+        for it in evidence_pool(tile, y0):
+            reject = melt.reject_mask(it) | melt.cloud_mask(it)["mask"]
+            good = (~reject).astype("f4")
+            src_crs, _ = melt.tile_georeference(it)
+            dst = np.zeros((gh4, gw4), "f4")
+            reproject(source=good, destination=dst,
+                      src_transform=melt.aoi_transform(it), src_crs=src_crs,
+                      dst_transform=tr, dst_crs=shelf.GRID_CRS,
+                      resampling=Resampling.average)
+            d = it.datetime.date()
+            m = (dst >= 0.5) & sm
+            by_date[d] = (by_date[d] | m) if d in by_date else m
+            print(f"  [coverage] {tile} {d}: {int(m.sum())} cells", flush=True)
+    series = sorted(by_date.items())
+    if series:
+        np.savez_compressed(cache,
+                            ordinals=np.array([d.toordinal() for d, _ in series]),
+                            masks=np.stack([m for _, m in series]))
+    return series
 
 
 def pond_series(season, sgrid, cache_root=None):
@@ -196,19 +270,10 @@ def pond_series(season, sgrid, cache_root=None):
     # pre-melt December cannot veto hazy record-melt January scenes (in
     # 2019-20 a season-wide pool selected two dry December scenes and missed
     # 97% of the record ponding).
-    months = [(f"{y0}-12-01", f"{y0}-12-31"),
-              (f"{y0+1}-01-01", f"{y0+1}-01-31"),
-              (f"{y0+1}-02-01", f"{y0+1}-02-28")]
     tr, gw4, gh4, sm = sgrid
     by_date = {}
     for tile in shelf.SHELF_TILES:
-        pool, seen = [], set()
-        for m_start, m_end in months:
-            for it in shelf.production_pool(tile, m_start, m_end,
-                                            max_scenes=2):
-                if it.id not in seen:
-                    seen.add(it.id)
-                    pool.append(it)
+        pool = evidence_pool(tile, y0)
         for it in pool:
             bands = melt.load_scene(it, bands=("green", "nir", "red"))
             reject = melt.reject_mask(it) | melt.cloud_mask(it)["mask"]

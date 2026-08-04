@@ -37,7 +37,14 @@ def run(season):
     y0 = int(season.split("-")[0])
     season_zero = date(y0, 11, 1).toordinal()
 
-    events = fusion.drainage_candidates(dates, masks)
+    import shelf
+    cov_series = fusion.evidence_coverage(season, sar.sar_grid(shelf.build_fixed_grid()))
+    cov_by_date = dict(cov_series)
+    if not all(d in cov_by_date for d in dates):
+        raise SystemExit(f"coverage dates missing for {season} - rebuild caches")
+    coverage = [cov_by_date[d] for d in dates]
+
+    events = fusion.drainage_candidates(dates, masks, coverage=coverage)
     for e in events:
         # the component's radar phenology, sampled at the event centroid's
         # neighbourhood (5x5) to ride out speckle

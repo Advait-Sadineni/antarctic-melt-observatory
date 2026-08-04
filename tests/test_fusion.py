@@ -132,3 +132,19 @@ def test_drainage_candidates_ignores_stable_and_slow():
         [date(2020, 1, 1), date(2020, 2, 1)], [m0, np.zeros((20, 20), bool)],
         min_cells=8)
     assert ev == []
+
+
+def test_drainage_candidates_requires_coverage():
+    from datetime import date
+    import fusion
+    m0 = np.zeros((20, 20), bool); m0[5:10, 5:10] = True
+    gone = np.zeros((20, 20), bool)
+    dates = [date(2020, 1, 10), date(2020, 1, 20)]
+    # after-date never observed the pond area -> NOT an event
+    cov_blind = [np.ones((20, 20), bool), np.zeros((20, 20), bool)]
+    assert fusion.drainage_candidates(dates, [m0, gone], min_cells=8,
+                                      coverage=cov_blind) == []
+    # after-date observed it -> real event
+    cov_seen = [np.ones((20, 20), bool), np.ones((20, 20), bool)]
+    assert len(fusion.drainage_candidates(dates, [m0, gone], min_cells=8,
+                                          coverage=cov_seen)) == 1
