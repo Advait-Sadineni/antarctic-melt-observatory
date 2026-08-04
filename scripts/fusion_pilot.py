@@ -54,10 +54,24 @@ def report():
         outside = int((ponded_radar & ~ever_pond_optical).sum())
         out["seasons"][season]["ponded_cells_outside_optical"] = outside
 
-    conflicts = {s: out["seasons"][s]["conflict_rate"] for s in SEASONS}
+    # conflict gate is a RATE: only meaningful with a real denominator.
+    # A quiet season with ~1 km2 ponded yields tens of instances, where a
+    # dozen diurnal-refreeze cells swing the rate arbitrarily.
+    MIN_INSTANCES = 500
+    conflicts, insufficient = {}, {}
+    for s in SEASONS:
+        z = np.load(sar.OUT / f"state_{s}_t{t:g}.npz", allow_pickle=False)
+        inst = int(z["days_ponded"].sum()) + out["seasons"][s]["conflict_days_wetseason"]
+        if inst >= MIN_INSTANCES:
+            conflicts[s] = out["seasons"][s]["conflict_rate"]
+        else:
+            insufficient[s] = {"instances": inst,
+                               "rate_not_evaluated": out["seasons"][s]["conflict_rate"]}
     out["checks"]["a_conflict_lt_5pct"] = {
-        "rates": conflicts,
-        "pass": all(c is not None and c < 0.05 for c in conflicts.values())}
+        "rates": conflicts, "insufficient_ponding": insufficient,
+        "min_instances": MIN_INSTANCES,
+        "pass": bool(conflicts) and all(c is not None and c < 0.05
+                                        for c in conflicts.values())}
     out["checks"]["b_ponded_subset_optical"] = {
         "cells_outside": {s: out["seasons"][s]["ponded_cells_outside_optical"]
                           for s in SEASONS},
