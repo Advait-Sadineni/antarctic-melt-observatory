@@ -22,7 +22,7 @@ phase:
   far smaller than wet extent alone suggests.
 - Pond depths calibrated against ICESat-2 photon-split crossovers at two
   sites 4,000 km apart (George VI and Amery) — attenuation coefficients
-  agree to 3%, RMSE 0.56 m over 111 (29 tight) tight crossovers, honestly
+  agree to 3%, RMSE 0.56 m on the tight-window crossovers (111 total), honestly
   reported against our 0.5 m target.
 
 Everything is public (repo + DOI below). If any of it is useful to your
@@ -47,7 +47,7 @@ yours, I wanted to share it and ask one question.
 The pipeline fuses Sentinel-2 pond detection (blind stratified validation,
 Horvitz-Thompson corrected) with Sentinel-1 wet-snow states, then retrieves
 pond depths by dual-band attenuation calibrated against ICESat-2 photon
-depths (111 (29 tight) crossovers; George VI and Amery attenuation agree to 3%).
+depths (111 crossovers; George VI and Amery attenuation agree to 3%).
 For 2019-20 George VI it gives 0.129 [0.108-0.166] km3 of ponded meltwater
 (0.050 [0.042-0.064] km3 for 2020-21), with Monte Carlo uncertainty.
 
@@ -64,7 +64,7 @@ Advait Sadineni
 
 ## 3. Rajashree Tri Datta (CU Boulder) — ICESat-2 + Amery melt lakes
 
-Subject: 82 ICESat-2 pond-depth crossovers on Amery/George VI from an open
+Subject: 111 ICESat-2 pond-depth crossovers on Amery/George VI from an open
 pipeline — student project
 
 Dear Dr. Datta,
@@ -74,7 +74,7 @@ something I just built, so I wanted to share it. I'm a CS undergraduate at
 Penn State; my open-source pipeline harvests ATL03 photon-split pond depths
 automatically at optical crossovers (strong beams, Parrish refraction,
 histogram peak splitting) and uses them to calibrate dual-band attenuation
-depths — 111 (29 tight) tight crossovers so far across Amery and George VI, with
+depths — 111 crossovers so far across Amery and George VI, with
 the two sites' attenuation coefficients agreeing to 3%.
 
 One methodological question: at segment scale we plateau at ~0.56 m
