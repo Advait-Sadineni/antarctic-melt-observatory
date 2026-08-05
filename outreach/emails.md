@@ -215,3 +215,11 @@ Advait Sadineni
 - **2026-08-04 Trusel (PSU, wave 3) SENT**: on-campus meeting request, led
   with nonlinearity finding vs his Nature 2015 melt thresholds. 11 sent
   total; 6 armed behind preprint (emails_wave3.md).
+
+- **2026-08-05 Alison Banwell (CU/CIRES, on medical leave!):** confirmed our
+  independent reproduction of her 19 Jan 2020 GVI record; no Larsen C field
+  verdict (never worked there); pointed to Becky Dell's slush work (Nat.
+  Geosci. 2024 s41561-024-01466-6 + J.Glac. supervised slush/pond
+  classifier) -> adopted as the upgrade path for slush-regime corrections.
+  Dell (Cambridge) added as future contact. Reply drafted: warm, defers the
+  volumes ask until she's recovered.
