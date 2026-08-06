@@ -233,3 +233,6 @@ Advait Sadineni
   (already computed by fusion!) minus year-round-persistent cells (shadow
   proxy); DEM optional later. FOUR of eleven emails have now drawn expert
   replies (Leeson, Stokes, Banwell, Deakin).
+
+- **2026-08-06:** Deakin reply sent (winter-product design credit + preprint
+  citation note).
