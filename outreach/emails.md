@@ -223,3 +223,13 @@ Advait Sadineni
   classifier) -> adopted as the upgrade path for slush-regime corrections.
   Dell (Cambridge) added as future contact. Reply drafted: warm, defers the
   volumes ask until she's recovered.
+
+- **2026-08-06 Katherine Deakin (Durham):** "really interesting project" +
+  substantive answer: our -3dB winter test WOULD flag her buried persistent
+  meltwater (>3dB single-image deviations); caution = winter anomalies also
+  from topo shadows (persistent year-round) and transient roughness; guards =
+  optical context from adjacent seasons + DEM. -> Roadmap: winter
+  buried-meltwater product = winter anomalies ∩ prior-season PONDED-ever
+  (already computed by fusion!) minus year-round-persistent cells (shadow
+  proxy); DEM optional later. FOUR of eleven emails have now drawn expert
+  replies (Leeson, Stokes, Banwell, Deakin).
